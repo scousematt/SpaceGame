@@ -35,8 +35,18 @@ class Orbitals(object):
         Takes in the orbital distance in metres as per Kepler's Law of
         harmonies, T^2 / R^3  = 3 x 10^-19
         :return: orbital period in seconds
+
+        Extra solar planets are different
+
+        time = math.sqrt((4 * math.pi**2/ (0.000000000067 * stellarMass)) * radius ** 3)
         '''
-        return (math.sqrt(0.0000000000000000003 * (radius ** 3)))
+        #TODO stellarMass needs to be calculated for each star
+
+
+        G = 6.674 * 10 ** -11
+        stellarMass = 1.989 * 10 ** 30
+
+        return (math.sqrt( ( (4 * math.pi ** 2 )/ G * stellarMass ) *  (radius ** 3) ) )
 
 
 
@@ -46,7 +56,7 @@ class Star(Orbitals):
         Orbitals.__init__(self, 1)
         self.orbitalPeriod = 0
         self.name = None
-
+        #TODO self.stellarMass for kepler3(stellarMass)
 
     def generate(self):
         self.stellarClass = "G5"
