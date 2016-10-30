@@ -5,7 +5,8 @@ class Orbitals(object):
         self.parent = None
         self.children = []
 
-
+        self.currentTime = 1534562334
+        self.name = None
         #Arbitary north as 0
         self.angle = 0
         #Metres
@@ -13,14 +14,21 @@ class Orbitals(object):
         #Seconds
         self.orbitalPeriod = self.kepler3(self.orbitalDistance)
 
-
     def update(self, timeSinceStart):
         # Advance time by correct amount of time (a delta t could introduce floating point probs)
-        self.Angle = (timeSinceStart / self.orbitalPeriod) * math.pi * 2
+
+        #print("Updating via Orbitals :" + self.name)
+        self.currentTime += timeSinceStart
+
+        self.angle = (self.currentTime / self.orbitalPeriod) * math.pi * 2
+
+
+
+
 
         # Update all of our children
         for i in range(0, len(self.children)):
-            self.children[i].Update(timeSinceStart)
+            self.children[i].update(timeSinceStart)
 
     def addChild(self, c):
         c.Parent = self
@@ -29,6 +37,12 @@ class Orbitals(object):
     def removeChild(self, c):
         c.Parent = None
         self.children.remove(c)
+
+    def getCoords(self):
+        return(math.sin(self.angle) * self.orbitalDistance,
+               math.cos(self.angle) * self.orbitalDistance,
+               )
+
 
     def kepler3(self, radius):
         '''
@@ -43,10 +57,11 @@ class Orbitals(object):
         #TODO stellarMass needs to be calculated for each star
 
 
-        G = 6.674 * 10 ** -11
+        G = 6.67408 * 10 ** -11
         stellarMass = 1.989 * 10 ** 30
 
-        return (math.sqrt( ( (4 * math.pi ** 2 )/ G * stellarMass ) *  (radius ** 3) ) )
+        return (math.sqrt((4 * math.pi**2/ (G * stellarMass)) * radius ** 3))
+
 
 
 
@@ -54,7 +69,7 @@ class Star(Orbitals):
     def __init__(self):
         #Assume the star is at the centre of the system with a radius of 1
         Orbitals.__init__(self, 1)
-        self.orbitalPeriod = 0
+        self.orbitalPeriod = 1
         self.name = None
         #TODO self.stellarMass for kepler3(stellarMass)
 
@@ -71,6 +86,8 @@ class Planet(Orbitals):
         Orbitals.__init__(self, orbitalDistance)
         self.name = name
 
+
+
     def generate(self):
         pass
 
@@ -79,9 +96,8 @@ class Planet(Orbitals):
 
 
 
-'''
-t = Star()
-t.generate()
-print(t.orbitalPeriod / (360 * 24 * 3600))
-print(t.name)
-'''
+#
+# t = Planet(150000000000, "Earth")
+# #t.generate()
+# print(t.orbitalPeriod / (360 * 24 * 3600))
+# print(t)
