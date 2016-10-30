@@ -1,0 +1,37 @@
+A series of star systems
+
+Galaxy
+  System
+    Star Name
+    Coords relative to centre of galaxy, distance and angle
+    
+    Star
+      Name   ?Name of Star
+      Type
+    
+    Planets / Asteroids / Moons / Artifical Stations
+      Owner (allows for moons and stations can be artificial moons)
+      Coords (Angle and distance from centre of system)
+      Name
+      Type
+      Habitability
+      Gravity
+      Temperature
+      Resources
+      Settlement Zones - More than one owner on system
+      
+        Settlements
+          Name
+          Size
+          Long Lat - generate temperature
+          Infrastructure
+          Owner
+          Population
+          Industry
+            Mining
+            Civilian / Domestic - looking after people
+            Military - Fighters, missiles
+            Shipbuilding      
+      
+    
+    Comets? Non circular orbit?????
