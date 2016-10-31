@@ -56,8 +56,15 @@ class PageOne(tk.Frame):
         self.canvas = tk.Canvas(self, height = self.canvasH, width = self.canvasW, bg = "grey")
         self.canvas.pack()
 
+        self.zoomLevel = 1
+        self.zoomLevelChange = 0.2
         self.x = self.canvasW / 2
         self.y = self.canvasH / 2
+
+
+        self.centreX = self.x
+        self.centreY = self.y
+
 
         self.starRadius = 25
         self.planetRadius = 5
@@ -69,14 +76,37 @@ class PageOne(tk.Frame):
         self.mySystem.generate()
 
         self.planetWidgets = []
+        self.planetOrbits = []
 
+
+        #tkinter stuff related to the class
         button1 = tk.Button(self, text="Update", width = 75,
                 command = self.redrawCanvas)
         button1.pack()
 
-
+        #keybindngs
+        self.focus_set()
+        self.bind('=', self.zoomCanvas)
+        self.bind('-', self.zoomCanvas)
+        self.bind('w', self.moveCanvas)
+        self.bind('s', self.moveCanvas)
+        self.bind('a', self.moveCanvas)
+        self.bind('d', self.moveCanvas)
 
         self.generateCanvas()
+
+
+
+    def zoomCanvas(self, event):
+        if event.char == '-':
+            self.zoomLevel -= self.zoomLevelChange
+        else:
+            self.zoomLevel += self.zoomLevelChange
+        self.canvas.delete('all')
+        self.generateCanvas()
+
+    def moveCanvas(self, event):
+        print(event.char)
 
     def generateCanvas(self):
         for p in self.mySystem.children:
@@ -84,7 +114,7 @@ class PageOne(tk.Frame):
             if isinstance(p, Orbitals.Star):
                 applyColor = "yellow"
                 radius = self.starRadius
-                self.circle(self.x, self.y, radius, fill=applyColor)
+                self.circle(self.centreX, self.centreY, radius, fill=applyColor)
                 self.canvas.create_text(self.x, self.y + self.starTextOffset, text=p.name)
 
 
@@ -100,8 +130,9 @@ class PageOne(tk.Frame):
                 # y += canvas_height / 2
 
                 #Draw orbits
-                self.circle(self.canvasW / 2, self.canvasH / 2,
-                                (p.orbitalDistance / self.mySystem.maxOrbitalDistance) * self.canvasH,
+                self.circle(self.centreX, self.centreY,
+                                (p.orbitalDistance / self.mySystem.maxOrbitalDistance)\
+                             * self.canvasH * self.zoomLevel,
                                 fill="")
 
                 self.planetWidgets.append(self.circle(self.x, self.y, radius, fill=applyColor))
@@ -129,9 +160,9 @@ class PageOne(tk.Frame):
         maxRadius = self.mySystem.maxOrbitalDistance
         # print("Y from orbitals is " + str(y))
 
-        x = self.canvasW / 2 + (((x / maxRadius) * self.canvasW))
+        x = self.zoomLevel * (self.canvasW / 2 + (((x / maxRadius) * self.canvasW)) )
 
-        y = self.canvasH / 2 + ((y / maxRadius) * self.canvasH)
+        y = self.zoomLevel * (self.canvasH / 2 + ((y / maxRadius) * self.canvasH))
 
         return (x, y)
 
