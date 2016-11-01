@@ -51,19 +51,27 @@ class PageOne(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
 
+        #If these are not equal, then orbitals need to be an oval
         self.canvasH = 1000
         self.canvasW = 1000
+
+
         self.canvas = tk.Canvas(self, height = self.canvasH, width = self.canvasW, bg = "grey")
         self.canvas.pack()
 
         self.zoomLevel = 1
         self.zoomLevelChange = 0.2
-        self.x = self.canvasW / 2
-        self.y = self.canvasH / 2
 
+        #Current centre of the system - the star centre upon creation
+        self.starX = self.canvasW / 2
+        self.starY = self.canvasH / 2
 
-        self.centreX = self.x
-        self.centreY = self.y
+        #The centre of the canvas
+        self.centreX = self.starX
+        self.centreY = self.starY
+
+        self.zoomOffsetX = 0
+        self.zoomOffsetY = 0
 
 
         self.starRadius = 25
@@ -76,7 +84,7 @@ class PageOne(tk.Frame):
         self.mySystem.generate()
 
         self.planetWidgets = []
-        self.planetOrbits = []
+        self.planetName = []
 
 
         #tkinter stuff related to the class
@@ -86,59 +94,136 @@ class PageOne(tk.Frame):
 
         #keybindngs
         self.focus_set()
-        self.bind('=', self.zoomCanvas)
-        self.bind('-', self.zoomCanvas)
-        self.bind('w', self.moveCanvas)
-        self.bind('s', self.moveCanvas)
-        self.bind('a', self.moveCanvas)
-        self.bind('d', self.moveCanvas)
+        self.bind('=', self.keyonCanvas)
+        self.bind('-', self.keyonCanvas)
+        self.bind('w', self.keyonCanvas)
+        self.bind('s', self.keyonCanvas)
+        self.bind('a', self.keyonCanvas)
+        self.bind('d', self.keyonCanvas)
+
+        self.canvas.bind('<Button-1>', self.focusOnClick)
 
         self.generateCanvas()
 
 
+    def focusOnClick(self, event):
 
-    def zoomCanvas(self, event):
+        returnedID = self.canvas.find_closest(event.x, event.y, halo = 5)[0]
+
+        if returnedID in self.planetWidgets:
+
+
+            print(event.x, event.y)
+            self.canvas.itemconfig(self.planetName[self.planetWidgets.index(returnedID)], fill="white")
+
+
+            #exact cordinates of the object on the canvas
+            x, y = self.getCircleCoords(returnedID)
+
+            #now the offset are equal to the distance from the star
+            self.zoomOffsetX = self.starX - x
+            self.zoomOffsetY = self.starY - y
+
+            #Adjust the star to its new position, alloowing the clicked object to the centre
+            self.starX = self.centreX + self.zoomOffsetX
+            self.starY = self.centreY + self.zoomOffsetY
+
+
+
+            self.canvas.delete('all')
+            self.generateCanvas()
+
+
+
+    def keyonCanvas(self, event):
         if event.char == '-':
-            self.zoomLevel -= self.zoomLevelChange
-        else:
+            if self.zoomLevel > 0.4:
+
+
+                print(self.zoomOffsetX)
+
+
+                self.zoomLevel -= self.zoomLevelChange
+
+                zFactor = (self.zoomLevel - 1) / self.zoomLevelChange
+
+                self.zoomOffsetX -= (1 - 1 / 1.2) * self.zoomOffsetX
+                self.zoomOffsetY -= (1 - 1 / 1.2) * self.zoomOffsetY
+
+                self.starX = self.centreX + self.zoomOffsetX
+                self.starY = self.centreY + self.zoomOffsetY
+
+
+
+        elif event.char == '=':
             self.zoomLevel += self.zoomLevelChange
+
+            # self.zoomOffsetX += (self.zoomLevel - 5) * self.zoomLevelChange
+            # self.zoomOffsetY += (self.zoomLevel - 5) * self.zoomLevelChange
+
+
+            print(self.zoomOffsetX)
+            zFactor = (self.zoomLevel - 1) / self.zoomLevelChange
+
+            self.zoomOffsetX *= 1.2
+            self.zoomOffsetY *= 1.2
+
+            #selected planet is at centre so offset to star to relative to centre
+            self.starX = self.centreX + self.zoomOffsetX
+            self.starY = self.centreY + self.zoomOffsetY
+
+
+
+
+        elif event.char == 'w':
+            self.starY -= 20
+            #self.zoomOffsetY -= 20
+
+        elif event.char == 's':
+            self.starY += 20
+            #self.zoomOffsetY -= 20
+
+        elif event.char == 'a':
+            self.starX -= 20
+            #self.zoomOffsetX -= 20
+
+        elif event.char == 'd':
+            self.starX += 20
+            #self.zoomOffsetX += 20
+
         self.canvas.delete('all')
         self.generateCanvas()
 
-    def moveCanvas(self, event):
-        print(event.char)
 
     def generateCanvas(self):
+
+        self.planetWidgets = []
+        self.planetName = []
+
+
         for p in self.mySystem.children:
 
             if isinstance(p, Orbitals.Star):
                 applyColor = "yellow"
                 radius = self.starRadius
-                self.circle(self.centreX, self.centreY, radius, fill=applyColor)
-                self.canvas.create_text(self.x, self.y + self.starTextOffset, text=p.name)
+                self.circle(self.starX, self.starY, radius, fill=applyColor)
+                self.canvas.create_text(self.starX, self.starY + self.starTextOffset, text=p.name)
 
-
-                #Assuming first item is star? self.x, y are already set
-                #x, y = self.width / 2, self.height / 2
             else:
                 applyColor = "blue"
                 radius = self.planetRadius
-                self.x, self.y = self.getCanvasXY(p)
-                # print(y)
-                # #offset x to the centre
-                # x += canvas_width / 2
-                # y += canvas_height / 2
+                pX, pY = self.getCanvasXY(p)
 
-                #Draw orbits
-                self.circle(self.centreX, self.centreY,
-                                (p.orbitalDistance / self.mySystem.maxOrbitalDistance)\
-                             * self.canvasH * self.zoomLevel,
-                                fill="")
+                #Note - If Canvas is not a square, this needs to be an oval
 
-                self.planetWidgets.append(self.circle(self.x, self.y, radius, fill=applyColor))
-                self.planetWidgets.append(self.canvas.create_text(self.x,
-                                                                  self.y + self.planetTextOffset,
-                                                                  text=p.name))
+                orbRadius = (p.orbitalDistance / self.mySystem.maxOrbitalDistance) * self.canvasH
+                orbRadius *= ((1 + self.zoomLevelChange) ** ((self.zoomLevel - 1) / self.zoomLevelChange))
+                #test
+
+                self.circle(self.starX, self.starY, orbRadius, fill="")
+
+                self.planetWidgets.append(self.circle(pX, pY, radius, fill=applyColor))
+                self.planetName.append(self.canvas.create_text(pX, pY + self.planetTextOffset, text=p.name,))
 
 
 
@@ -150,19 +235,34 @@ class PageOne(tk.Frame):
 
     def getCanvasXY(self, obj):
         ''''
-        Converts the angle and radius of the planets location into
-        a form that fits inside the canvas.
+        Takes in a StarSystem.Planet object
 
-        Adjusts to the centre of the canvas and returns x,y suited to the canvas
+        Calculate the x and y distances of the planet in terms of the canvas size
+
+        then adjust these to the centre of the star
+
+
+        :returns
+
+        x and y coordinates for the canvas object
         '''
+
         x, y = obj.getCoords()
 
+
         maxRadius = self.mySystem.maxOrbitalDistance
-        # print("Y from orbitals is " + str(y))
 
-        x = self.zoomLevel * (self.canvasW / 2 + (((x / maxRadius) * self.canvasW)) )
+        #number of times plus or minus on zoom level
+        zFactor = (self.zoomLevel - 1) / self.zoomLevelChange
+        if zFactor > -1:
+            x = ((1 + self.zoomLevelChange) ** zFactor) * ( (x / maxRadius * self.canvasW)) + self.starX
+            y = ((1 + self.zoomLevelChange) ** zFactor) * ( (y / maxRadius * self.canvasH)) + self.starY
+        else:
+            #the number is smaller so 0.8 ** zFactor * -1
+            x = ((1 - self.zoomLevelChange) ** (-1 * zFactor) * ( (x / maxRadius * self.canvasW))) + self.starX
+            y = ((1 - self.zoomLevelChange) ** (-1 * zFactor) * ( (y / maxRadius * self.canvasH))) + self.starY
 
-        y = self.zoomLevel * (self.canvasH / 2 + ((y / maxRadius) * self.canvasH))
+
 
         return (x, y)
 
@@ -175,10 +275,11 @@ class PageOne(tk.Frame):
         y = a[1] + (a[3] - a[1]) / 2
         return (x, y)
 
+
     def redrawCanvas(self):
         #print(self.planetWidgets)
 
-        self.mySystem.update(800000)
+        self.mySystem.update(80000)
 
 
         planetNewCoords = []
@@ -192,21 +293,21 @@ class PageOne(tk.Frame):
 
         #print(self.planetWidgets)
         #print(planetNewCoords)
-        j = 0
+
         #print(self.canvas.coords(self.planetWidgets[i]))
-        for i in range(0, len(self.planetWidgets), 2):
+        for i in range(0, len(self.planetWidgets)):
             #Derive old x, y from text displaying name
             oldX, oldY = self.getCircleCoords(self.planetWidgets[i])
             #print (oldX, oldY)
             #print("new - old : " + str(planetNewCoords[j][0]) + " " + str(oldX))
 
             self.canvas.move(self.planetWidgets[i],
-                             planetNewCoords[j][0] - oldX,
-                             planetNewCoords[j][1] - oldY)
-            self.canvas.move(self.planetWidgets[i+1],
-                             planetNewCoords[j][0] - oldX,
-                             planetNewCoords[j][1] - oldY)
-            j += 1
+                             planetNewCoords[i][0] - oldX,
+                             planetNewCoords[i][1] - oldY)
+            self.canvas.move(self.planetName[i],
+                             planetNewCoords[i][0] - oldX,
+                             planetNewCoords[i][1] - oldY)
+
 
 
 
