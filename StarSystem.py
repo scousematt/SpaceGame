@@ -4,11 +4,11 @@ import math
 
 
 class StarSystem(Orbitals.Orbitals):
-    def __init__(self, orbitalDistance, angle):
+    def __init__(self, orbitalDistance, angle, name):
         Orbitals.Orbitals.__init__(self, orbitalDistance)
         self.angle = angle
         self.orbitalPeriod = 1   #A static Galaxy
-        self.name = None
+        self.name = name
         self.maxOrbitalDistance = None
 
 
@@ -17,9 +17,10 @@ class StarSystem(Orbitals.Orbitals):
     def generate(self):
 
         #Star
-        myStar = Orbitals.Star()
+        myStar = Orbitals.Star(self.name)
         myStar.generate()
-        self.name = myStar.name
+        myPlanet = None
+
         self.addChild(myStar)
 
 
@@ -28,10 +29,12 @@ class StarSystem(Orbitals.Orbitals):
         print(numPlanets)
 
         #Planets
+
+        suffix =['i','ii','iii','iv','v','vi','vii','viii','ix','x','xi','xii','xiii','xiv']
         for i in range(0, numPlanets):
             orbitalDistance = 150000000000 + i * 40000000000
 
-            myPlanet = Orbitals.Planet(orbitalDistance, self.name + " " + str(i + 1))
+            myPlanet = Orbitals.Planet(orbitalDistance, " ".join( (self.name, suffix[i]) ) )
             myPlanet.angle = (random.randrange(360) / 360) * 2 * math.pi
 
             self.addChild(myPlanet)

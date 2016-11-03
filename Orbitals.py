@@ -66,16 +66,18 @@ class Orbitals(object):
 
 
 class Star(Orbitals):
-    def __init__(self):
+    def __init__(self, name):
         #Assume the star is at the centre of the system with a radius of 1
         Orbitals.__init__(self, 1)
         self.orbitalPeriod = 1
-        self.name = None
+        self.name = name
         #TODO self.stellarMass for kepler3(stellarMass)
 
     def generate(self):
         self.stellarClass = "G5"
-        self.name = "Sol"
+
+
+
 
 
     def __str__(self):
