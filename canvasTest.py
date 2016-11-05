@@ -68,6 +68,7 @@ class PageOne(tk.Frame):
         self.canvas = tk.Canvas(self, height = self.canvasH, width = self.canvasW, bg = 'grey')
         self.canvas.pack(side=tk.LEFT)
 
+        self.zoomLevelDefault = 1
         self.zoomLevel = 1
         self.zoomLevelChange = 0.2
 
@@ -125,6 +126,8 @@ class PageOne(tk.Frame):
 
         #add data
         self.treeview = self.tree
+
+        self.treeview.bind('<Double-1>', self.clickTreeview)
         '''
         Galaxy - StarSystem - children[myStar, planet1, planet2]
 
@@ -132,12 +135,36 @@ class PageOne(tk.Frame):
         self.treeview.insert('', 'end', 'root', text='Systems')
 
         for i in range(0, len(self.galaxy.systems)):
-            print(self.galaxy.systems[i].name)
-
-        for i in range(0, len(self.galaxy.systems)):
             self.treeview.insert('root', 'end', self.galaxy.systems[i].name, text=self.galaxy.systems[i].name)
+            # for j in range(1, len(self.galaxy.systems[i].children)):
+            #     print(self.galaxy.systems[i].children.name)
+            #
+
+    def clickTreeview(self, event):
+
+        self.focus_set()
+        name = self.tree.identify('item', event.x, event.y)
+
+        #Doubleclick on the treeview root, ie: 'root'
+        if name  == 'root':
+            return
+        self.mySystem = self.galaxy.systems[self.galaxy.systemNames.index(name)]
+        print(self.mySystem.children)
+        #If no system has been generated, generate it.
+        if  len(self.mySystem.children) == 0:
+            self.mySystem.generate()
+            print("Are there children " + str(len(self.mySystem.children)) + " " + self.mySystem.children[0].name)
+            for j in range(1, len(self.mySystem.children)):
+                self.treeview.insert(self.mySystem.children[0].name,
+                                     'end',
+                                     self.mySystem.children[j].name,
+                                     text = self.mySystem.children[j].name)
+        self.zoomLevel = self.zoomLevelDefault
+        self.generateCanvas()
+
 
     def focusOnClick(self, event):
+        self.focus_set()
 
         returnedID = self.canvas.find_closest(event.x, event.y, halo = 5)[0]
 
@@ -159,9 +186,6 @@ class PageOne(tk.Frame):
             self.starX = self.centreX + self.zoomOffsetX
             self.starY = self.centreY + self.zoomOffsetY
 
-
-
-            self.canvas.delete('all')
             self.generateCanvas()
 
 
@@ -197,26 +221,27 @@ class PageOne(tk.Frame):
 
 
         elif event.char == 'w':
+            self.starY += 20
+            self.zoomOffsetY += 20
+
+        elif event.char == 's':
             self.starY -= 20
             self.zoomOffsetY -= 20
 
-        elif event.char == 's':
-            self.starY += 20
-            self.zoomOffsetY -= 20
-
         elif event.char == 'a':
-            self.starX -= 20
-            self.zoomOffsetX -= 20
-
-        elif event.char == 'd':
             self.starX += 20
             self.zoomOffsetX += 20
 
-        self.canvas.delete('all')
+        elif event.char == 'd':
+            self.starX -= 20
+            self.zoomOffsetX -= 20
+
+
         self.generateCanvas()
 
 
     def generateCanvas(self):
+        self.canvas.delete('all')
 
         self.planetWidgets = []
         self.planetName = []
@@ -241,10 +266,11 @@ class PageOne(tk.Frame):
                 orbRadius *= ((1 + self.zoomLevelChange) ** ((self.zoomLevel - 1) / self.zoomLevelChange))
                 #test
 
-                self.circle(self.starX, self.starY, orbRadius, fill="")
+                if  orbRadius - 3 > self.starRadius:
+                    self.circle(self.starX, self.starY, orbRadius, fill="")
 
-                self.planetWidgets.append(self.circle(pX, pY, radius, fill=applyColor))
-                self.planetName.append(self.canvas.create_text(pX, pY + self.planetTextOffset, text=p.name,))
+                    self.planetWidgets.append(self.circle(pX, pY, radius, fill=applyColor))
+                    self.planetName.append(self.canvas.create_text(pX, pY + self.planetTextOffset, text=p.name,))
 
 
 

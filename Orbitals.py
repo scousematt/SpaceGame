@@ -1,4 +1,5 @@
 import math
+import random
 
 class Orbitals(object):
     def __init__(self, orbitalDistance):
@@ -76,25 +77,25 @@ class Star(Orbitals):
     def generate(self):
         self.stellarClass = "G5"
 
-
-
-
-
-    def __str__(self):
-        return ("The stars name is " + self.name)
+    # def __str__(self):
+    #     return ("The stars name is " + self.name)
 
 class Planet(Orbitals):
-    def __init__(self, orbitalDistance, name):
+    def __init__(self, orbitalDistance, name, pType, pMass, moons):
         Orbitals.__init__(self, orbitalDistance)
         self.name = name
+        self.planetType = pType
+        self.planetMass = pMass
+        self.moons = moons
+        self.angle = (random.randrange(360) / 360) * 2 * math.pi
 
 
 
     def generate(self):
         pass
 
-    def __str__(self):
-        return("The planets name is " + self.name)
+    # def __str__(self):
+    #     return("The planets name is " + self.name)
 
 
 

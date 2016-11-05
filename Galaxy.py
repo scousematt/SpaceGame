@@ -11,7 +11,7 @@ class Galaxy(object):
 
     def __init__(self):
         self.systems = []
-
+        self.systemNames = []
         self.generate()
 
     def generate(self):
@@ -29,9 +29,13 @@ class Galaxy(object):
             c = random.randrange(len(starNames) - 1)
             name = starNames[c]
             starNames.remove(name)
+
+            #add to systemNames so we can do an index search when selecting a system
+            self.systemNames.append(name)
+            #Add to list of objects
             self.systems.append(StarSystem.StarSystem(orbDis, angle, name))
 
-        print(self.systems)
+        #print(self.systems)
 
 
 
