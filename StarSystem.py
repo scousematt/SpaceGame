@@ -64,28 +64,30 @@ class StarSystem(Orbitals.Orbitals):
                 #print(" ".join(('Planet Number is', str(planetNumber))))
                 myPlanet = Orbitals.Planet(orbitalDistance, " ".join( (self.name, suffix[planetNumber -1 ]) ), pType, pMass, moons )
                 self.addChild(myPlanet)
-            #print(myPlanet)
 
         #last object in system
         self.maxOrbitalDistance = myPlanet.orbitalDistance * 3
-
         self.update(10)
 
+    def getPlanetNames(self):
+        '''
+        Sends a type to self.getNamesFromChildren
+        :return: A list of planet names
+        '''
+        return(self.getNamesFromChildren('<class \'Orbitals.Planet\'>'))
+
+    def getNamesFromChildren(self, text):
+        '''
+        :param: text is the type e.g. 'Orbitals.planet'
+        :return: A list of all the names within self.children of type(text)
+        '''
+        output = []
+        for item in self.children:
+            if str(type(item)) == text:
+                output.append(item.name)
+        return(output)
 
 
-        #A check on generation
-        # for item in self.children:
-        #     print(item)
 
 
-#A little test
-#
-# mySystem = StarSystem(10000000, 25)
-# mySystem.generate()
-# print(mySystem.children[1].angle)
-# mySystem.update(55000000)
-# print(mySystem.children[1].angle)
-# print(mySystem.children[1].orbitalPeriod)
-#
-# mySystem.update(55000000)
-# print(mySystem.children[1].angle)
+

@@ -1,9 +1,9 @@
 import tkinter as tk
 import tkinter.ttk as ttk
-import StarSystem
+
 import Orbitals
 import Galaxy
-
+import StarSystem
 
 LARGE_FONT = ("Verdana", 12)
 
@@ -59,9 +59,9 @@ class PageOne(tk.Frame):
         self.canvasW = 1000
 
         #Left Canvas is the planetary treeview
-        self.leftCanvas = tk.Canvas(self, height = self.canvasH, width = 250, bg = 'white')
-        self.leftCanvas.pack(side=tk.LEFT)
-        self.tree = ttk.Treeview(self.leftCanvas, columns=('Systems'))
+        self.leftCanvas = tk.Canvas(self, height = self.canvasH, width = 100, bg = 'white')
+        self.leftCanvas.pack(side=tk.LEFT, expand=1, fill=tk.Y)
+        self.tree = ttk.Treeview(self.leftCanvas, columns=('Systems'), height=100)
 
 
         #Shows the planet and ships n stuff
@@ -104,22 +104,27 @@ class PageOne(tk.Frame):
         #tkinter stuff related to the class
         button1 = tk.Button(self, text="Update", width = 75,
                 command = self.redrawCanvas)
-        button1.pack()
+        button1.pack(side=tk.BOTTOM)
 
         #keybindngs
-        self.focus_set()
+        #self.focus_set()
         self.bind('=', self.keyonCanvas)
         self.bind('-', self.keyonCanvas)
         self.bind('w', self.keyonCanvas)
         self.bind('s', self.keyonCanvas)
         self.bind('a', self.keyonCanvas)
         self.bind('d', self.keyonCanvas)
-
+        #Mouse button events
         self.canvas.bind('<Button-1>', self.focusOnClick)
-
-
+        self.bind('<Enter>', self.mouseFocus)
+        #Generate Widgets
         self.generateLeftCanvas()
         self.generateCanvas()
+
+    def mouseFocus(self, event):
+        #print("Mouse focus")
+        event.widget.focus_set()
+
 
     def generateLeftCanvas(self):
         self.tree.grid(row=2, sticky='nsew')
@@ -132,66 +137,95 @@ class PageOne(tk.Frame):
         Galaxy - StarSystem - children[myStar, planet1, planet2]
 
         '''
-        self.treeview.insert('', 'end', 'root', text='Systems')
-
+        self.treeview.insert('', 'end', 'ROOT:Systems', text='Systems')
+        #Populate the tree with systems
         for i in range(0, len(self.galaxy.systems)):
-            self.treeview.insert('root', 'end', self.galaxy.systems[i].name, text=self.galaxy.systems[i].name)
-            # for j in range(1, len(self.galaxy.systems[i].children)):
-            #     print(self.galaxy.systems[i].children.name)
-            #
+            self.treeview.insert('ROOT:Systems', 'end',
+                                 ":".join(("STAR", self.galaxy.systems[i].name)),
+                                 text=self.galaxy.systems[i].name)
 
     def clickTreeview(self, event):
 
-        self.focus_set()
-        name = self.tree.identify('item', event.x, event.y)
+        #self.focus_set()
+        itemID = self.tree.identify('item', event.x, event.y)
+        itemType, name = self.processTreeID(itemID)
 
         #Doubleclick on the treeview root, ie: 'root'
-        if name  == 'root':
+        if itemType  == 'ROOT':
             return
-        self.mySystem = self.galaxy.systems[self.galaxy.systemNames.index(name)]
-        print(self.mySystem.children)
-        #If no system has been generated, generate it.
-        if  len(self.mySystem.children) == 0:
-            self.mySystem.generate()
-            print("Are there children " + str(len(self.mySystem.children)) + " " + self.mySystem.children[0].name)
-            for j in range(1, len(self.mySystem.children)):
-                self.treeview.insert(self.mySystem.children[0].name,
-                                     'end',
-                                     self.mySystem.children[j].name,
-                                     text = self.mySystem.children[j].name)
-        self.zoomLevel = self.zoomLevelDefault
-        self.generateCanvas()
+        if itemType == 'STAR':
+            self.starX = self.centreX
+            self.starY = self.centreY
+            self.mySystem = self.galaxy.systems[self.galaxy.systemNames.index(name)]
+            print(self.mySystem)
+            #If no system has been generated, generate it.
+            if  len(self.mySystem.children) == 0:
+                self.mySystem.generate()
+                print("Are there children " + str(len(self.mySystem.children)) + " " + self.mySystem.children[0].name)
+                #Insert planets
+                for j in range(1, len(self.mySystem.children)):
+                    self.treeview.insert(itemID,
+                                         'end',
+                                         ":".join(("PLANET",self.mySystem.children[j].name)),
+                                         text = self.mySystem.children[j].name)
+            self.zoomLevel = self.zoomLevelDefault
+            self.generateCanvas()
+            return
+        if itemType == 'PLANET':
+            print('Planet double clicked on')
+            #need returnedID from self.focusOnClick()
+            #Unfortunately, planetWidgets is a list of numerical ID's but thats what planetName is numerical ID
+            # of the text that displays the planet name.
+            # mySystem.children or planet name - then what about moons? type the children?
+            #print(self.mySystem.children, name)
+            nameList = self.mySystem.getPlanetNames()
+            self.centreOnPlanet(self.planetWidgets[nameList.index(name)])
+
+    def processTreeID(self, text):
+        '''
+        :param text: "STAR:starname" or "PLANET: Earth"
+        :return: a list ['STAR', 'starname']
+        '''
+        return(text.split(':'))
 
 
     def focusOnClick(self, event):
+        '''
+        Processes a mouse click.m Currently it only reacts to clicking on a planet
+
+        In the future we can left click on the star, or ships, or setting waypoints and stuff
+        :param event:
+        :return:
+        '''
+
+
         self.focus_set()
 
-        returnedID = self.canvas.find_closest(event.x, event.y, halo = 5)[0]
+        returnedID = self.canvas.find_closest(event.x, event.y, halo = 1)[0]
 
         if returnedID in self.planetWidgets:
+            self.centreOnPlanet(returnedID)
 
 
-            print(event.x, event.y)
-            self.canvas.itemconfig(self.planetName[self.planetWidgets.index(returnedID)], fill="white")
+    def centreOnPlanet(self, returnedID):
 
+        #exact cordinates of the object on the canvas
+        x, y = self.getCircleCoords(returnedID)
 
-            #exact cordinates of the object on the canvas
-            x, y = self.getCircleCoords(returnedID)
+        #now the offset are equal to the distance from the star
+        self.zoomOffsetX = self.starX - x
+        self.zoomOffsetY = self.starY - y
 
-            #now the offset are equal to the distance from the star
-            self.zoomOffsetX = self.starX - x
-            self.zoomOffsetY = self.starY - y
+        #Adjust the star to its new position, alloowing the clicked object to the centre
+        self.starX = self.centreX + self.zoomOffsetX
+        self.starY = self.centreY + self.zoomOffsetY
 
-            #Adjust the star to its new position, alloowing the clicked object to the centre
-            self.starX = self.centreX + self.zoomOffsetX
-            self.starY = self.centreY + self.zoomOffsetY
-
-            self.generateCanvas()
+        self.generateCanvas()
 
 
 
     def keyonCanvas(self, event):
-
+        #self.canvas.focus_set()
         if event.char == '-':
 
             #Check that we are at the minimum zoom level or above
@@ -269,8 +303,10 @@ class PageOne(tk.Frame):
                 if  orbRadius - 3 > self.starRadius:
                     self.circle(self.starX, self.starY, orbRadius, fill="")
 
-                    self.planetWidgets.append(self.circle(pX, pY, radius, fill=applyColor))
-                    self.planetName.append(self.canvas.create_text(pX, pY + self.planetTextOffset, text=p.name,))
+                #Even though not displayed atm, they are still placed in the lists so that the comparison
+                #with mySystem.getPlanetNames() is valid
+                self.planetWidgets.append(self.circle(pX, pY, radius, fill=applyColor))
+                self.planetName.append(self.canvas.create_text(pX, pY + self.planetTextOffset, text=p.name,))
 
 
 
