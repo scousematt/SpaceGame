@@ -8,10 +8,20 @@ stellarMass = 1.989 * 10 ** 30  # Mass of the sun
 starClass = ['O', 'B', 'A', 'F', 'G', 'K', 'M']
 starColor = ['dodger blue', 'light sky blue', 'white', 'light yellow',
                   'yellow', 'orange', 'red']
+starHowCommon = [0.00003, 0.12503, 0.75003, 3.78003, 11.28003, 23.28003, 100]
+
+
 # In earth masses
 solarMasses = [[16, 25], [2.1, 16], [1.4, 2.1], [1.04, 1.4], [0.8, 1.04], [0.45, 0.8], [0.08, 0.45]]
 
 solarMass = 1.989 * 10 ** 30
+
+def getStarTypeIndex():
+    t = random.random() * 100
+    for i, j in enumerate(starHowCommon):
+        if t <= j:
+            print(t, j)
+            return(i)
 
 def getStarMass(c):
     '''Takes in the index of both starClass and starColor which will be the same and
@@ -89,7 +99,7 @@ class Star(Orbitals):
         #Assume the star is at the centre of the system with a radius of 1
         Orbitals.__init__(self, 1)
         self.orbitalPeriod = 1
-        t = random.randint(0, 6)
+        t = getStarTypeIndex()
         self.sMass = solarMass * getStarMass(t)
         self.name = name
         #TODO self.stellarMass for kepler3(stellarMass)

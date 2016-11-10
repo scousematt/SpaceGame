@@ -16,6 +16,10 @@ class Galaxy(object):
 
     def generate(self):
         numberOfStars = 11
+        #with open('res/data/stardata.txt') as f:
+        #   for line in F:
+        #       print(line.rstrip('\r\n'))
+        #no need to close
         f = open('res/data/stardata.txt')
         starNames = []
         for line in f:
