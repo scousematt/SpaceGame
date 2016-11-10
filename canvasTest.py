@@ -246,14 +246,9 @@ class PageOne(tk.Frame):
 
             self.zoomOffsetX *= 1.2
             self.zoomOffsetY *= 1.2
-
             #selected planet is at centre so offset to star to relative to centre
             self.starX = self.centreX + self.zoomOffsetX
             self.starY = self.centreY + self.zoomOffsetY
-
-
-
-
         elif event.char == 'w':
             self.starY += 20
             self.zoomOffsetY += 20
@@ -269,8 +264,6 @@ class PageOne(tk.Frame):
         elif event.char == 'd':
             self.starX -= 20
             self.zoomOffsetX -= 20
-
-
         self.generateCanvas()
 
 
@@ -280,40 +273,30 @@ class PageOne(tk.Frame):
         self.planetWidgets = []
         self.planetName = []
 
-
         for p in self.mySystem.children:
-
             if isinstance(p, Orbitals.Star):
-                applyColor = "yellow"
+                applyColor = self.mySystem.children[0].stellarColor
+                print(applyColor)
                 radius = self.starRadius
                 self.circle(self.starX, self.starY, radius, fill=applyColor)
                 self.canvas.create_text(self.starX, self.starY + self.starTextOffset, text=p.name)
-
             else:
                 applyColor = "blue"
                 radius = self.planetRadius
                 pX, pY = self.getCanvasXY(p)
-
                 #Note - If Canvas is not a square, this needs to be an oval
-
                 orbRadius = (p.orbitalDistance / self.mySystem.maxOrbitalDistance) * self.canvasH
                 orbRadius *= ((1 + self.zoomLevelChange) ** ((self.zoomLevel - 1) / self.zoomLevelChange))
-                #test
-
                 if  orbRadius - 3 > self.starRadius:
                     self.circle(self.starX, self.starY, orbRadius, fill="")
-
                 #Even though not displayed atm, they are still placed in the lists so that the comparison
                 #with mySystem.getPlanetNames() is valid
                 self.planetWidgets.append(self.circle(pX, pY, radius, fill=applyColor))
                 self.planetName.append(self.canvas.create_text(pX, pY + self.planetTextOffset, text=p.name,))
 
 
-
     def circle(self, x, y, r, **kwargs):
         return self.canvas.create_oval( x - r, y - r, x + r, y + r, **kwargs)
-
-
 
 
     def getCanvasXY(self, obj):
@@ -391,66 +374,5 @@ class PageOne(tk.Frame):
 
 
 
-
-
 app = SpaceGame()
 app.mainloop()
-
-
-
-# class PCanvas(Canvas):
-#     def __init__(self, parent, *args, **kwargs):
-#         Canvas.__init__(self, parent)
-#         self.height = 1000
-#         self.width = 1000
-#         self.planetWidgets = []
-#         self.mySystem = StarSystem.StarSystem(10000000, 25)
-#         self.mySystem.generate()
-#
-#     def circle(self, x, y, r, **kwargs):
-#         return self.create_oval(x - r, y - r, x + r, y + r, **kwargs)
-#
-#     def getCanvasXY(self, obj):
-#         x, y = obj.getCoords()
-#
-#         maxRadius = self.mySystem.maxOrbitalDistance
-#         # print("Y from orbitals is " + str(y))
-#
-#         x = self.width / 2 + (((x / maxRadius) * self.width))
-#
-#         y = self.height / 2 + ((y / maxRadius) * self.height)
-#
-#         return (x, y)
-#
-#
-#     def drawCanvas(self):
-#         for p in self.mySystem.children:
-#
-#             if isinstance(p, Orbitals.Star):
-#                 applyColor = "yellow"
-#                 radius = 25
-#                 x, y = self.width / 2, self.height / 2
-#             else:
-#                 applyColor = "blue"
-#                 radius = 5
-#                 x, y = self.getCanvasXY(p)
-#                 # print(y)
-#                 # #offset x to the centre
-#                 # x += canvas_width / 2
-#                 # y += canvas_height / 2
-#                 self.circle(self.width / 2, self.height / 2,
-#                                 (p.orbitalDistance / self.mySystem.maxOrbitalDistance) * self.height,
-#                                 fill="")
-#
-#             self.planetWidgets.append(self.circle(x, y, radius, fill=applyColor))
-#             self.planetWidgets.append(self.create_text(x, y + 5 + (radius * 1.3), text=p.name))
-#
-#     def drawCircle(self):
-#         self.circle(50,50,25)
-#
-# root = Tk()
-# w = PCanvas(root, height = 1000, width = 1000, bg = "white")
-# w.pack()
-# #w.drawCanvas()
-# w.drawCircle
-# mainloop()

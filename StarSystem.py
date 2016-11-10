@@ -22,7 +22,7 @@ class StarSystem(Orbitals.Orbitals):
 
         #Star
         myStar = Orbitals.Star(self.name)
-        myStar.generate()
+
         myPlanet = None
 
         self.addChild(myStar)
@@ -42,7 +42,6 @@ class StarSystem(Orbitals.Orbitals):
                   'xiv', 'xv', 'xvi', 'xvii', 'xviii', 'ix', 'xx']
 
         for i in range(0, 20):
-
             if random.randint(0, 100) < chancePlanet:
                 orbitalDistance = orbitShells[i] + (orbitShells[i] * (random.randint(-7, 12)) / 100)
                 planetNumber += 1
@@ -62,7 +61,8 @@ class StarSystem(Orbitals.Orbitals):
                     x = random.randint(0, 100)
                 #Create the planet object
                 #print(" ".join(('Planet Number is', str(planetNumber))))
-                myPlanet = Orbitals.Planet(orbitalDistance, " ".join( (self.name, suffix[planetNumber -1 ]) ), pType, pMass, moons )
+                myPlanet = Orbitals.Planet(orbitalDistance, " ".join( (self.name, suffix[planetNumber -1 ]) ),
+                                           pType, pMass, moons )
                 self.addChild(myPlanet)
 
         #last object in system
@@ -75,12 +75,17 @@ class StarSystem(Orbitals.Orbitals):
         :return: A list of planet names
         '''
         return(self.getNamesFromChildren('<class \'Orbitals.Planet\'>'))
+        #return([item for item in self.children if str(type(item)) == '<class \'Orbitals.Planet\'>'])
+
 
     def getNamesFromChildren(self, text):
         '''
         :param: text is the type e.g. 'Orbitals.planet'
         :return: A list of all the names within self.children of type(text)
         '''
+
+
+        #return([item for item in self.children if str(type(item)) == text])
         output = []
         for item in self.children:
             if str(type(item)) == text:
