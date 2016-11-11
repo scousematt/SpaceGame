@@ -9,6 +9,7 @@ starClass = ['O', 'B', 'A', 'F', 'G', 'K', 'M']
 starColor = ['dodger blue', 'light sky blue', 'white', 'light yellow',
                   'yellow', 'orange', 'red']
 starHowCommon = [0.00003, 0.12503, 0.75003, 3.78003, 11.28003, 23.28003, 100]
+starChancePlanet = [0, 4, 10, 50, 60, 60, 60]
 
 
 # In earth masses
@@ -17,15 +18,19 @@ solarMasses = [[16, 25], [2.1, 16], [1.4, 2.1], [1.04, 1.4], [0.8, 1.04], [0.45,
 solarMass = 1.989 * 10 ** 30
 
 def getStarTypeIndex():
+    '''
+    Uses the constant list starHowCommon and a random number to decide on an index for the other stat type
+     lists.
+    :return: The index of starClass, starColor
+    '''
     t = random.random() * 100
     for i, j in enumerate(starHowCommon):
         if t <= j:
-            print(t, j)
             return(i)
 
 def getStarMass(c):
     '''Takes in the index of both starClass and starColor which will be the same and
-    returns the '''
+    returns the mass in units - solar mass'''
     return(solarMasses[c][0] +( random.random() *(solarMasses[c][0] - solarMasses[c][0]) ) )
 
 class Orbitals(object):
@@ -40,6 +45,7 @@ class Orbitals(object):
         self.angle = 0
         #Metres
         self.orbitalDistance = orbitalDistance
+        self.orbitalPeriod = 100000
 
 
 
@@ -76,19 +82,10 @@ class Orbitals(object):
     def kepler3(self, radius, mass):
         '''
         Takes in the orbital distance in metres as per Kepler's Law of
-        harmonies, T^2 / R^3  = 3 x 10^-19
+        harmonies, T^2 / R^3  = 3 x 10^-19 and the mass of the body being orbited
         :return: orbital period in seconds
-
-        Extra solar planets are different
-
-        time = math.sqrt((4 * math.pi**2/ (0.000000000067 * stellarMass)) * radius ** 3)
         '''
-        #TODO stellarMass needs to be calculated for each star
-
-
         G = 6.67408 * 10 ** -11
-
-
         return (math.sqrt((4 * math.pi**2/ (G * mass)) * radius ** 3))
 
 
@@ -102,16 +99,12 @@ class Star(Orbitals):
         t = getStarTypeIndex()
         self.sMass = solarMass * getStarMass(t)
         self.name = name
-        #TODO self.stellarMass for kepler3(stellarMass)
-
-
         self.sMass = solarMass * getStarMass(t)
         self.stellarClass = starClass[t]
         self.stellarColor = starColor[t]
         self.orbitalPeriod = self.kepler3(self.orbitalDistance, self.sMass)
+        self.chanceOfPlanet = starChancePlanet[t]
 
-    # def __str__(self):
-    #     return ("The stars name is " + self.name)
 
 class Planet(Orbitals):
     def __init__(self, orbitalDistance, name, pType, pMass, moons):
@@ -125,14 +118,3 @@ class Planet(Orbitals):
 
     def generate(self):
         pass
-
-    # def __str__(self):
-    #     return("The planets name is " + self.name)
-
-
-
-#
-# t = Planet(150000000000, "Earth")
-# #t.generate()
-# print(t.orbitalPeriod / (360 * 24 * 3600))
-# print(t)

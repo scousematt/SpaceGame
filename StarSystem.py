@@ -34,7 +34,7 @@ class StarSystem(Orbitals.Orbitals):
         gasGiantMassModifier = [(1 / math.sqrt(2 * math.pi)) * math.e ** (-0.5 * ((x / 6) ** 2)) * 2.5 for x in range(-10, 11)]
         #There are 20 planet 'electron shells'
         orbitShells = [0.07 * (i * 15) ** 2 + 25 for i in range(20)]
-        chancePlanet = 60
+        chancePlanet = myStar.chanceOfPlanet
         planetNumber = 0
 
         #Planets
