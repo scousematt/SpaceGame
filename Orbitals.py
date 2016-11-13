@@ -4,7 +4,6 @@ import random
 
 # -------------------------------------------- CONSTANTS -------------------------------
 
-stellarMass = 1.989 * 10 ** 30  # Mass of the sun
 starClass = ['O', 'B', 'A', 'F', 'G', 'K', 'M']
 starColor = ['dodger blue', 'light sky blue', 'white', 'light yellow',
                   'yellow', 'orange', 'red']
@@ -31,7 +30,7 @@ def getStarTypeIndex():
 def getStarMass(c):
     '''Takes in the index of both starClass and starColor which will be the same and
     returns the mass in units - solar mass'''
-    return(solarMasses[c][0] +( random.random() *(solarMasses[c][0] - solarMasses[c][0]) ) )
+    return solarMasses[c][0] + (random.random() * (solarMasses[c][1] - solarMasses[c][0]))
 
 class Orbitals(object):
     def __init__(self, orbitalDistance):
@@ -51,32 +50,23 @@ class Orbitals(object):
 
     def update(self, timeSinceStart):
         # Advance time by correct amount of time (a delta t could introduce floating point probs)
-
-        #print("Updating via Orbitals :" + self.name)
         self.currentTime += timeSinceStart
-
         self.angle = (self.currentTime / self.orbitalPeriod) * math.pi * 2
-
-
-
-
-
         # Update all of our children
         for i in range(0, len(self.children)):
             self.children[i].update(timeSinceStart)
 
     def addChild(self, c):
-        c.Parent = self
+        c.parent = self
         self.children.append(c)
 
     def removeChild(self, c):
-        c.Parent = None
+        c.parent = None
         self.children.remove(c)
 
     def getCoords(self):
         return(math.sin(self.angle) * self.orbitalDistance,
-               math.cos(self.angle) * self.orbitalDistance,
-               )
+               math.cos(self.angle) * self.orbitalDistance)
 
 
     def kepler3(self, radius, mass):
@@ -97,12 +87,11 @@ class Star(Orbitals):
         Orbitals.__init__(self, 1)
         self.orbitalPeriod = 1
         t = getStarTypeIndex()
-        self.sMass = solarMass * getStarMass(t)
         self.name = name
-        self.sMass = solarMass * getStarMass(t)
+        self.mass = solarMass * getStarMass(t)
         self.stellarClass = starClass[t]
         self.stellarColor = starColor[t]
-        self.orbitalPeriod = self.kepler3(self.orbitalDistance, self.sMass)
+        self.orbitalPeriod = self.kepler3(self.orbitalDistance, self.mass)
         self.chanceOfPlanet = starChancePlanet[t]
 
 
@@ -111,10 +100,11 @@ class Planet(Orbitals):
         Orbitals.__init__(self, orbitalDistance)
         self.name = name
         self.planetType = pType
-        self.planetMass = pMass
+        self.mass = pMass
         self.moons = moons
         self.angle = (random.randrange(360) / 360) * 2 * math.pi
-        self.orbitalPeriod = self.kepler3(self.orbitalDistance, self.planetMass)
+
 
     def generate(self):
-        pass
+        #Note, parents and childen are not set during __init__.
+        self.orbitalPeriod = self.kepler3(self.orbitalDistance, self.parent.children[0].mass)

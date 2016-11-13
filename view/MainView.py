@@ -1,42 +1,36 @@
 import tkinter as tk
 import tkinter.ttk as ttk
-
 import Orbitals
 import Galaxy
 import StarSystem
 
 
 class MainPage(tk.Frame):
-
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
 
-
-        #If these are not equal, then orbitals need to be an oval
+        # If these are not equal, then orbitals need to be an oval
         self.canvasH = 1000
         self.canvasW = 1000
-
-        #Left Canvas is the planetary treeview
-        self.leftCanvas = tk.Canvas(self, height = self.canvasH, width = 100, bg = 'white')
+        # Left Canvas is the planetary treeview
+        self.leftCanvas = tk.Canvas(self, height=self.canvasH, width=100, bg='white')
         self.leftCanvas.pack(side=tk.LEFT, expand=1, fill=tk.Y)
         self.tree = ttk.Treeview(self.leftCanvas, columns=('Systems'), height=100)
-        #Shows the planet and ships n stuff
-        self.canvas = tk.Canvas(self, height = self.canvasH, width = self.canvasW, bg = 'grey')
+        # Shows the planet and ships n stuff
+        self.canvas = tk.Canvas(self, height=self.canvasH, width=self.canvasW, bg='grey')
         self.canvas.pack(side=tk.LEFT)
-
         self.zoomLevelDefault = 1
         self.zoomLevel = 1
         self.zoomLevelChange = 0.2
-        #Current centre of the system - the star centre upon creation
+        # Current centre of the system - the star centre upon creation
         self.starX = self.canvasW / 2
         self.starY = self.canvasH / 2
-        #The centre of the canvas
+        # The centre of the canvas
         self.centreX = self.starX
         self.centreY = self.starY
 
         self.zoomOffsetX = 0
         self.zoomOffsetY = 0
-
 
         self.starRadius = 25
         self.planetRadius = 5
@@ -45,53 +39,49 @@ class MainPage(tk.Frame):
 
         self.planetWidgets = []
 
-        #Generate the galaxy here, TODO need to move this to a main at some point
+        # Generate the galaxy here, TODO need to move this to a main at some point
         self.galaxy = Galaxy.Galaxy()
         self.mySystem = self.galaxy.systems[0]
-        print(self.mySystem)
         self.mySystem.generate()
 
         self.planetWidgets = []
         self.planetName = []
 
-
-        #tkinter stuff related to the class
-        button1 = tk.Button(self, text="Update", width = 75,
-                command = self.redrawCanvas)
+        # tkinter stuff related to the class
+        button1 = tk.Button(self, text="Update", width=75,
+                            command=self.redrawCanvas)
         button1.pack(side=tk.BOTTOM)
 
-        #keybindngs
+        # keybindngs
         self.bind('=', self.keyonCanvas)
         self.bind('-', self.keyonCanvas)
         self.bind('w', self.keyonCanvas)
         self.bind('s', self.keyonCanvas)
         self.bind('a', self.keyonCanvas)
         self.bind('d', self.keyonCanvas)
-        #Mouse button events
+        # Mouse button events
         self.canvas.bind('<Button-1>', self.focusOnClick)
         self.bind('<Enter>', self.mouseFocus)
-        #Generate Widgets
+        # Generate Widgets
         self.generateLeftCanvas()
         self.generateCanvas()
 
     def mouseFocus(self, event):
-        #print("Mouse focus")
+        # print("Mouse focus")
         event.widget.focus_set()
-
 
     def generateLeftCanvas(self):
         self.tree.grid(row=2, sticky='nsew')
 
-        #add data
+        # add data
         self.treeview = self.tree
 
         self.treeview.bind('<Double-1>', self.clickTreeview)
         '''
         Galaxy - StarSystem - children[myStar, planet1, planet2]
-
         '''
-        self.treeview.insert('', 'end', 'ROOT:Systems', text='Systems')
-        #Populate the tree with systems
+        self.treeview.insert('', 'end', 'ROOT:Systems', text='Systems', open=True)
+        # Populate the tree with systems
         for i in range(0, len(self.galaxy.systems)):
             self.treeview.insert('ROOT:Systems', 'end',
                                  ":".join(("STAR", self.galaxy.systems[i].name)),
@@ -99,229 +89,170 @@ class MainPage(tk.Frame):
 
     def clickTreeview(self, event):
 
-        #self.focus_set()
+        # self.focus_set()
         itemID = self.tree.identify('item', event.x, event.y)
-        itemType, name = self.processTreeID(itemID)
+        itemType, name = itemID.split(':')
 
-        #Doubleclick on the treeview root, ie: 'root'
-        if itemType  == 'ROOT':
+        # Doubleclick on the treeview root, ie: 'root'
+        if itemType == 'ROOT':
             return
         if itemType == 'STAR':
             self.starX = self.centreX
             self.starY = self.centreY
             self.mySystem = self.galaxy.systems[self.galaxy.systemNames.index(name)]
-            print(self.mySystem)
-            #If no system has been generated, generate it.
-            if  len(self.mySystem.children) == 0:
+            #print(self.mySystem)
+            # If no system has been generated, generate it.
+            if len(self.mySystem.children) == 0:
                 self.mySystem.generate()
-                print("Are there children " + str(len(self.mySystem.children)) + " " + self.mySystem.children[0].name)
-                #Insert planets
+                #print("Are there children " + str(len(self.mySystem.children)) + " " + self.mySystem.children[0].name)
+                # Insert planets
                 for j in range(1, len(self.mySystem.children)):
                     self.treeview.insert(itemID,
                                          'end',
-                                         ":".join(("PLANET",self.mySystem.children[j].name)),
-                                         text = self.mySystem.children[j].name)
+                                         ":".join(("PLANET", self.mySystem.children[j].name)),
+                                         text=self.mySystem.children[j].name)
             self.zoomLevel = self.zoomLevelDefault
             self.generateCanvas()
             return
         if itemType == 'PLANET':
-            print('Planet double clicked on')
-            #need returnedID from self.focusOnClick()
-            #Unfortunately, planetWidgets is a list of numerical ID's but thats what planetName is numerical ID
-            # of the text that displays the planet name.
-            # mySystem.children or planet name - then what about moons? type the children?
-            #print(self.mySystem.children, name)
             nameList = self.mySystem.getPlanetNames()
-            #If some planets are not displayed as they are too close to the star, planetWidgets is not fully populated
             self.centreOnPlanet(self.planetWidgets[nameList.index(name)])
-
-    def processTreeID(self, text):
-        '''
-        :param text: "STAR:starname" or "PLANET: Earth"
-        :return: a list ['STAR', 'starname']
-        '''
-        return(text.split(':'))
-
 
     def focusOnClick(self, event):
         '''
         Processes a mouse click. Currently it only reacts to clicking on a planet
-
         In the future we can left click on the star, or ships, or setting waypoints and stuff
         :param event:
         :return:
         '''
-
-
         self.focus_set()
-
-        returnedID = self.canvas.find_closest(event.x, event.y, halo = 1)[0]
-
+        returnedID = self.canvas.find_closest(event.x, event.y, halo=1)[0]
         if returnedID in self.planetWidgets:
             self.centreOnPlanet(returnedID)
 
-
     def centreOnPlanet(self, returnedID):
-
-        #exact cordinates of the object on the canvas
+        # exact cordinates of the object on the canvas
         x, y = self.getCircleCoords(returnedID)
-
-        #now the offset are equal to the distance from the star
+        # now the offset are equal to the distance from the star
         self.zoomOffsetX = self.starX - x
         self.zoomOffsetY = self.starY - y
-
-        #Adjust the star to its new position, alloowing the clicked object to the centre
+        # Adjust the star to its new position, alloowing the clicked object to the centre
         self.starX = self.centreX + self.zoomOffsetX
         self.starY = self.centreY + self.zoomOffsetY
-
         self.generateCanvas()
 
-
-
     def keyonCanvas(self, event):
-        #self.canvas.focus_set()
+        # self.canvas.focus_set()
         if event.char == '-':
-
-            #Check that we are at the minimum zoom level or above
+            # Check that we are at the minimum zoom level or above
             if self.zoomLevel > 0.8:
-
                 self.zoomLevel -= self.zoomLevelChange
-
                 self.zoomOffsetX -= (1 - 1 / 1.2) * self.zoomOffsetX
                 self.zoomOffsetY -= (1 - 1 / 1.2) * self.zoomOffsetY
-
                 self.starX = self.centreX + self.zoomOffsetX
                 self.starY = self.centreY + self.zoomOffsetY
-
-
-
         elif event.char == '=':
             self.zoomLevel += self.zoomLevelChange
-
             self.zoomOffsetX *= 1.2
             self.zoomOffsetY *= 1.2
-            #selected planet is at centre so offset to star to relative to centre
+            # selected planet is at centre so offset to star to relative to centre
             self.starX = self.centreX + self.zoomOffsetX
             self.starY = self.centreY + self.zoomOffsetY
         elif event.char == 'w':
             self.starY += 20
             self.zoomOffsetY += 20
-
         elif event.char == 's':
             self.starY -= 20
             self.zoomOffsetY -= 20
-
         elif event.char == 'a':
             self.starX += 20
             self.zoomOffsetX += 20
-
         elif event.char == 'd':
             self.starX -= 20
             self.zoomOffsetX -= 20
         self.generateCanvas()
 
-
     def generateCanvas(self):
         self.canvas.delete('all')
-
         self.planetWidgets = []
         self.planetName = []
-
         for p in self.mySystem.children:
             if isinstance(p, Orbitals.Star):
                 applyColor = self.mySystem.children[0].stellarColor
-                print(applyColor)
+                # print(applyColor)
                 radius = self.starRadius
                 self.circle(self.starX, self.starY, radius, fill=applyColor)
-                self.canvas.create_text(self.starX, self.starY + self.starTextOffset, text = p.name)
+                self.canvas.create_text(self.starX, self.starY + self.starTextOffset, text=p.name)
             else:
                 applyColor = "blue"
                 radius = self.planetRadius
                 pX, pY = self.getCanvasXY(p)
-                #Note - If Canvas is not a square, this needs to be an oval
+                # Note - If Canvas is not a square, this needs to be an oval
                 orbRadius = (p.orbitalDistance / self.mySystem.maxOrbitalDistance) * self.canvasH
                 orbRadius *= ((1 + self.zoomLevelChange) ** ((self.zoomLevel - 1) / self.zoomLevelChange))
-                if  orbRadius - 3 > self.starRadius:   # Dont display planets in the star
-                    self.circle(self.starX, self.starY, orbRadius, fill = "")
-                    self.planetWidgets.append(self.circle(pX, pY, radius, fill = applyColor))
-                    self.planetName.append(self.canvas.create_text(pX, pY + self.planetTextOffset, text = p.name,))
+                if orbRadius - 3 > self.starRadius:  # Dont display planets in the star
+                    self.circle(self.starX, self.starY, orbRadius, fill="")
+                    self.planetWidgets.append(self.circle(pX, pY, radius, fill=applyColor))
+                    self.planetName.append(self.canvas.create_text(pX, pY + self.planetTextOffset, text=p.name, ))
                 else:
-                    self.planetWidgets.append(self.circle(pX, pY, radius, fill=applyColor, tags = 'deleteme'))
-                    self.planetName.append(self.canvas.create_text(pX, pY + self.planetTextOffset, text=p.name, tags = 'deleteme'))
+                    self.planetWidgets.append(self.circle(pX, pY, radius, fill=applyColor, tags='deleteme'))
+                    self.planetName.append(
+                        self.canvas.create_text(pX, pY + self.planetTextOffset, text=p.name, tags='deleteme'))
                     self.canvas.delete('deleteme')
 
     def circle(self, x, y, r, **kwargs):
-        return self.canvas.create_oval( x - r, y - r, x + r, y + r, **kwargs)
-
+        return self.canvas.create_oval(x - r, y - r, x + r, y + r, **kwargs)
 
     def getCanvasXY(self, obj):
         ''''
         Takes in a StarSystem.Planet object
-
         Calculate the x and y distances of the planet in terms of the canvas size
-
         then adjust these to the centre of the star
-
-
         :returns
-
         x and y coordinates for the canvas object
         '''
-
         x, y = obj.getCoords()
-
-
         maxRadius = self.mySystem.maxOrbitalDistance
-
-        #number of times plus or minus on zoom level
+        # number of times plus or minus on zoom level
         zFactor = (self.zoomLevel - 1) / self.zoomLevelChange
         if zFactor > -1:
-            x = ((1 + self.zoomLevelChange) ** zFactor) * ( (x / maxRadius * self.canvasW)) + self.starX
-            y = ((1 + self.zoomLevelChange) ** zFactor) * ( (y / maxRadius * self.canvasH)) + self.starY
+            x = ((1 + self.zoomLevelChange) ** zFactor) * ((x / maxRadius * self.canvasW)) + self.starX
+            y = ((1 + self.zoomLevelChange) ** zFactor) * ((y / maxRadius * self.canvasH)) + self.starY
         else:
-            #the number is smaller so 0.8 ** zFactor * -1
-            x = ((1 - self.zoomLevelChange) ** (-1 * zFactor) * ( (x / maxRadius * self.canvasW))) + self.starX
-            y = ((1 - self.zoomLevelChange) ** (-1 * zFactor) * ( (y / maxRadius * self.canvasH))) + self.starY
-
+            # the number is smaller so 0.8 ** zFactor * -1
+            x = ((1 - self.zoomLevelChange) ** (-1 * zFactor) * ((x / maxRadius * self.canvasW))) + self.starX
+            y = ((1 - self.zoomLevelChange) ** (-1 * zFactor) * ((y / maxRadius * self.canvasH))) + self.starY
         return (x, y)
-
-
 
     def getCircleCoords(self, pObj):
         '''
         :param pObj: A circular canvas widget object ID
+
+        Checks to see if the object exists on the canvas as objects close
+        to the star are not displayed if they overlap
         :return: The x , y coordinates of the centre of the pObject
         '''
         a = self.canvas.coords(pObj)
-        x = a[0] +  (a[2] - a[0]) / 2
+        if a == []:
+            return False
+        x = a[0] + (a[2] - a[0]) / 2
         y = a[1] + (a[3] - a[1]) / 2
-        return (x, y)
-
+        return x, y
 
     def redrawCanvas(self):
-
-        #Temp: The redraw canvas should be an update method
+        # Temp: The redraw canvas should be an update method
         self.mySystem.update(80000)
-
-
-        planetNewCoords = []
-        for p in self.mySystem.children:
-            if isinstance(p, Orbitals.Planet):
-                x , y = self.getCanvasXY(p)
-
-                #These are the newly updated locations
-                planetNewCoords.append([x, y])
-                #print(x, y)
+        planetNewCoords = [self.getCanvasXY(p) for p in self.mySystem.children \
+                           if isinstance(p, Orbitals.Planet)]
 
         for i in range(0, len(self.planetWidgets)):
-            #Derive old x, y from text displaying name
-            oldX, oldY = self.getCircleCoords(self.planetWidgets[i])
-            #print (oldX, oldY)
-            #print("new - old : " + str(planetNewCoords[j][0]) + " " + str(oldX))
-
-            self.canvas.move(self.planetWidgets[i],
-                             planetNewCoords[i][0] - oldX,
-                             planetNewCoords[i][1] - oldY)
-            self.canvas.move(self.planetName[i],
-                             planetNewCoords[i][0] - oldX,
-                             planetNewCoords[i][1] - oldY)
+            coords = self.getCircleCoords(self.planetWidgets[i])
+            #print(str(i) + " " + str(coords) + " " + str(planetNewCoords[i]))
+            # Check to see planetWidget exists on canvas
+            if coords != False:
+                self.canvas.move(self.planetWidgets[i],
+                                 planetNewCoords[i][0] - coords[0],
+                                 planetNewCoords[i][1] - coords[1])
+                self.canvas.move(self.planetName[i],
+                                 planetNewCoords[i][0] - coords[0],
+                                 planetNewCoords[i][1] - coords[1])

@@ -33,7 +33,7 @@ class StarSystem(Orbitals.Orbitals):
         #Assume 1000Mkm has largest gas giants
         gasGiantMassModifier = [(1 / math.sqrt(2 * math.pi)) * math.e ** (-0.5 * ((x / 6) ** 2)) * 2.5 for x in range(-10, 11)]
         #There are 20 planet 'electron shells'
-        orbitShells = [0.07 * (i * 15) ** 2 + 25 for i in range(20)]
+        orbitShells = [0.02 * (i * 15) ** 2 + 25 for i in range(20)]
         chancePlanet = myStar.chanceOfPlanet
         planetNumber = 0
 
@@ -43,7 +43,7 @@ class StarSystem(Orbitals.Orbitals):
 
         for i in range(0, 20):
             if random.randint(0, 100) < chancePlanet:
-                orbitalDistance = orbitShells[i] + (orbitShells[i] * (random.randint(-7, 12)) / 100)
+                orbitalDistance = 10**9 * (orbitShells[i] + (orbitShells[i] * (random.randint(-7, 12)) / 100))
                 planetNumber += 1
                 if gasGiantMassModifier[i] + 0.25 > 1:
                     pType = 'Gas Giant'
@@ -64,6 +64,7 @@ class StarSystem(Orbitals.Orbitals):
                 myPlanet = Orbitals.Planet(orbitalDistance, " ".join( (self.name, suffix[planetNumber -1 ]) ),
                                            pType, pMass, moons )
                 self.addChild(myPlanet)
+                myPlanet.generate()
 
         #last object in system
         self.maxOrbitalDistance = myPlanet.orbitalDistance * 3
