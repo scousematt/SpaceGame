@@ -48,11 +48,11 @@ class StarSystem(Orbitals.Orbitals):
                 if gasGiantMassModifier[i] + 0.25 > 1:
                     pType = 'Gas Giant'
                     pMass = gasGiantMassModifier[i] ** 3 * (255) + random.randint(0, 100)
-                    moonChance = 500
+                    moonChance = 200
                 else:
                     pType='Rocky'
                     pMass=random.randint(1, 1000) / 1000 * 1.2 + 0.5
-                    moonChance = 40
+                    moonChance = 30
                 moons = 0
                 x = random.randint(0, 100)
                 while x < moonChance:
@@ -61,10 +61,13 @@ class StarSystem(Orbitals.Orbitals):
                     x = random.randint(0, 100)
                 #Create the planet object
                 #print(" ".join(('Planet Number is', str(planetNumber))))
-                myPlanet = Orbitals.Planet(orbitalDistance, " ".join( (self.name, suffix[planetNumber -1 ]) ),
+                myPlanet = Orbitals.Planet(orbitalDistance, " ".join( (self.name, suffix[planetNumber - 1])),
                                            pType, pMass, moons )
                 self.addChild(myPlanet)
                 myPlanet.generate()
+                for j in range(moons):
+                    myMoon = Orbitals.Moon(2000000000 * random.random() ** 2, " ".join((myPlanet.name, chr(65 + j))), (pMass * 0.2 * random.random()), myPlanet)
+                    self.addChild(myMoon)
 
         #last object in system
         self.maxOrbitalDistance = myPlanet.orbitalDistance * 3

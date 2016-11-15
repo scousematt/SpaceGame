@@ -108,3 +108,11 @@ class Planet(Orbitals):
     def generate(self):
         #Note, parents and childen are not set during __init__.
         self.orbitalPeriod = self.kepler3(self.orbitalDistance, self.parent.children[0].mass)
+
+class Moon(Orbitals):
+    def __init__(self, orbitalDistance, name, mMass, pOrb):
+        Orbitals.__init__(self, orbitalDistance)
+        self.name = name
+        self.moonMass = mMass
+        self.planet_orbited = pOrb
+        self.orbitalPeriod = self.kepler3(self.orbitalDistance, self.planet_orbited.mass )

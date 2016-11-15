@@ -34,6 +34,7 @@ class MainPage(tk.Frame):
 
         self.starRadius = 25
         self.planetRadius = 5
+        self.moonRadius = 3
         self.starTextOffset = 5 + self.starRadius * 1.3
         self.planetTextOffset = 5 + self.planetRadius * 1.3
 
@@ -183,7 +184,7 @@ class MainPage(tk.Frame):
                 radius = self.starRadius
                 self.circle(self.starX, self.starY, radius, fill=applyColor)
                 self.canvas.create_text(self.starX, self.starY + self.starTextOffset, text=p.name)
-            else:
+            elif isinstance(p, Orbitals.Planet):
                 applyColor = "blue"
                 radius = self.planetRadius
                 pX, pY = self.getCanvasXY(p)
@@ -192,6 +193,25 @@ class MainPage(tk.Frame):
                 orbRadius *= ((1 + self.zoomLevelChange) ** ((self.zoomLevel - 1) / self.zoomLevelChange))
                 if orbRadius - 3 > self.starRadius:  # Dont display planets in the star
                     self.circle(self.starX, self.starY, orbRadius, fill="")
+                    self.planetWidgets.append(self.circle(pX, pY, radius, fill=applyColor))
+                    self.planetName.append(self.canvas.create_text(pX, pY + self.planetTextOffset, text=p.name, ))
+                else:
+                    self.planetWidgets.append(self.circle(pX, pY, radius, fill=applyColor, tags='deleteme'))
+                    self.planetName.append(
+                        self.canvas.create_text(pX, pY + self.planetTextOffset, text=p.name, tags='deleteme'))
+                    self.canvas.delete('deleteme')
+            elif isinstance(p, Orbitals.Moon):
+                applyColor = "blue"
+                radius = self.moonRadius
+                orbRadius = (p.orbitalDistance / self.mySystem.maxOrbitalDistance) * self.canvasH
+                orbRadius *= ((1 + self.zoomLevelChange) ** ((self.zoomLevel - 1) / self.zoomLevelChange))
+                parentX, parentY = self.getCanvasXY(p.planet_orbited)
+                print(parentX, parentY, p.planet_orbited)
+                pX, pY = self.getCanvasXY(p)
+                pX += parentX - self.starX
+                pY += parentY - self.starY
+                if orbRadius - 5 > self.planetRadius:
+                    self.circle(parentX, parentY, orbRadius, fill="")
                     self.planetWidgets.append(self.circle(pX, pY, radius, fill=applyColor))
                     self.planetName.append(self.canvas.create_text(pX, pY + self.planetTextOffset, text=p.name, ))
                 else:
