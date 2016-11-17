@@ -43,7 +43,6 @@ class MainPage(tk.Frame):
         # Generate the galaxy here, TODO need to move this to a main at some point
         self.galaxy = Galaxy.Galaxy()
         self.mySystem = self.galaxy.systems[0]
-        self.mySystem.generate()
 
         self.planetWidgets = []
         self.planetName = []
@@ -61,10 +60,14 @@ class MainPage(tk.Frame):
         self.bind('a', self.keyonCanvas)
         self.bind('d', self.keyonCanvas)
         # Mouse button events
-        self.canvas.bind('<Button-1>', self.focusOnClick)
+        self.canvas.bind('<Button-1>', self.focusOnClickedObject)
         self.bind('<Enter>', self.mouseFocus)
         # Generate Widgets
         self.generateLeftCanvas()
+        self.lastItemOnTreeview = ":".join(("STAR", self.galaxy.systems[0].name))
+        self.createTreeviewSystemData(self.mySystem, self.lastItemOnTreeview)
+        self.treeview.item(self.lastItemOnTreeview, open=True)
+
         self.generateCanvas()
 
     def mouseFocus(self, event):
@@ -77,7 +80,7 @@ class MainPage(tk.Frame):
         # add data
         self.treeview = self.tree
 
-        self.treeview.bind('<Double-1>', self.clickTreeview)
+        self.treeview.bind('<Double-1>', self.doubleClickTreeview)
         '''
         Galaxy - StarSystem - children[myStar, planet1, planet2]
         '''
@@ -88,38 +91,54 @@ class MainPage(tk.Frame):
                                  ":".join(("STAR", self.galaxy.systems[i].name)),
                                  text=self.galaxy.systems[i].name)
 
-    def clickTreeview(self, event):
+    def doubleClickTreeview(self, event):
 
         # self.focus_set()
+
+        # for s in self.treeview.get_children():
+        #     self.treeview.item(s, open=False)
+
         itemID = self.tree.identify('item', event.x, event.y)
         itemType, name = itemID.split(':')
+
+        #self.treeview.focus(itemID)
 
         # Doubleclick on the treeview root, ie: 'root'
         if itemType == 'ROOT':
             return
         if itemType == 'STAR':
-            self.starX = self.centreX
-            self.starY = self.centreY
+            self.starX = self.centreX = self.canvasW / 2
+            self.starY = self.centreY = self.canvasH / 2
+            self.zoomOffsetX = self.zoomOffsetY = 0
             self.mySystem = self.galaxy.systems[self.galaxy.systemNames.index(name)]
-            #print(self.mySystem)
-            # If no system has been generated, generate it.
+            self.treeview.item(self.lastItemOnTreeview, open=0)
+            self.treeview.item(itemID, open=True)
+            self.lastItemOnTreeview = itemID
+             # If no system has been generated, generate it.
             if len(self.mySystem.children) == 0:
-                self.mySystem.generate()
-                #print("Are there children " + str(len(self.mySystem.children)) + " " + self.mySystem.children[0].name)
-                # Insert planets
-                for j in range(1, len(self.mySystem.children)):
-                    self.treeview.insert(itemID,
-                                         'end',
-                                         ":".join(("PLANET", self.mySystem.children[j].name)),
-                                         text=self.mySystem.children[j].name)
+                self.createTreeviewSystemData(self.mySystem, itemID)
             self.zoomLevel = self.zoomLevelDefault
+            childrenList = []
+            childrenList = self.treeview.get_children(itemID)
+            print(childrenList)
+            #self.treeview.see(childrenList[0])
+            print(itemID, self.treeview.item(itemID, 'open'), self.lastItemOnTreeview)
             self.generateCanvas()
             return
         if itemType == 'PLANET':
             nameList = self.mySystem.getPlanetNames()
             self.centreOnPlanet(self.planetWidgets[nameList.index(name)])
 
-    def focusOnClick(self, event):
+
+    def createTreeviewSystemData(self, system, itemID):
+        system.generate()
+        for j in range(1, len(self.mySystem.children)):
+            self.treeview.insert(itemID,
+                             'end',
+                             ":".join(("PLANET", self.mySystem.children[j].name)),
+                             text=self.mySystem.children[j].name)
+
+    def focusOnClickedObject(self, event):
         '''
         Processes a mouse click. Currently it only reacts to clicking on a planet
         In the future we can left click on the star, or ships, or setting waypoints and stuff
@@ -146,7 +165,7 @@ class MainPage(tk.Frame):
         # self.canvas.focus_set()
         if event.char == '-':
             # Check that we are at the minimum zoom level or above
-            if self.zoomLevel > 0.8:
+            if self.zoomLevel > 1:
                 self.zoomLevel -= self.zoomLevelChange
                 self.zoomOffsetX -= (1 - 1 / 1.2) * self.zoomOffsetX
                 self.zoomOffsetY -= (1 - 1 / 1.2) * self.zoomOffsetY
@@ -180,45 +199,37 @@ class MainPage(tk.Frame):
         for p in self.mySystem.children:
             if isinstance(p, Orbitals.Star):
                 applyColor = self.mySystem.children[0].stellarColor
-                # print(applyColor)
                 radius = self.starRadius
-                self.circle(self.starX, self.starY, radius, fill=applyColor)
-                self.canvas.create_text(self.starX, self.starY + self.starTextOffset, text=p.name)
+                self.planetWidgets.append(self.circle(self.starX, self.starY, radius, fill=applyColor))
+                self.planetName.append(self.canvas.create_text(self.starX, self.starY + self.starTextOffset, text=p.name))
             elif isinstance(p, Orbitals.Planet):
                 applyColor = "blue"
-                radius = self.planetRadius
                 pX, pY = self.getCanvasXY(p)
-                # Note - If Canvas is not a square, this needs to be an oval
-                orbRadius = (p.orbitalDistance / self.mySystem.maxOrbitalDistance) * self.canvasH
-                orbRadius *= ((1 + self.zoomLevelChange) ** ((self.zoomLevel - 1) / self.zoomLevelChange))
-                if orbRadius - 3 > self.starRadius:  # Dont display planets in the star
-                    self.circle(self.starX, self.starY, orbRadius, fill="")
-                    self.planetWidgets.append(self.circle(pX, pY, radius, fill=applyColor))
-                    self.planetName.append(self.canvas.create_text(pX, pY + self.planetTextOffset, text=p.name, ))
-                else:
-                    self.planetWidgets.append(self.circle(pX, pY, radius, fill=applyColor, tags='deleteme'))
-                    self.planetName.append(
-                        self.canvas.create_text(pX, pY + self.planetTextOffset, text=p.name, tags='deleteme'))
-                    self.canvas.delete('deleteme')
+                self.drawPlanetsAndMoon(self.starX, self.starY,
+                                        p.orbitalDistance, self.starRadius, self.planetRadius,
+                                        applyColor, pX, pY, p.name)
             elif isinstance(p, Orbitals.Moon):
                 applyColor = "blue"
-                radius = self.moonRadius
-                orbRadius = (p.orbitalDistance / self.mySystem.maxOrbitalDistance) * self.canvasH
-                orbRadius *= ((1 + self.zoomLevelChange) ** ((self.zoomLevel - 1) / self.zoomLevelChange))
                 parentX, parentY = self.getCanvasXY(p.planet_orbited)
-                print(parentX, parentY, p.planet_orbited)
                 pX, pY = self.getCanvasXY(p)
                 pX += parentX - self.starX
                 pY += parentY - self.starY
-                if orbRadius - 5 > self.planetRadius:
-                    self.circle(parentX, parentY, orbRadius, fill="")
-                    self.planetWidgets.append(self.circle(pX, pY, radius, fill=applyColor))
-                    self.planetName.append(self.canvas.create_text(pX, pY + self.planetTextOffset, text=p.name, ))
-                else:
-                    self.planetWidgets.append(self.circle(pX, pY, radius, fill=applyColor, tags='deleteme'))
-                    self.planetName.append(
-                        self.canvas.create_text(pX, pY + self.planetTextOffset, text=p.name, tags='deleteme'))
-                    self.canvas.delete('deleteme')
+                self.drawPlanetsAndMoon(parentX, parentY, p.orbitalDistance,
+                                        self.planetRadius, self.moonRadius, applyColor,
+                                        pX, pY, p.name)
+
+    def drawPlanetsAndMoon(self, centreX, centreY, orbDistance, parentRadius, radius, applyColor, x, y, name):
+        orbRadius = (orbDistance / self.mySystem.maxOrbitalDistance) * self.canvasH
+        orbRadius *= ((1 + self.zoomLevelChange) ** ((self.zoomLevel - 1) / self.zoomLevelChange))
+        if orbRadius - 5 > parentRadius:
+            self.circle(centreX, centreY, orbRadius, fill="")
+            self.planetWidgets.append(self.circle(x, y, radius, fill=applyColor))
+            self.planetName.append(self.canvas.create_text(x, y + self.planetTextOffset, text = name))
+        else:
+            self.planetWidgets.append(self.circle(x, y, radius, fill=applyColor, tags="deleteme"))
+            self.planetName.append(self.canvas.create_text(x, y + self.planetTextOffset, text = name, tags="deleteme"))
+            self.canvas.delete('deleteme')
+
 
     def circle(self, x, y, r, **kwargs):
         return self.canvas.create_oval(x - r, y - r, x + r, y + r, **kwargs)
