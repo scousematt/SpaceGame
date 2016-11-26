@@ -5,9 +5,10 @@ import Galaxy
 import StarSystem
 
 
+
 class MainPage(tk.Frame):
-    def __init__(self, parent, controller):
-        tk.Frame.__init__(self, parent)
+    def __init__(self):
+        tk.Frame.__init__(self)
 
         # If these are not equal, then orbitals need to be an oval
         self.canvasH = 1000
@@ -37,8 +38,6 @@ class MainPage(tk.Frame):
         self.moonRadius = 3
         self.starTextOffset = 5 + self.starRadius * 1.3
         self.planetTextOffset = 5 + self.planetRadius * 1.3
-
-        self.planetWidgets = []
 
         # Generate the galaxy here, TODO need to move this to a main at some point
         self.galaxy = Galaxy.Galaxy()
@@ -287,3 +286,8 @@ class MainPage(tk.Frame):
                 self.canvas.move(self.planetName[i],
                                  planetNewCoords[i][0] - coords[0],
                                  planetNewCoords[i][1] - coords[1])
+
+
+
+app = MainPage()
+app.mainloop()
