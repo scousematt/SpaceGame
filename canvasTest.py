@@ -3,6 +3,7 @@ import tkinter.ttk as ttk
 
 import Orbitals
 import Galaxy
+import CanvasZoom
 import StarSystem
 
 
@@ -54,24 +55,20 @@ class PageOne(tk.Frame):
         self.canvasH = 750
         self.canvasW = 750
         # Left Canvas is the planetary treeview
-        self.leftCanvas = tk.Canvas(self, height=self.canvasH, width=100, bg='white')
+        self.leftCanvas = tk.Canvas(self, height=self.canvasH, width=6, bg='white')
         self.leftCanvas.pack(side=tk.LEFT, expand=1, fill=tk.Y)
         self.tree = ttk.Treeview(self.leftCanvas, columns=('Systems'), height=100)
         # Shows the planet and ships n stuff
         self.canvas = tk.Canvas(self, height=self.canvasH, width=self.canvasW, bg='grey')
         self.canvas.pack(side=tk.LEFT)
-        self.zoomLevelDefault = 1
-        self.zoomLevel = 1
-        self.zoomLevelChange = 0.2
-        # Current centre of the system - the star centre upon creation
+
+        # # Current centre of the system - the star centre upon creation
         self.starX = self.canvasW / 2
         self.starY = self.canvasH / 2
         # The centre of the canvas
         self.centreX = self.starX
         self.centreY = self.starY
-
-        self.zoomOffsetX = 0
-        self.zoomOffsetY = 0
+        self.cz = CanvasZoom.Zoom(1, 0.2, self.centreX, self.centreY)
 
         self.starRadius = 25
         self.planetRadius = 5
@@ -120,6 +117,8 @@ class PageOne(tk.Frame):
 
         # add data
         self.treeview = self.tree
+        self.treeview.column('#0', width=210)
+        self.treeview.column('#1', width=30)
 
         self.treeview.bind('<Double-1>', self.doubleClickTreeview)
         '''
@@ -141,10 +140,11 @@ class PageOne(tk.Frame):
         if itemType == 'ROOT':
             return
         if itemType == 'STAR':
-            self.zoomLevel = 1
+            self.cz.level = 1
             self.starX = self.centreX = self.canvasW / 2
             self.starY = self.centreY = self.canvasH / 2
-            self.zoomOffsetX = self.zoomOffsetY = 0
+            # self.zoomOffsetX = self.zoomOffsetY = 0
+
             self.mySystem = self.galaxy.systems[self.galaxy.systemNames.index(name)]
             self.treeview.item(self.lastItemOnTreeview, open=0)
             self.treeview.item(itemID, open=True)
@@ -152,7 +152,7 @@ class PageOne(tk.Frame):
              # If no system has been generated, generate it.
             if len(self.mySystem.children) == 0:
                 self.createTreeviewSystemData(self.mySystem, itemID)
-            self.zoomLevel = self.zoomLevelDefault
+            self.cz.resetZoom()
             childrenList = []
             childrenList = self.treeview.get_children(itemID)
             print(childrenList)
@@ -164,7 +164,7 @@ class PageOne(tk.Frame):
             #nameList = self.mySystem.getPlanetNames()
             #print(self.planetName[name], self.planetWidgets.index(self.planetName[name]-1))
             #print(self.planetWidgets)
-            self.adjustZoomLevel(4)
+            self.cz.adjustZoomLevel(4)
             #Wasteful do I need to break up generate Canvas so I dont draw to the canvas?
             self.generateCanvas()
 
@@ -176,31 +176,40 @@ class PageOne(tk.Frame):
             '''
             #There should be only one moon with a given name
             moon = [i for i in self.mySystem.children if i.name == name]
-            self.adjustZoomLevel(9)
+            self.cz.adjustZoomLevel(9)
             self.generateCanvas()
             idOfCanvasObj = self.planetWidgets[self.planetWidgets.index(self.planetName[moon[0].name]-1)]
         if  [item for item in self.canvas.find_all() if idOfCanvasObj == item] == []:
             #Should this be an isExistsCanvasID(Canvas, ID)   ?
 
             #need to zoom in more
-            self.adjustZoomLevel(12)
+            self.cz.adjustZoomLevel(15)
             self.generateCanvas()
             #centre the canvas on the object for its parent (planet/ moon)
         self.centreOnPlanet(idOfCanvasObj)
 
 
     def createTreeviewSystemData(self, system, itemID):
+        '''
+
+        :param system: the system from self.mySystem
+        :param itemID: The last item inserted into the Treeview - used as the parent
+        :return:
+        '''
         system.generate()
         textType = ''
+        parent = tempID =  ''
         for j in range(1, len(self.mySystem.children)):
             if isinstance(self.mySystem.children[j], Orbitals.Planet):
                 textType = 'PLANET'
+                parent = itemID
             elif isinstance(self.mySystem.children[j], Orbitals.Moon):
                 textType = 'MOON'
-            self.treeview.insert(itemID,
-                             'end',
-                             ":".join((textType, self.mySystem.children[j].name)),
-                             text=self.mySystem.children[j].name)
+                if parent == itemID:
+                    parent = tempID
+            tempID = self.treeview.insert(parent, 'end',
+                                        ":".join((textType, self.mySystem.children[j].name)),
+                                        text=self.mySystem.children[j].name)
 
 
     def focusOnClickedObject(self, event):
@@ -220,67 +229,39 @@ class PageOne(tk.Frame):
         # exact coordinates of the object on the canvas
         x, y = self.getCircleCoords(returnedID)
         # now the offset are equal to the distance from the star
-        self.zoomOffsetX = self.starX - x
-        self.zoomOffsetY = self.starY - y
+        self.cz.offsetX = self.starX - x
+        self.cz.offsetY = self.starY - y
         # Adjust the star to its new position, allowing the clicked object to the centre
-        self.starX = self.centreX + self.zoomOffsetX
-        self.starY = self.centreY + self.zoomOffsetY
+        self.starX = self.centreX + self.cz.offsetX
+        self.starY = self.centreY + self.cz.offsetY
         self.generateCanvas()
 
-    def zoomLevelUp(self, times):
-        i = 0
-        print('times ', times / self.zoomLevelChange)
-        print(int(round(times / self.zoomLevelChange)))
-        while i < int(round(times / self.zoomLevelChange)):
-            self.zoomOffsetX *= 1.2
-            self.zoomOffsetY *= 1.2
-            self.starX = self.centreX + self.zoomOffsetX
-            self.starY = self.centreY + self.zoomOffsetY
-            i += 1
-
-    def zoomLevelDown(self, times):
-        i = 0
-        while i < int(round(times / self.zoomLevelChange)):
-            self.zoomOffsetX -= (1 - 1 / 1.2) * self.zoomOffsetX
-            self.zoomOffsetY -= (1 - 1 / 1.2) * self.zoomOffsetY
-            self.starX = self.centreX + self.zoomOffsetX
-            self.starY = self.centreY + self.zoomOffsetY
-            i += 1
-
-    def adjustZoomLevel(self, toLevel):
-
-        if self.zoomLevel < toLevel:
-             self.zoomLevelUp((toLevel - self.zoomLevel))
-        elif self.zoomLevel > toLevel:
-            self.zoomLevelDown((self.zoomLevel - toLevel))
-
-        self.zoomLevel = toLevel
 
     def keyonCanvas(self, event):
         # self.canvas.focus_set()
         if event.char == '-':
             # Check that we are at the minimum zoom level or above
-            if self.zoomLevel > 1:
-                self.zoomLevel -= self.zoomLevelChange
-                self.zoomLevelDown(self.zoomLevelChange)
+            if self.cz.level > 1:
+                self.cz.level -= self.cz.change
+                self.starX, self.starY = self.cz.zoomLevelDown(self.cz.change)
 
         elif event.char == '=':
-            self.zoomLevel += self.zoomLevelChange
-            self.zoomLevelUp(self.zoomLevelChange)
+            self.cz.level += self.cz.change
+            self.starX, self.starY = self.cz.zoomLevelUp(self.cz.change)
             # selected planet is at centre so offset to star to relative to centre
 
         elif event.char == 'w':
             self.starY += 20
-            self.zoomOffsetY += 20
+            self.cz.offsetY += 20
         elif event.char == 's':
             self.starY -= 20
-            self.zoomOffsetY -= 20
+            self.cz.offsetY -= 20
         elif event.char == 'a':
             self.starX += 20
-            self.zoomOffsetX += 20
+            self.cz.offsetX += 20
         elif event.char == 'd':
             self.starX -= 20
-            self.zoomOffsetX -= 20
+            self.cz.offsetX -= 20
         self.generateCanvas()
 
     def generateCanvas(self):
@@ -308,11 +289,11 @@ class PageOne(tk.Frame):
                 self.drawPlanetsAndMoon(parentX, parentY, p.orbitalDistance,
                                         self.planetRadius, self.moonRadius, applyColor,
                                         pX, pY, p.name)
-        self.canvas.create_text(30, self.canvasH - 50, text=('Zoom: ' + str(round(self.zoomLevel / self.zoomLevelChange) - 5)))
+        self.canvas.create_text(30, self.canvasH - 50, text=self.cz.getZoomLevelText())
 
     def drawPlanetsAndMoon(self, centreX, centreY, orbDistance, parentRadius, radius, applyColor, x, y, name):
         orbRadius = (orbDistance / self.mySystem.maxOrbitalDistance) * self.canvasH
-        orbRadius *= ((1 + self.zoomLevelChange) ** ((self.zoomLevel - 1) / self.zoomLevelChange))
+        orbRadius *= (1 + self.cz.change) ** ((self.cz.level - 1) / self.cz.change)
         if orbRadius - 5 > parentRadius:
             self.circle(centreX, centreY, orbRadius, fill="")
             self.planetWidgets.append(self.circle(x, y, radius, fill=applyColor))
@@ -337,16 +318,8 @@ class PageOne(tk.Frame):
         x, y = obj.getCoords()
         maxRadius = self.mySystem.maxOrbitalDistance
         # number of times plus or minus on zoom level
-        zFactor = (self.zoomLevel - 1) / self.zoomLevelChange
-
-        #TODO zFactor never gets below 1 so the if statements can go
-        if zFactor > -1:
-            x = ((1 + self.zoomLevelChange) ** zFactor) * ((x / maxRadius * self.canvasW)) + self.starX
-            y = ((1 + self.zoomLevelChange) ** zFactor) * ((y / maxRadius * self.canvasH)) + self.starY
-        else:
-            # the number is smaller so 0.8 ** zFactor * -1
-            x = ((1 - self.zoomLevelChange) ** (-1 * zFactor) * ((x / maxRadius * self.canvasW))) + self.starX
-            y = ((1 - self.zoomLevelChange) ** (-1 * zFactor) * ((y / maxRadius * self.canvasH))) + self.starY
+        x = (self.cz.canvasXYZoom()) * ((x / maxRadius * self.canvasW)) + self.starX
+        y = (self.cz.canvasXYZoom()) * ((y / maxRadius * self.canvasH)) + self.starY
         return (x, y)
 
     def getCircleCoords(self, pObj):
