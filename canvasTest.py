@@ -51,8 +51,8 @@ class PageOne(tk.Frame):
         tk.Frame.__init__(self, parent)
 
          # If these are not equal, then orbitals need to be an oval
-        self.canvasH = 1000
-        self.canvasW = 1000
+        self.canvasH = 750
+        self.canvasW = 750
         # Left Canvas is the planetary treeview
         self.leftCanvas = tk.Canvas(self, height=self.canvasH, width=100, bg='white')
         self.leftCanvas.pack(side=tk.LEFT, expand=1, fill=tk.Y)
@@ -60,7 +60,6 @@ class PageOne(tk.Frame):
         # Shows the planet and ships n stuff
         self.canvas = tk.Canvas(self, height=self.canvasH, width=self.canvasW, bg='grey')
         self.canvas.pack(side=tk.LEFT)
-        print('after canvas.pack')
         self.zoomLevelDefault = 1
         self.zoomLevel = 1
         self.zoomLevelChange = 0.2
@@ -134,21 +133,15 @@ class PageOne(tk.Frame):
                                  text=self.galaxy.systems[i].name)
 
     def doubleClickTreeview(self, event):
-
-        # self.focus_set()
-
-        # for s in self.treeview.get_children():
-        #     self.treeview.item(s, open=False)
-
+        #itemID is the tree id
         itemID = self.tree.identify('item', event.x, event.y)
         itemType, name = itemID.split(':')
-
-        #self.treeview.focus(itemID)
-
+        idOfCanvasObj = ''
         # Doubleclick on the treeview root, ie: 'root'
         if itemType == 'ROOT':
             return
         if itemType == 'STAR':
+            self.zoomLevel = 1
             self.starX = self.centreX = self.canvasW / 2
             self.starY = self.centreY = self.canvasH / 2
             self.zoomOffsetX = self.zoomOffsetY = 0
@@ -168,22 +161,47 @@ class PageOne(tk.Frame):
             self.generateCanvas()
             return
         if itemType == 'PLANET':
-            nameList = self.mySystem.getPlanetNames()
-            print(self.planetName[name], self.planetWidgets.index(self.planetName[name]-1))
-            print(self.planetWidgets)
-            self.centreOnPlanet(self.planetWidgets[self.planetWidgets.index(self.planetName[name]-1)])
+            #nameList = self.mySystem.getPlanetNames()
+            #print(self.planetName[name], self.planetWidgets.index(self.planetName[name]-1))
+            #print(self.planetWidgets)
+            self.adjustZoomLevel(4)
+            #Wasteful do I need to break up generate Canvas so I dont draw to the canvas?
+            self.generateCanvas()
+
+            idOfCanvasObj =  self.planetWidgets[self.planetWidgets.index(self.planetName[name]-1)]
         if itemType == 'MOON':
-            pass
+            '''
+            Need to zoom in and centre on the moons parent
+            Need to cycle through self.mySystem until
+            '''
+            #There should be only one moon with a given name
+            moon = [i for i in self.mySystem.children if i.name == name]
+            self.adjustZoomLevel(9)
+            self.generateCanvas()
+            idOfCanvasObj = self.planetWidgets[self.planetWidgets.index(self.planetName[moon[0].name]-1)]
+        if  [item for item in self.canvas.find_all() if idOfCanvasObj == item] == []:
+            #Should this be an isExistsCanvasID(Canvas, ID)   ?
+
+            #need to zoom in more
+            self.adjustZoomLevel(12)
+            self.generateCanvas()
+            #centre the canvas on the object for its parent (planet/ moon)
+        self.centreOnPlanet(idOfCanvasObj)
 
 
     def createTreeviewSystemData(self, system, itemID):
         system.generate()
+        textType = ''
         for j in range(1, len(self.mySystem.children)):
+            if isinstance(self.mySystem.children[j], Orbitals.Planet):
+                textType = 'PLANET'
+            elif isinstance(self.mySystem.children[j], Orbitals.Moon):
+                textType = 'MOON'
             self.treeview.insert(itemID,
                              'end',
-                             ":".join(("PLANET", self.mySystem.children[j].name)),
+                             ":".join((textType, self.mySystem.children[j].name)),
                              text=self.mySystem.children[j].name)
-            #TODO MOONS IN TREEVIEW
+
 
     def focusOnClickedObject(self, event):
         '''
@@ -199,15 +217,44 @@ class PageOne(tk.Frame):
             self.centreOnPlanet(returnedID)
 
     def centreOnPlanet(self, returnedID):
-        # exact cordinates of the object on the canvas
+        # exact coordinates of the object on the canvas
         x, y = self.getCircleCoords(returnedID)
         # now the offset are equal to the distance from the star
         self.zoomOffsetX = self.starX - x
         self.zoomOffsetY = self.starY - y
-        # Adjust the star to its new position, alloowing the clicked object to the centre
+        # Adjust the star to its new position, allowing the clicked object to the centre
         self.starX = self.centreX + self.zoomOffsetX
         self.starY = self.centreY + self.zoomOffsetY
         self.generateCanvas()
+
+    def zoomLevelUp(self, times):
+        i = 0
+        print('times ', times / self.zoomLevelChange)
+        print(int(round(times / self.zoomLevelChange)))
+        while i < int(round(times / self.zoomLevelChange)):
+            self.zoomOffsetX *= 1.2
+            self.zoomOffsetY *= 1.2
+            self.starX = self.centreX + self.zoomOffsetX
+            self.starY = self.centreY + self.zoomOffsetY
+            i += 1
+
+    def zoomLevelDown(self, times):
+        i = 0
+        while i < int(round(times / self.zoomLevelChange)):
+            self.zoomOffsetX -= (1 - 1 / 1.2) * self.zoomOffsetX
+            self.zoomOffsetY -= (1 - 1 / 1.2) * self.zoomOffsetY
+            self.starX = self.centreX + self.zoomOffsetX
+            self.starY = self.centreY + self.zoomOffsetY
+            i += 1
+
+    def adjustZoomLevel(self, toLevel):
+
+        if self.zoomLevel < toLevel:
+             self.zoomLevelUp((toLevel - self.zoomLevel))
+        elif self.zoomLevel > toLevel:
+            self.zoomLevelDown((self.zoomLevel - toLevel))
+
+        self.zoomLevel = toLevel
 
     def keyonCanvas(self, event):
         # self.canvas.focus_set()
@@ -215,17 +262,13 @@ class PageOne(tk.Frame):
             # Check that we are at the minimum zoom level or above
             if self.zoomLevel > 1:
                 self.zoomLevel -= self.zoomLevelChange
-                self.zoomOffsetX -= (1 - 1 / 1.2) * self.zoomOffsetX
-                self.zoomOffsetY -= (1 - 1 / 1.2) * self.zoomOffsetY
-                self.starX = self.centreX + self.zoomOffsetX
-                self.starY = self.centreY + self.zoomOffsetY
+                self.zoomLevelDown(self.zoomLevelChange)
+
         elif event.char == '=':
             self.zoomLevel += self.zoomLevelChange
-            self.zoomOffsetX *= 1.2
-            self.zoomOffsetY *= 1.2
+            self.zoomLevelUp(self.zoomLevelChange)
             # selected planet is at centre so offset to star to relative to centre
-            self.starX = self.centreX + self.zoomOffsetX
-            self.starY = self.centreY + self.zoomOffsetY
+
         elif event.char == 'w':
             self.starY += 20
             self.zoomOffsetY += 20
@@ -265,6 +308,7 @@ class PageOne(tk.Frame):
                 self.drawPlanetsAndMoon(parentX, parentY, p.orbitalDistance,
                                         self.planetRadius, self.moonRadius, applyColor,
                                         pX, pY, p.name)
+        self.canvas.create_text(30, self.canvasH - 50, text=('Zoom: ' + str(round(self.zoomLevel / self.zoomLevelChange) - 5)))
 
     def drawPlanetsAndMoon(self, centreX, centreY, orbDistance, parentRadius, radius, applyColor, x, y, name):
         orbRadius = (orbDistance / self.mySystem.maxOrbitalDistance) * self.canvasH
@@ -294,6 +338,8 @@ class PageOne(tk.Frame):
         maxRadius = self.mySystem.maxOrbitalDistance
         # number of times plus or minus on zoom level
         zFactor = (self.zoomLevel - 1) / self.zoomLevelChange
+
+        #TODO zFactor never gets below 1 so the if statements can go
         if zFactor > -1:
             x = ((1 + self.zoomLevelChange) ** zFactor) * ((x / maxRadius * self.canvasW)) + self.starX
             y = ((1 + self.zoomLevelChange) ** zFactor) * ((y / maxRadius * self.canvasH)) + self.starY
@@ -312,8 +358,7 @@ class PageOne(tk.Frame):
         :return: The x , y coordinates of the centre of the pObject
         '''
         a = self.canvas.coords(pObj)
-        print('mmmmmmmmm')
-        print(pObj)
+
         if a == []:
             return False
         x = a[0] + (a[2] - a[0]) / 2
