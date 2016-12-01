@@ -53,8 +53,10 @@ class Orbitals(object):
         self.currentTime += timeSinceStart
         self.angle = (self.currentTime / self.orbitalPeriod) * math.pi * 2
         # Update all of our children
-        for i in range(0, len(self.children)):
-            self.children[i].update(timeSinceStart)
+
+        # for i in range(0, len(self.children)):
+        #     self.children[i].update(timeSinceStart)
+        [i.update(timeSinceStart) for i in self.children]
 
     def addChild(self, c):
         c.parent = self
@@ -69,7 +71,7 @@ class Orbitals(object):
                math.cos(self.angle) * self.orbitalDistance)
 
 
-    def kepler3(self, radius, mass):
+    def kepler3(self, radius, mass ):
         '''
         Takes in the orbital distance in metres as per Kepler's Law of
         harmonies, T^2 / R^3  = 3 x 10^-19 and the mass of the body being orbited
@@ -115,4 +117,12 @@ class Moon(Orbitals):
         self.name = name
         self.moonMass = mMass
         self.planet_orbited = pOrb
+        self.angle = (random.randrange(360) / 360) * 2 * math.pi
+
+
+
+    def generate(self):
         self.orbitalPeriod = self.kepler3(self.orbitalDistance, self.planet_orbited.mass )
+        print('planet orbited mass is ', str(self.planet_orbited.mass))
+        print('Orbital period is ', str(self.orbitalPeriod))
+

@@ -40,6 +40,7 @@ class StarSystem(Orbitals.Orbitals):
         #Planets
         suffix = ['i', 'ii', 'iii', 'iv', 'v', 'vi', 'vii', 'viii', 'ix', 'x', 'xi', 'xii', 'xiii',
                   'xiv', 'xv', 'xvi', 'xvii', 'xviii', 'ix', 'xx']
+        earth_mass = 5.972 * 10 ** 24
 
         for i in range(0, 20):
             if random.randint(0, 100) < chancePlanet:
@@ -47,11 +48,11 @@ class StarSystem(Orbitals.Orbitals):
                 planetNumber += 1
                 if gasGiantMassModifier[i] + 0.25 > 1:
                     pType = 'Gas Giant'
-                    pMass = gasGiantMassModifier[i] ** 3 * (255) + random.randint(0, 100)
+                    pMass = earth_mass * (gasGiantMassModifier[i] ** 3 * (255) + random.randint(0, 100))
                     moonChance = 200
                 else:
                     pType='Rocky'
-                    pMass=random.randint(1, 1000) / 1000 * 1.2 + 0.5
+                    pMass=earth_mass * (random.randint(1, 1000) / 1000 * 1.2 + 0.5)
                     moonChance = 30
                 moons = 0
                 x = random.randint(0, 100)
@@ -66,12 +67,13 @@ class StarSystem(Orbitals.Orbitals):
                 self.addChild(myPlanet)
                 myPlanet.generate()
                 for j in range(moons):
-                    myMoon = Orbitals.Moon(2000000000 * random.random() ** 2, " ".join((myPlanet.name, chr(65 + j))), (pMass * 0.2 * random.random()), myPlanet)
+                    myMoon = Orbitals.Moon(j * 60000000 +  100000000 * random.random() ** 2, " ".join((myPlanet.name, chr(65 + j))), (pMass * 0.2 * random.random()), myPlanet)
                     self.addChild(myMoon)
+                    myMoon.generate()
 
         #last object in system
         self.maxOrbitalDistance = myPlanet.orbitalDistance * 3
-        self.update(10)
+        self.update(8383740)
 
     def getPlanetNames(self):
         '''

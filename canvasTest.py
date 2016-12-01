@@ -176,14 +176,14 @@ class PageOne(tk.Frame):
             '''
             #There should be only one moon with a given name
             moon = [i for i in self.mySystem.children if i.name == name]
-            self.cz.adjustZoomLevel(9)
+            self.cz.adjustZoomLevel(10)
             self.generateCanvas()
             idOfCanvasObj = self.planetWidgets[self.planetWidgets.index(self.planetName[moon[0].name]-1)]
         if  [item for item in self.canvas.find_all() if idOfCanvasObj == item] == []:
             #Should this be an isExistsCanvasID(Canvas, ID)   ?
 
             #need to zoom in more
-            self.cz.adjustZoomLevel(15)
+            self.cz.adjustZoomLevel(18)
             self.generateCanvas()
             #centre the canvas on the object for its parent (planet/ moon)
         self.centreOnPlanet(idOfCanvasObj)
@@ -342,7 +342,7 @@ class PageOne(tk.Frame):
         # Temp: The redraw canvas should be an update method
         self.mySystem.update(80000)
         planetNewCoords = [self.getCanvasXY(p) for p in self.mySystem.children \
-                           if isinstance(p, Orbitals.Planet)]
+                           if isinstance(p, Orbitals.Planet) or isinstance(p, Orbitals.Moon)]
 
         for i in range(0, len(self.planetWidgets)):
             coords = self.getCircleCoords(self.planetWidgets[i])
