@@ -5,6 +5,8 @@ import pygame
 from pygame.locals import *
 
 import itertools, operator
+import pdb
+
 
 
 
@@ -31,7 +33,7 @@ class Icosphere:
 		#vertex buffer 
 		self.vertexes_bytes = 0
 		
-		self.recursions = 5
+		self.recursions = 2 
 		
 		self.color = []
 		
@@ -84,30 +86,82 @@ class Icosphere:
 		self.triangles.append([ 8, 6,  7])			
 		self.triangles.append([ 9, 8,  1])
 
+	def divide_tri(self, tri, weight):
+		'''
+		tri is a single element of self.triangle consisting of 
+		3 vertex indexes
+		weight dictates wether the number of subdivisions:
+			1 is half
+			4/3 is thirds
+		'''
+		tris = []
+		a = self.midpoint(tri[0], tri[1], weight)
+		b = self.midpoint(tri[0], tri[2], weight)
+		c = self.midpoint(tri[1], tri[2], weight)
+
+		a_id = self.add_vertexes(a)
+		b_id = self.add_vertexes(b)
+		c_id = self.add_vertexes(c)
+		if weight == 2:
+			a1 = self.midpoint(tri[0], tri[1], -weight)
+			#print(a, a1)
+			b1 = self.midpoint(tri[0], tri[2], -weight)
+			c1 = self.midpoint(tri[1], tri[2], -weight)
+			#midpoint is halfway between c and b so weight = 1
+			d  = self.midpoint(c_id, b_id, 1)
+			a1_id = self.add_vertexes(a1)
+			b1_id = self.add_vertexes(b1)
+			c1_id = self.add_vertexes(c1)
+			d_id  = self.add_vertexes(d)
+			tris.append([tri[0], a_id, b_id])  #1
+			tris.append([a_id, a1_id, d_id])   #2
+			tris.append([a_id, d_id, b_id])    #3
+			tris.append([b_id, d_id, b1_id])   #4
+			tris.append([a1_id, tri[1], c_id]) #5
+			tris.append([d_id, a1_id, c_id])   #6
+			tris.append([d_id, c_id, c1_id])   #7
+			tris.append([d_id, c1_id, b1_id])  #8
+			tris.append([b1_id, c1_id, tri[2]])#9
+		else:
+			tris.append([tri[0], a_id, b_id])
+			tris.append([tri[1], c_id, a_id])
+			tris.append([tri[2], b_id, c_id])
+			tris.append([  a_id, c_id, b_id])
+		for t in tris:
+			if len(set(t)) < 3:
+				print(tri, tris)
+				print(self.vertexes[tri[0]], self.vertexes[tri[1]])
+				print(self.midpoint(tri[0], tri[1], 2), 
+						self.midpoint(tri[0], tri[1], -2)) 
+				pdb.set_trace()
+		return tris
+
 	def refine(self):
 		tris = []
 		x = 0
+		if self.recursions > 0:
+			#Initial pass with 12 polys we need to create 2 vertexes per edge
+			#After this every triangle has been converted into 9
+			#There should be 180 triangle - working
+			for tri in self.triangles:
+				tris += self.divide_tri(tri, weight=2)
+			self.triangles = tris
+			tris = []
+			#pdb.set_trace()
+			print("Finished initial recursion")
+			print((self.triangles))
 		while x < self.recursions:
 			for tri in self.triangles:
-				a = self.midpoint(tri[0], tri[1])
-				b = self.midpoint(tri[1], tri[2])
-				c = self.midpoint(tri[2], tri[0])
-				a_id = self.add_vertexes(a)
-				b_id = self.add_vertexes(b)
-				c_id = self.add_vertexes(c)
-				tris.append([tri[0], a_id, c_id])
-				tris.append([tri[1], b_id, a_id])
-				tris.append([tri[2], c_id, b_id])
-				tris.append([  a_id, b_id, c_id])
-					
+				tris += self.divide_tri(tri, weight=1)					
 			x += 1
 			self.triangles = tris
 			tris=[]
-			if x == self.recursions - 1:
-				self.hexes = len(self.vertexes) 
-
+			print(len(self.triangles))
 			print(x)
-		self.set_color_list()
+		self.hexes = len(self.vertexes) 
+
+			
+		#self.set_color_list()
 		#~ for vert in self.vertexes:
 			#~ self.vertexes_bytes += sys.getsizeof(vert)
 			
@@ -119,6 +173,7 @@ class Icosphere:
 			if vert_hex_centre in tris:
 				temp_list.append(tris)
 		self.hex_temp += temp_list 
+		
 				
 	def identify_hexes(self):
 		'''
@@ -129,40 +184,52 @@ class Icosphere:
 		for vert in range(12):
 			self.build_hexes(vert)
 		self.hex_list += self.hex_temp
-		#print((self.hex_list))
-		
+		print("Hex list")
+		print(self.hex_centres)
+		#pdb.set_trace()
 		self.hex_temp = []
-		for tri in self.hex_list:
-			edge = [tri[i] for i in range(3) if tri[i] not in self.hex_centres]
-			#print(edge, self.hex_centres)
-			
-			tris_with_edge = [tri for tri in self.triangles 
-							if edge[0] in tri and edge[1] in tri]
-			#print(tris_with_edge)				
-			verts = list(set(itertools.chain(*tris_with_edge)))
-			#print(verts)
-			verts.pop(verts.index(edge[0]))
-			verts.pop(verts.index(edge[1]))
-			#take the unique value
-			
-			new_centre_vert = [verts[i] for i in range(2)
-								if verts[i] not in self.hex_centres]
-			
-			#~ if len(new_centre_vert) > 1:
+		while len(self.hex_list) < len(self.triangles):
+			for tri in self.hex_list:
+				#edge is the shared edge between one tri with a centre in
+				#self.hex_centres and one new one to be placed in hex_centres
+				#and the 2 triangles are found in tris_with_edges
+				edge = [tri[i] for i in range(3) if tri[i] not in self.hex_centres]
+				if len(edge) < 2:
+					print("Edge")
+					#print( edge, tri)
+					#print(self.triangles)
+				else:	
+					tris_with_edge = [tri for tri in self.triangles 
+								if edge[0] in tri and edge[1] in tri]
+				#print(tris_with_edge)	
+				if len(self.hex_list) == 1380:
+					print( tris_with_edge, edge )			
+				verts = list(set(itertools.chain(*tris_with_edge)))
+				if len(self.hex_list) < 1380:
+					#print(verts)
+					#Remove the verts from the shared edge
+					verts.pop(verts.index(edge[0]))
+					verts.pop(verts.index(edge[1]))
+				#take the unique value
 				
-				#~ print(self.vertexes[new_centre_vert[0]])
-				#~ print(self.vertexes[new_centre_vert[1]])
-				
-			self.build_hexes(new_centre_vert[0])
-			#print(self.hex_temp)
+				new_centre_vert = [verts[i] for i in range(2)
+									if verts[i] not in self.hex_centres]
+				#Not every edge will have a new_centre_vert
+				if len(new_centre_vert) > 0:
+					self.build_hexes(new_centre_vert[0])
+				#print(self.hex_temp)
+
+			self.hex_list += self.hex_temp
+			print(len(self.hex_list))
+			self.hex_temp = []
 		'''
 		self.hex_temp is only the newly added hexes, so we need to generate
 		our new list of edges from this rather than self.hex_list so we don't
 		iterate over previously processed hexes
 		'''	
 			
-		self.hex_list += self.hex_temp
-		print(self.hex_list)
+
+
 		#print(self.hex_centres)
 
 
@@ -171,7 +238,9 @@ class Icosphere:
 		while x < len(self.hex_centres):
 			self.color.append((random.random(), random.random(), random.random()))
 			x += 1
- 
+		self.color[0] = (1,1,1)
+		print(self.color[0])
+		
 	def add_vertexes(self, v):
 		#print(v)
 		if v in self.vertexes:
@@ -183,11 +252,10 @@ class Icosphere:
 	def rotate(self):
 		glLoadIdentity() #resets the view
 		glTranslate(0, 0, -10) #moves the view
-		#glRotatef(3, 3, 2, 0)
 		glRotatef(self.angle, self.r_x, self.r_y, 0)
-		#~ self.angle += 1.5
-		#~ self.r_x = self.r_x + 0.8 - random.random()
-		#~ self.r_y = self.r_y + 1 - random.random()
+		self.angle += 1.5
+		self.r_x = self.r_x + 0.8 - random.random()
+		self.r_y = self.r_y + 1 - random.random()
 		
 				
 	def render_old_GL(self):
@@ -198,11 +266,12 @@ class Icosphere:
 			for vertex in surface:
 				if x < 55:
 					glColor3fv(self.color[x // 5])
+
 				else:
-					glColor3fv(self.color[(x - 54) // 6])
+					#glColor3fv(self.color[(x - 54) // 6])
+					glColor3fv((1.0,0,0))
 				glVertex3fv(self.vertexes[vertex])
 			x += 1
-
 		glEnd()
 		
 	def render(self):
@@ -212,20 +281,20 @@ class Icosphere:
 				pass
 		
 		
-	def midpoint(self, v1, v2):
-
+	def midpoint(self, v1, v2, weight):
+		#print(v1, v2)
 		v1 = self.vertexes[v1]
 		v2 = self.vertexes[v2]
-		#this does not account for the sphere, need to convert to vector and then 1.
-		#~ vx = (v1[0] + v2[0]) / 2.0
-		#~ vy = (v1[1] + v2[1]) / 2.0
-		#~ vz = (v1[2] + v2[2]) / 2.0
-		#~ magnitude = math.sqrt(vx**2 + vy**2 + vz**2)
-		
-		v = ([(v1 + v2)/2 for (v1, v2) in zip(v1, v2)])
-		
+		if weight == 1:
+			v = ([(v1 + v2)/2 for (v1, v2) in zip(v1, v2)])
+		elif weight < 0:
+			#the vertexes 2/3 along each edge
+			v = ([v2 + (2 * (v1 - v2) / 3) for (v1, v2) in zip(v1, v2)])
+		else:
+			#vertexes 1/3 along each edge
+			v = ([v2 + ((v1 - v2) / 3) for (v1, v2) in zip(v1, v2)])
+			
 		magnitude = sum([v[i]**2 for i in range(3)]) ** 0.5
-
 		return [round(v[i] * self.t_magnitude / magnitude, 7) for i in range(3)]
 
 	def magnitude(self):
@@ -279,3 +348,27 @@ def main():
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+if __name__ == "__main__":
+	main()
+				
+#~ ico = Icosphere()
+#~ ico.render()
+#~ print(ico.vertexes[0][1])
+#~ print(ico.triangles)
+#~ ico.refine()
+#~ print(ico.triangles)
