@@ -26,6 +26,8 @@ class Icosphere:
 		self.hex_temp = []
 		self.hex_centres = []
 		self.hexes = 12
+		self.new_verts_dic = {}
+		
 		#rotate
 		self.angle = 3
 		self.r_x = 3
@@ -33,7 +35,7 @@ class Icosphere:
 		#vertex buffer 
 		self.vertexes_bytes = 0
 		
-		self.recursions = 2
+		self.recursions = 3
 		
 		self.color = []
 		
@@ -112,7 +114,7 @@ class Icosphere:
 			a1_id = self.add_vertexes(a1)
 			b1_id = self.add_vertexes(b1)
 			c1_id = self.add_vertexes(c1)
-			d_id  = self.add_vertexes(d)
+			d_id  = self.add_vertexes(d, erase=True)
 			tris.append([tri[0], a_id, b_id])  #1
 			tris.append([a_id, a1_id, d_id])   #2
 			tris.append([d_id, b_id, a_id])    #3
@@ -155,7 +157,7 @@ class Icosphere:
 				for triangle in self.triangles:
 					count += 1
 					tris += self.divide_tri(triangle, weight=2)
-					print("{} triangles".format(count))
+					#print("{} triangles".format(count))
 				self.triangles = tris
 				tris = []
 				count = 0
@@ -181,8 +183,22 @@ class Icosphere:
 		
 
 
-	def add_vertexes(self, v):
-		#print(v)
+	def add_vertexes(self, v, erase=False):
+		
+		v_str = str(v[0]) + str(v[1]) + str(v[2])
+		dic_test = self.new_verts_dic.get(v_str)
+		if dic_test == None:
+			#First time for this vertex
+			self.vertexes.append(v)
+			if erase == False:
+				self.new_verts_dic[v_str] = len(self.vertexes) - 1
+				
+			return len(self.vertexes) - 1
+		else:
+			del self.new_verts_dic[v_str]
+			return dic_test
+			
+			
 		if v in self.vertexes:
 			return self.vertexes.index(v)
 		else:
@@ -191,7 +207,7 @@ class Icosphere:
 
 	def rotate(self):
 		glLoadIdentity() #resets the view
-		glTranslate(0, 0, -10) #moves the view
+		glTranslate(0, 0, -30) #moves the view
 		glRotatef(self.angle, self.r_x, self.r_y, 0)
 		self.angle += 1.5
 		self.r_x = self.r_x + 0.8 - random.random()
@@ -265,4 +281,3 @@ def main():
 
 if __name__ == "__main__":
 	main()
-
