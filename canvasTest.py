@@ -4,6 +4,7 @@ import tkinter.ttk as ttk
 import Orbitals
 import Galaxy
 import CanvasZoom
+import game
 import StarSystem
 
 
@@ -13,8 +14,11 @@ LARGE_FONT = ("Verdana", 12)
 
 class SpaceGame(tk.Tk):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, game, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
+
+        self.game = game
+
         container = tk.Frame(self)
 
         container.pack(side = "top", fill="both", expand= True)
@@ -77,8 +81,8 @@ class PageOne(tk.Frame):
         self.planetTextOffset = 5 + self.planetRadius * 1.3
 
         # Generate the galaxy here, TODO need to move this to a main at some point
-        self.galaxy = Galaxy.Galaxy()
-        self.mySystem = self.galaxy.systems[0]
+        # self.galaxy = Galaxy.Galaxy()
+        # self.current_system = self.galaxy.systems[0]
 
         self.planetWidgets = []
         self.planetName = []
@@ -101,8 +105,8 @@ class PageOne(tk.Frame):
         # Generate Widgets
         self.generateLeftCanvas()
 
-        self.lastItemOnTreeview = ":".join(("STAR", self.galaxy.systems[0].name))
-        self.createTreeviewSystemData(self.mySystem, self.lastItemOnTreeview)
+        self.lastItemOnTreeview = ":".join(("STAR", game.game.current_system.name))
+        self.createTreeviewSystemData(game.game.current_system, self.lastItemOnTreeview)
         self.treeview.item(self.lastItemOnTreeview, open=True)
 
         self.generateCanvas()
@@ -126,10 +130,11 @@ class PageOne(tk.Frame):
         '''
         self.treeview.insert('', 'end', 'ROOT:Systems', text='Systems', open=True)
         # Populate the tree with systems
-        for i in range(0, len(self.galaxy.systems)):
+        #for i in range(0, len(game.game.galaxy.systems)):
+        for system in game.game.galaxy.systems:
             self.treeview.insert('ROOT:Systems', 'end',
-                                 ":".join(("STAR", self.galaxy.systems[i].name)),
-                                 text=self.galaxy.systems[i].name)
+                                 ":".join(("STAR", system.name)),
+                                 text=system.name)
 
     def doubleClickTreeview(self, event):
         #itemID is the tree id
@@ -145,13 +150,13 @@ class PageOne(tk.Frame):
             self.starY = self.centreY = self.canvasH / 2
             # self.zoomOffsetX = self.zoomOffsetY = 0
 
-            self.mySystem = self.galaxy.systems[self.galaxy.systemNames.index(name)]
+            game.game.current_system = game.game.galaxy.systems[game.game.galaxy.systemNames.index(name)]
             self.treeview.item(self.lastItemOnTreeview, open=0)
             self.treeview.item(itemID, open=True)
             self.lastItemOnTreeview = itemID
              # If no system has been generated, generate it.
-            if len(self.mySystem.children) == 0:
-                self.createTreeviewSystemData(self.mySystem, itemID)
+            if len(game.game.current_system.children) == 0:
+                self.createTreeviewSystemData(game.game.current_system, itemID)
             self.cz.resetZoom()
             childrenList = []
             childrenList = self.treeview.get_children(itemID)
@@ -161,7 +166,7 @@ class PageOne(tk.Frame):
             self.generateCanvas()
             return
         if itemType == 'PLANET':
-            #nameList = self.mySystem.getPlanetNames()
+            #nameList = self.current_system.getPlanetNames()
             #print(self.planetName[name], self.planetWidgets.index(self.planetName[name]-1))
             #print(self.planetWidgets)
             self.cz.adjustZoomLevel(4)
@@ -172,10 +177,10 @@ class PageOne(tk.Frame):
         if itemType == 'MOON':
             '''
             Need to zoom in and centre on the moons parent
-            Need to cycle through self.mySystem until
+            Need to cycle through self.current_system until
             '''
             #There should be only one moon with a given name
-            moon = [i for i in self.mySystem.children if i.name == name]
+            moon = [i for i in game.game.current_system.children if i.name == name]
             self.cz.adjustZoomLevel(10)
             self.generateCanvas()
             idOfCanvasObj = self.planetWidgets[self.planetWidgets.index(self.planetName[moon[0].name]-1)]
@@ -192,24 +197,25 @@ class PageOne(tk.Frame):
     def createTreeviewSystemData(self, system, itemID):
         '''
 
-        :param system: the system from self.mySystem
+        :param system: the system from self.current_system
         :param itemID: The last item inserted into the Treeview - used as the parent
         :return:
         '''
         system.generate()
         textType = ''
         parent = tempID =  ''
-        for j in range(1, len(self.mySystem.children)):
-            if isinstance(self.mySystem.children[j], Orbitals.Planet):
+        #for j in range(1, len(self.current_system.children)):
+        for body in game.game.current_system.children:
+            if isinstance(body, Orbitals.Planet):
                 textType = 'PLANET'
                 parent = itemID
-            elif isinstance(self.mySystem.children[j], Orbitals.Moon):
+            elif isinstance(body, Orbitals.Moon):
                 textType = 'MOON'
                 if parent == itemID:
                     parent = tempID
             tempID = self.treeview.insert(parent, 'end',
-                                        ":".join((textType, self.mySystem.children[j].name)),
-                                        text=self.mySystem.children[j].name)
+                                        ":".join((textType, body.name)),
+                                        text=body.name)
 
 
     def focusOnClickedObject(self, event):
@@ -268,9 +274,9 @@ class PageOne(tk.Frame):
         self.canvas.delete('all')
         self.planetWidgets = []
         self.planetName = {}
-        for p in self.mySystem.children:
+        for p in game.game.current_system.children:
             if isinstance(p, Orbitals.Star):
-                applyColor = self.mySystem.children[0].stellarColor
+                applyColor = game.game.current_system.get_star_color()
                 radius = self.starRadius
                 self.planetWidgets.append(self.circle(self.starX, self.starY, radius, fill=applyColor))
                 self.planetName[p.name] = self.canvas.create_text(self.starX, self.starY + self.starTextOffset, text=p.name)
@@ -292,7 +298,7 @@ class PageOne(tk.Frame):
         self.canvas.create_text(30, self.canvasH - 50, text=self.cz.getZoomLevelText())
 
     def drawPlanetsAndMoon(self, centreX, centreY, orbDistance, parentRadius, radius, applyColor, x, y, name):
-        orbRadius = (orbDistance / self.mySystem.maxOrbitalDistance) * self.canvasH
+        orbRadius = (orbDistance / game.game.current_system.maxOrbitalDistance) * self.canvasH
         orbRadius *= (1 + self.cz.change) ** ((self.cz.level - 1) / self.cz.change)
         if orbRadius - 5 > parentRadius:
             self.circle(centreX, centreY, orbRadius, fill="")
@@ -316,7 +322,7 @@ class PageOne(tk.Frame):
         x and y coordinates for the canvas object
         '''
         x, y = obj.getCoords()
-        maxRadius = self.mySystem.maxOrbitalDistance
+        maxRadius = game.game.current_system.maxOrbitalDistance
         # number of times plus or minus on zoom level
         x = (self.cz.canvasXYZoom()) * ((x / maxRadius * self.canvasW)) + self.starX
         y = (self.cz.canvasXYZoom()) * ((y / maxRadius * self.canvasH)) + self.starY
@@ -340,23 +346,9 @@ class PageOne(tk.Frame):
 
     def redrawCanvas(self):
         # Temp: The redraw canvas should be an update method
-        self.mySystem.update(80000)
-        planetNewCoords = [self.getCanvasXY(p) for p in self.mySystem.children \
-                           if isinstance(p, Orbitals.Planet) or isinstance(p, Orbitals.Moon)]
-
-        for i in range(0, len(self.planetWidgets)):
-            coords = self.getCircleCoords(self.planetWidgets[i])
-            #print(str(i) + " " + str(coords) + " " + str(planetNewCoords[i]))
-            # Check to see planetWidget exists on canvas
-            if coords != False:
-                self.canvas.move(self.planetWidgets[i],
-                                 planetNewCoords[i][0] - coords[0],
-                                 planetNewCoords[i][1] - coords[1])
-                self.canvas.move(self.planetName[i],
-                                 planetNewCoords[i][0] - coords[0],
-                                 planetNewCoords[i][1] - coords[1])
+        '''Throws time at the system and moves all planetary bodies accordingly'''
+        game.game.current_system.update(80000)
+        self.generateCanvas()
 
 
 
-app = SpaceGame()
-app.mainloop()

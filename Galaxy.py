@@ -12,7 +12,34 @@ class Galaxy(object):
     def __init__(self):
         self.systems = []
         self.systemNames = []
+
+        '''
+        Do I add a list of settlements here, and how do I reference them? A unique ID when created?
+
+        Do I add a new class, Factions, which controls species traits and its settlements and ships? I like the idea of that
+
+
+
+        So we are looking at something like...
+
+        self.generate_factions()
+            generate_species()
+                'Human'
+                generate_nation()
+                    'UK'
+                    generate_settlement()
+                        'London'
+                    'France'
+                        'Paris'
+                'Vulcan'
+                    'Vulcan'
+                        'Vulcan City'
+
+
+        '''
+
         self.generate()
+
 
     def generate(self):
         numberOfStars = 11

@@ -98,6 +98,8 @@ class StarSystem(Orbitals.Orbitals):
                 output.append(item.name)
         return(output)
 
+    def get_star_color(self):
+        return(self.children[0].stellarColor)
 
 
 
