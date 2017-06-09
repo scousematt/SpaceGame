@@ -1,35 +1,15 @@
-import random
+'''
+This module is where all of the global project variables are going to be encountered, stored and accessed.
 
-import canvasMain
-import Galaxy
-import Settlement
-
-
-class Game:
-    current_time = 0
-    galaxy = None
-
-    def __init__(self):
+Variables will be set up when the main.py is run.
+'''
 
 
-        self.initial_setup()
 
-    @classmethod
-    def initial_setup(cls):
-        cls.galaxy = Galaxy.Galaxy()
-        cls.current_system = cls.galaxy.systems[0]
-
-    @classmethod
-    def update(cls, dt):
-        cls.current_time += dt
-
-    @classmethod
-    def set_current_system(cls, name):
-        system_index = cls.galaxy.systemNames.index(name)
-        cls.current_system = cls.galaxy.systems[system_index]
+galaxy = None
+current_time = 0
+current_system = 0
 
 
-print(canvasMain.LARGE_FONT)
-game = Game()
-app = canvasMain.SpaceGame(game)
-app.mainloop()
+def update_time(dt):
+    current_time += dt

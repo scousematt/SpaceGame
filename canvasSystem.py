@@ -1,10 +1,14 @@
 import tkinter as tk
 import tkinter.ttk as ttk
 
+import math
+
 import Orbitals
-import Galaxy
+import canvasMain
 import CanvasZoom
 import game
+
+
 import StarSystem
 
 
@@ -12,48 +16,50 @@ import StarSystem
 LARGE_FONT = ("Verdana", 12)
 
 
-class SpaceGame(tk.Tk):
-
-    def __init__(self, game, *args, **kwargs):
-        tk.Tk.__init__(self, *args, **kwargs)
-
-        self.game = game
-
-        container = tk.Frame(self)
-
-        container.pack(side = "top", fill="both", expand= True)
-
-        container.grid_rowconfigure(0, weight=1)
-        container.grid_columnconfigure(0, weight = 1)
-
-        self.frames = {}
-        for F in (StartPage, PageOne):
-            frame = F(container, self)
-            self.frames[F] = frame
-            frame.grid(row = 0, column=0, sticky="nsew")
-        self.show_frame(StartPage)
-
-    def show_frame(self, cont):
-        frame = self.frames[cont]
-        frame.tkraise()
-
-
-
-class StartPage(tk.Frame):
-
-    def __init__(self, parent, controller):
-        tk.Frame.__init__(self, parent)
-        label = tk.Label(self, text="Start Page", font=LARGE_FONT)
-        label.pack(pady=10, padx=10)
-
-        button1 = tk.Button(self, text="Visit page 1",
-                            command=lambda: controller.show_frame(PageOne))
-        button1.pack()
+# class SpaceGame(tk.Tk):
+#
+#     def __init__(self, game, *args, **kwargs):
+#         tk.Tk.__init__(self, *args, **kwargs)
+#
+#         self.game = game
+#
+#         container = tk.Frame(self)
+#
+#         container.pack(side = "top", fill="both", expand= True)
+#
+#         container.grid_rowconfigure(0, weight=1)
+#         container.grid_columnconfigure(0, weight = 1)
+#
+#         self.frames = {}
+#         for F in (StartPage, PageOne):
+#             frame = F(container, self)
+#             self.frames[F] = frame
+#             frame.grid(row = 0, column=0, sticky="nsew")
+#         self.show_frame(StartPage)
+#
+#     def show_frame(self, cont):
+#         frame = self.frames[cont]
+#         frame.tkraise()
+#
+#
+#
+# class StartPage(tk.Frame):
+#
+#     def __init__(self, parent, controller):
+#         tk.Frame.__init__(self, parent)
+#         label = tk.Label(self, text="Start Page", font=LARGE_FONT)
+#         label.pack(pady=10, padx=10)
+#
+#         button1 = tk.Button(self, text="Visit page 1",
+#                             command=lambda: controller.show_frame(PageOne))
+#         button1.pack()
 
 class PageOne(tk.Frame):
 
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
+
+        #import game object which includes all game informati
 
          # If these are not equal, then orbitals need to be an oval
         self.canvasH = 750
@@ -105,11 +111,21 @@ class PageOne(tk.Frame):
         # Generate Widgets
         self.generateLeftCanvas()
 
-        self.lastItemOnTreeview = ":".join(("STAR", game.game.current_system.name))
-        self.createTreeviewSystemData(game.game.current_system, self.lastItemOnTreeview)
+        self.lastItemOnTreeview = ":".join(("STAR", game.current_system.name))
+        self.createTreeviewSystemData(game.current_system, self.lastItemOnTreeview)
         self.treeview.item(self.lastItemOnTreeview, open=True)
 
         self.generateCanvas()
+
+        ###############################################################
+        #
+        # GUI
+
+        button1 = tk.Button(self, text="Main Menu",
+                            command=lambda: controller.show_frame(canvasMain.StartPage))
+        button1.pack()
+
+
         print('after generatecanvas')
 
     def mouseFocus(self, event):
@@ -131,7 +147,7 @@ class PageOne(tk.Frame):
         self.treeview.insert('', 'end', 'ROOT:Systems', text='Systems', open=True)
         # Populate the tree with systems
         #for i in range(0, len(game.game.galaxy.systems)):
-        for system in game.game.galaxy.systems:
+        for system in game.galaxy.systems:
             self.treeview.insert('ROOT:Systems', 'end',
                                  ":".join(("STAR", system.name)),
                                  text=system.name)
@@ -150,13 +166,13 @@ class PageOne(tk.Frame):
             self.starY = self.centreY = self.canvasH / 2
             # self.zoomOffsetX = self.zoomOffsetY = 0
 
-            game.game.current_system = game.game.galaxy.systems[game.game.galaxy.systemNames.index(name)]
+            game.current_system = game.galaxy.systems[game.galaxy.systemNames.index(name)]
             self.treeview.item(self.lastItemOnTreeview, open=0)
             self.treeview.item(itemID, open=True)
             self.lastItemOnTreeview = itemID
              # If no system has been generated, generate it.
-            if len(game.game.current_system.children) == 0:
-                self.createTreeviewSystemData(game.game.current_system, itemID)
+            if len(game.current_system.children) == 0:
+                self.createTreeviewSystemData(game.current_system, itemID)
             self.cz.resetZoom()
             childrenList = []
             childrenList = self.treeview.get_children(itemID)
@@ -180,7 +196,7 @@ class PageOne(tk.Frame):
             Need to cycle through self.current_system until
             '''
             #There should be only one moon with a given name
-            moon = [i for i in game.game.current_system.children if i.name == name]
+            moon = [i for i in game.current_system.children if i.name == name]
             self.cz.adjustZoomLevel(10)
             self.generateCanvas()
             idOfCanvasObj = self.planetWidgets[self.planetWidgets.index(self.planetName[moon[0].name]-1)]
@@ -205,7 +221,7 @@ class PageOne(tk.Frame):
         textType = ''
         parent = tempID =  ''
         #for j in range(1, len(self.current_system.children)):
-        for body in game.game.current_system.children:
+        for body in game.current_system.children:
             if isinstance(body, Orbitals.Planet):
                 textType = 'PLANET'
                 parent = itemID
@@ -277,11 +293,11 @@ class PageOne(tk.Frame):
         self.canvas.delete('all')
         self.planetWidgets = []
         self.planetName = {}
-        for p in game.game.current_system.children:
+        for p in game.current_system.children:
             if isinstance(p, Orbitals.Star):
-                applyColor = game.game.current_system.get_star_color()
+                applyColor = game.current_system.get_star_color()
                 radius = self.starRadius
-                self.planetWidgets.append(self.circle(self.starX, self.starY, radius, fill=applyColor))
+                self.planetWidgets.append(self.circle(self.starX, self.starY,0,0, radius, fill=applyColor))
                 self.planetName[p.name] = self.canvas.create_text(self.starX, self.starY + self.starTextOffset, text=p.name)
             elif isinstance(p, Orbitals.Planet):
                 applyColor = "blue"
@@ -301,20 +317,46 @@ class PageOne(tk.Frame):
         self.canvas.create_text(30, self.canvasH - 50, text=self.cz.getZoomLevelText())
 
     def drawPlanetsAndMoon(self, centreX, centreY, orbDistance, parentRadius, radius, applyColor, x, y, name):
-        orbRadius = (orbDistance / game.game.current_system.maxOrbitalDistance) * self.canvasH
+        orbRadius = (orbDistance / game.current_system.maxOrbitalDistance) * self.canvasH
         orbRadius *= (1 + self.cz.change) ** ((self.cz.level - 1) / self.cz.change)
         if orbRadius - 5 > parentRadius:
-            self.circle(centreX, centreY, orbRadius, fill="")
-            self.planetWidgets.append(self.circle(x, y, radius, fill=applyColor))
+            #Draws Orbital Path if not too close to the parent
+            self.circle(centreX, centreY,0,0, orbRadius, fill="")
+            #Draws blue blob to show planet
+            self.planetWidgets.append(self.circle(x, y, centreX, centreY, radius, fill=applyColor))
             self.planetName[name] = self.canvas.create_text(x, y + self.planetTextOffset, text = name)
         else:
-            self.planetWidgets.append(self.circle(x, y, radius, fill=applyColor, tags="deleteme"))
+            self.planetWidgets.append(self.circle(x, y, centreX, centreY, radius, fill=applyColor, tags="deleteme"))
             self.planetName[name] = self.canvas.create_text(x, y + self.planetTextOffset, text = name, tags="deleteme")
             self.canvas.delete('deleteme')
 
 
-    def circle(self, x, y, r, **kwargs):
-        return self.canvas.create_oval(x - r, y - r, x + r, y + r, **kwargs)
+    def circle(self, centre_x, centre_y, circ_x, circ_y,  r, **kwargs):
+        '''
+
+        :param centre_x: centre of the circle
+        :param centre_y:
+        :param circ_x:
+        :param circ_y:
+        :param r: radius
+        :param kwargs:
+        :return: If the radius is less than an amount - there are errors when zoomed in, so there are
+        times when a line will be drawn
+        '''
+        if  r > 500:    #fill == '' means drawing orbital path, Arbitary radius
+            #Return a line
+            x = centre_x - circ_x
+            y = centre_y - circ_y
+            angle = math.radians(90 - math.acos(y/x))
+            #Lets make the canvas 1000 - worst case scenario
+            dx = math.sin(angle) * 1000
+            dy = math.cos(angle) * 1000
+
+            #Need the angle from the vertical to the centre
+            #90 - above
+            return self.canvas.create_line(centre_x,centre_y,centre_x - dx,centre_y - dy)
+        else:
+            return self.canvas.create_oval(centre_x - r, centre_y - r, centre_x + r, centre_y + r, **kwargs)
 
     def getCanvasXY(self, obj):
         ''''
@@ -325,7 +367,7 @@ class PageOne(tk.Frame):
         x and y coordinates for the canvas object
         '''
         x, y = obj.getCoords()
-        maxRadius = game.game.current_system.maxOrbitalDistance
+        maxRadius = game.current_system.maxOrbitalDistance
         # number of times plus or minus on zoom level
         x = (self.cz.canvasXYZoom()) * ((x / maxRadius * self.canvasW)) + self.starX
         y = (self.cz.canvasXYZoom()) * ((y / maxRadius * self.canvasH)) + self.starY
@@ -350,7 +392,7 @@ class PageOne(tk.Frame):
     def redrawCanvas(self):
         # Temp: The redraw canvas should be an update method
         '''Throws time at the system and moves all planetary bodies accordingly'''
-        game.game.current_system.update(80000)
+        game.update_time(80000)
         self.generateCanvas()
 
 
