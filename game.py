@@ -1,12 +1,13 @@
 import random
 
-import canvasTest
+import canvasMain
 import Galaxy
 import Settlement
 
 
 class Game:
     current_time = 0
+    galaxy = None
 
     def __init__(self):
 
@@ -28,7 +29,7 @@ class Game:
         cls.current_system = cls.galaxy.systems[system_index]
 
 
-
+print(canvasMain.LARGE_FONT)
 game = Game()
-app = canvasTest.SpaceGame(game)
+app = canvasMain.SpaceGame(game)
 app.mainloop()
