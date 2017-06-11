@@ -2,6 +2,10 @@ import tkinter as tk
 import tkinter.ttk as ttk
 
 import canvasSystem
+import canvasFaction
+import canvasMenu
+import game
+
 import game
 
 LARGE_FONT = ("Verdana", 12)
@@ -23,7 +27,9 @@ class SpaceGame(tk.Tk):
         container.grid_columnconfigure(0, weight=1)
 
         self.frames = {}
-        for F in (StartPage, canvasSystem.PageOne):
+
+        game.top_menu = (StartPage, canvasSystem.PageOne, canvasFaction.PageOne)
+        for F in game.top_menu:
             frame = F(container, self)
             self.frames[F] = frame
             frame.grid(row = 0, column=0, sticky="nsew")
@@ -34,10 +40,11 @@ class SpaceGame(tk.Tk):
         frame = self.frames[cont]
         frame.tkraise()
 
-class StartPage(tk.Frame):
+
+class StartPage(canvasMenu.GameFrame):
 
     def __init__(self, parent, controller):
-        tk.Frame.__init__(self, parent)
+        canvasMenu.GameFrame.__init__(self, parent, controller)
 
         self.game = parent
         label = tk.Label(self, text="Start Page", font=LARGE_FONT)

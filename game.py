@@ -5,6 +5,7 @@ Variables will be set up when the main.py is run.
 '''
 
 
+top_menu = None
 
 galaxy = None
 current_time = 0

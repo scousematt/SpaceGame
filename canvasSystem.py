@@ -5,6 +5,7 @@ import math
 
 import Orbitals
 import canvasMain
+import canvasMenu
 import CanvasZoom
 import game
 
@@ -15,49 +16,10 @@ import StarSystem
 
 LARGE_FONT = ("Verdana", 12)
 
-
-# class SpaceGame(tk.Tk):
-#
-#     def __init__(self, game, *args, **kwargs):
-#         tk.Tk.__init__(self, *args, **kwargs)
-#
-#         self.game = game
-#
-#         container = tk.Frame(self)
-#
-#         container.pack(side = "top", fill="both", expand= True)
-#
-#         container.grid_rowconfigure(0, weight=1)
-#         container.grid_columnconfigure(0, weight = 1)
-#
-#         self.frames = {}
-#         for F in (StartPage, PageOne):
-#             frame = F(container, self)
-#             self.frames[F] = frame
-#             frame.grid(row = 0, column=0, sticky="nsew")
-#         self.show_frame(StartPage)
-#
-#     def show_frame(self, cont):
-#         frame = self.frames[cont]
-#         frame.tkraise()
-#
-#
-#
-# class StartPage(tk.Frame):
-#
-#     def __init__(self, parent, controller):
-#         tk.Frame.__init__(self, parent)
-#         label = tk.Label(self, text="Start Page", font=LARGE_FONT)
-#         label.pack(pady=10, padx=10)
-#
-#         button1 = tk.Button(self, text="Visit page 1",
-#                             command=lambda: controller.show_frame(PageOne))
-#         button1.pack()
-
-class PageOne(tk.Frame):
+class PageOne(canvasMenu.GameFrame):
 
     def __init__(self, parent, controller):
-        tk.Frame.__init__(self, parent)
+        canvasMenu.GameFrame.__init__(self, parent, controller)
 
         #import game object which includes all game informati
 
@@ -297,7 +259,7 @@ class PageOne(tk.Frame):
             if isinstance(p, Orbitals.Star):
                 applyColor = game.current_system.get_star_color()
                 radius = self.starRadius
-                self.planetWidgets.append(self.circle(self.starX, self.starY,0,0, radius, fill=applyColor))
+                self.planetWidgets.append(self.circle(self.starX, self.starY, radius, fill=applyColor))
                 self.planetName[p.name] = self.canvas.create_text(self.starX, self.starY + self.starTextOffset, text=p.name)
             elif isinstance(p, Orbitals.Planet):
                 applyColor = "blue"
@@ -316,47 +278,49 @@ class PageOne(tk.Frame):
                                         pX, pY, p.name)
         self.canvas.create_text(30, self.canvasH - 50, text=self.cz.getZoomLevelText())
 
-    def drawPlanetsAndMoon(self, centreX, centreY, orbDistance, parentRadius, radius, applyColor, x, y, name):
-        orbRadius = (orbDistance / game.current_system.maxOrbitalDistance) * self.canvasH
-        orbRadius *= (1 + self.cz.change) ** ((self.cz.level - 1) / self.cz.change)
-        if orbRadius - 5 > parentRadius:
+    def drawPlanetsAndMoon(self, parent_x, parent_y, orbDistance, parentRadius, radius, applyColor,
+                           child_x, child_y, name):
+        orb_radius = (orbDistance / game.current_system.maxOrbitalDistance) * self.canvasH
+        orb_radius *= (1 + self.cz.change) ** ((self.cz.level - 1) / self.cz.change)
+        if orb_radius - 5 > parentRadius:
             #Draws Orbital Path if not too close to the parent
-            self.circle(centreX, centreY,0,0, orbRadius, fill="")
+            #If we zoom in too far then the path is placed in the wrong place, so replace with a line if radius too big
+            if orb_radius > 15000:
+                #draw a tangent through child_x square to line to parent_x
+                self.draw_tangent(parent_x, parent_y, child_x, child_y)
+            else:
+                self.circle(parent_x, parent_y, orb_radius, fill="")
             #Draws blue blob to show planet
-            self.planetWidgets.append(self.circle(x, y, centreX, centreY, radius, fill=applyColor))
-            self.planetName[name] = self.canvas.create_text(x, y + self.planetTextOffset, text = name)
+            self.planetWidgets.append(self.circle(child_x, child_y, radius, fill=applyColor))
+            self.planetName[name] = self.canvas.create_text(child_x, child_y + self.planetTextOffset, text = name)
         else:
-            self.planetWidgets.append(self.circle(x, y, centreX, centreY, radius, fill=applyColor, tags="deleteme"))
-            self.planetName[name] = self.canvas.create_text(x, y + self.planetTextOffset, text = name, tags="deleteme")
+            self.planetWidgets.append(self.circle(child_x, child_y, radius, fill=applyColor, tags="deleteme"))
+            self.planetName[name] = self.canvas.create_text(child_x, child_y + self.planetTextOffset, text = name, tags="deleteme")
             self.canvas.delete('deleteme')
 
-
-    def circle(self, centre_x, centre_y, circ_x, circ_y,  r, **kwargs):
+    def draw_tangent(self, px, py, cx, cy):
+        '''
+        x, y   rotate ccw -> -y, x around origin
+        :param px:
+        :param py:
+        :param cx:
+        :param cy:
+        :return:
         '''
 
-        :param centre_x: centre of the circle
-        :param centre_y:
-        :param circ_x:
-        :param circ_y:
-        :param r: radius
-        :param kwargs:
-        :return: If the radius is less than an amount - there are errors when zoomed in, so there are
-        times when a line will be drawn
-        '''
-        if  r > 500:    #fill == '' means drawing orbital path, Arbitary radius
-            #Return a line
-            x = centre_x - circ_x
-            y = centre_y - circ_y
-            angle = math.radians(90 - math.acos(y/x))
-            #Lets make the canvas 1000 - worst case scenario
-            dx = math.sin(angle) * 1000
-            dy = math.cos(angle) * 1000
+        #Make cx, cy the origin
 
-            #Need the angle from the vertical to the centre
-            #90 - above
-            return self.canvas.create_line(centre_x,centre_y,centre_x - dx,centre_y - dy)
-        else:
-            return self.canvas.create_oval(centre_x - r, centre_y - r, centre_x + r, centre_y + r, **kwargs)
+        size_factor = (px - cx) / self.canvasH - 100
+        x, y = (px - cx) / size_factor, (py - cy) / size_factor
+
+        x1, y1 = -y + cx, x + cy
+        x2, y2 = y + cx, -x + cy
+        return self.canvas.create_line(x1, y1, x2, y2)
+
+
+    def circle(self, x, y,  r, **kwargs):
+
+        return self.canvas.create_oval(x - r, y - r, x + r, y + r, **kwargs)
 
     def getCanvasXY(self, obj):
         ''''
