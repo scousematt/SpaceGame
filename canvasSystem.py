@@ -24,19 +24,19 @@ class PageOne(canvasMenu.GameFrame):
         #import game object which includes all game informati
 
          # If these are not equal, then orbitals need to be an oval
-        self.canvasH = 750
-        self.canvasW = 750
+        self.canvas_height = 750
+        self.canvas_width = 750
         # Left Canvas is the planetary treeview
-        self.leftCanvas = tk.Canvas(self, height=self.canvasH, width=6, bg='white')
+        self.leftCanvas = tk.Canvas(self, height=self.canvas_height, width=6, bg='white')
         self.leftCanvas.pack(side=tk.LEFT, expand=1, fill=tk.Y)
         self.tree = ttk.Treeview(self.leftCanvas, columns=('Systems'), height=100)
         # Shows the planet and ships n stuff
-        self.canvas = tk.Canvas(self, height=self.canvasH, width=self.canvasW, bg='grey')
+        self.canvas = tk.Canvas(self, height=self.canvas_height, width=self.canvas_width, bg='grey')
         self.canvas.pack(side=tk.LEFT)
 
         # # Current centre of the system - the star centre upon creation
-        self.starX = self.canvasW / 2
-        self.starY = self.canvasH / 2
+        self.starX = self.canvas_width / 2
+        self.starY = self.canvas_height / 2
         # The centre of the canvas
         self.centreX = self.starX
         self.centreY = self.starY
@@ -47,10 +47,6 @@ class PageOne(canvasMenu.GameFrame):
         self.moonRadius = 3
         self.starTextOffset = 5 + self.starRadius * 1.3
         self.planetTextOffset = 5 + self.planetRadius * 1.3
-
-        # Generate the galaxy here, TODO need to move this to a main at some point
-        # self.galaxy = Galaxy.Galaxy()
-        # self.current_system = self.galaxy.systems[0]
 
         self.planetWidgets = []
         self.planetName = []
@@ -119,8 +115,8 @@ class PageOne(canvasMenu.GameFrame):
 
     def doubleclick_on_star(self, treeview_item):
         self.cz.level = 1
-        self.starX = self.centreX = self.canvasW / 2
-        self.starY = self.centreY = self.canvasH / 2
+        self.starX = self.centreX = self.canvas_width / 2
+        self.starY = self.centreY = self.canvas_height / 2
         # self.zoomOffsetX = self.zoomOffsetY = 0
 
         game.current_system = game.galaxy.systems[game.galaxy.systemNames.index(star_name)]
@@ -185,8 +181,8 @@ class PageOne(canvasMenu.GameFrame):
         if itemType == 'STAR':
 
             self.cz.level = 1
-            self.starX = self.centreX = self.canvasW / 2
-            self.starY = self.centreY = self.canvasH / 2
+            self.starX = self.centreX = self.canvas_width / 2
+            self.starY = self.centreY = self.canvas_height / 2
             # self.zoomOffsetX = self.zoomOffsetY = 0
 
             game.current_system = game.galaxy.systems[game.galaxy.systemNames.index(item_name)]
@@ -355,11 +351,17 @@ class PageOne(canvasMenu.GameFrame):
                 self.drawPlanetsAndMoon(parentX, parentY, p.orbitalDistance,
                                         self.planetRadius, self.moonRadius, applyColor,
                                         pX, pY, p.name)
-        self.canvas.create_text(30, self.canvasH - 50, text=self.cz.getZoomLevelText())
+        self.canvas.create_text(30, self.canvas_height - 50, text=self.cz.getZoomLevelText())
+        self.draw_vessels()
+
+    def draw_vessels(self):
+        for ship in game.current_system.ships:
+            x, y = self.getCanvasXY(ship)
+            self.circle(x, y, 5, fill=ship.color)
 
     def drawPlanetsAndMoon(self, parent_x, parent_y, orbDistance, parentRadius, radius, applyColor,
                            child_x, child_y, name):
-        orb_radius = (orbDistance / game.current_system.maxOrbitalDistance) * self.canvasH
+        orb_radius = (orbDistance / game.current_system.maxOrbitalDistance) * self.canvas_height
         orb_radius *= (1 + self.cz.change) ** ((self.cz.level - 1) / self.cz.change)
         if orb_radius - 5 > parentRadius:
             #Draws Orbital Path if not too close to the parent
@@ -389,7 +391,7 @@ class PageOne(canvasMenu.GameFrame):
 
         #Make cx, cy the origin
 
-        size_factor = (px - cx) / self.canvasH - 100
+        size_factor = (px - cx) / self.canvas_height - 100
         x, y = (px - cx) / size_factor, (py - cy) / size_factor
 
         x1, y1 = -y + cx, x + cy
@@ -412,8 +414,8 @@ class PageOne(canvasMenu.GameFrame):
         x, y = obj.getCoords()
         maxRadius = game.current_system.maxOrbitalDistance
         # number of times plus or minus on zoom level
-        x = (self.cz.canvasXYZoom()) * ((x / maxRadius * self.canvasW)) + self.starX
-        y = (self.cz.canvasXYZoom()) * ((y / maxRadius * self.canvasH)) + self.starY
+        x = (self.cz.canvasXYZoom()) * ((x / maxRadius * self.canvas_width)) + self.starX
+        y = (self.cz.canvasXYZoom()) * ((y / maxRadius * self.canvas_height)) + self.starY
         return (x, y)
 
     def getCircleCoords(self, pObj):

@@ -11,6 +11,9 @@ class StarSystem(Orbitals.Orbitals):
         self.name = name
         self.maxOrbitalDistance = None
 
+        #Ships
+        self.ships = []
+
 
 
 
