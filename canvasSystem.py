@@ -114,21 +114,82 @@ class PageOne(canvasMenu.GameFrame):
                                  ":".join(("STAR", system.name)),
                                  text=system.name)
 
+
+
+
+    def doubleclick_on_star(self, treeview_item):
+        self.cz.level = 1
+        self.starX = self.centreX = self.canvasW / 2
+        self.starY = self.centreY = self.canvasH / 2
+        # self.zoomOffsetX = self.zoomOffsetY = 0
+
+        game.current_system = game.galaxy.systems[game.galaxy.systemNames.index(star_name)]
+        self.treeview.item(self.lastItemOnTreeview, open=0)
+        self.treeview.item(itemID, open=True)
+        self.lastItemOnTreeview = itemID
+        # If no system has been generated, generate it.
+        if len(game.current_system.children) == 0:
+            self.createTreeviewSystemData(game.current_system, itemID)
+        self.cz.resetZoom()
+        # childrenList = []
+        childrenList = self.treeview.get_children(itemID)
+        # print(childrenList)
+        # self.treeview.see(childrenList[0])
+        # print(itemID, self.treeview.item(itemID, 'open'), self.lastItemOnTreeview)
+        self.generateCanvas()
+
     def doubleClickTreeview(self, event):
         #itemID is the tree id
+
+        '''
+
+        :param event:
+        :return:
+        '''
+        #TODO clicking on any part of a tree should change to that system
+        '''
+
+
+        This produces
+        'STAR: Rigel'
+        'PLANET: Rigel i'
+        'MOON: Rigel i A'
+        '''
         itemID = self.tree.identify('item', event.x, event.y)
-        itemType, name = itemID.split(':')
-        idOfCanvasObj = ''
+        itemType, item_name = itemID.split(':')
+
+        parent_id = self.tree.parent(itemID)
+        parent_type, parent_name = parent_id.split(':')
+
+        while parent_type != 'STAR' and parent_type != 'ROOT':
+            parent_id = self.tree.parent(parent_id)
+            parent_type, parent_name = parent_id.split(':')
+        if itemType == 'STAR':
+            parent_name = item_name
+        # Need something like:
+        # if game.galaxy.systems[game.current_system].name != parent_name: generate_canvas(parent_name)
+        if game.current_system.name != parent_name:
+            #We are clicking on a planet not in the current displayed system
+            print(parent_name + ' clicked while showing ' + game.current_system.name)
+            itemType = 'STAR'
+            item_name = parent_name
+            #game.current_system = game.galaxy.systems[game.galaxy.systemNames.index(parent_name)]
+
+
+        id_of_canvas_obj = '' # Not sure what this is doing yet
         # Doubleclick on the treeview root, ie: 'root'
         if itemType == 'ROOT':
             return
+
+        # Doubleclick on the star name
         if itemType == 'STAR':
+
             self.cz.level = 1
             self.starX = self.centreX = self.canvasW / 2
             self.starY = self.centreY = self.canvasH / 2
             # self.zoomOffsetX = self.zoomOffsetY = 0
 
-            game.current_system = game.galaxy.systems[game.galaxy.systemNames.index(name)]
+            game.current_system = game.galaxy.systems[game.galaxy.systemNames.index(item_name)]
             self.treeview.item(self.lastItemOnTreeview, open=0)
             self.treeview.item(itemID, open=True)
             self.lastItemOnTreeview = itemID
@@ -136,11 +197,11 @@ class PageOne(canvasMenu.GameFrame):
             if len(game.current_system.children) == 0:
                 self.createTreeviewSystemData(game.current_system, itemID)
             self.cz.resetZoom()
-            childrenList = []
-            childrenList = self.treeview.get_children(itemID)
-            print(childrenList)
+            #childrenList = []
+            #childrenList = self.treeview.get_children(itemID)
+            #print(childrenList)
             #self.treeview.see(childrenList[0])
-            print(itemID, self.treeview.item(itemID, 'open'), self.lastItemOnTreeview)
+            #print(itemID, self.treeview.item(itemID, 'open'), self.lastItemOnTreeview)
             self.generateCanvas()
             return
         if itemType == 'PLANET':
@@ -151,47 +212,65 @@ class PageOne(canvasMenu.GameFrame):
             #Wasteful do I need to break up generate Canvas so I dont draw to the canvas?
             self.generateCanvas()
 
-            idOfCanvasObj =  self.planetWidgets[self.planetWidgets.index(self.planetName[name]-1)]
+            id_of_canvas_obj =  self.planetWidgets[self.planetWidgets.index(self.planetName[item_name]-1)]
         if itemType == 'MOON':
-            '''
-            Need to zoom in and centre on the moons parent
-            Need to cycle through self.current_system until
-            '''
-            #There should be only one moon with a given name
-            moon = [i for i in game.current_system.children if i.name == name]
+            # There should be only one moon with a given name but this returns a list of objects with the
+            # same name
+            moon = [i for i in game.current_system.children if i.name == item_name]
             self.cz.adjustZoomLevel(10)
             self.generateCanvas()
-            idOfCanvasObj = self.planetWidgets[self.planetWidgets.index(self.planetName[moon[0].name]-1)]
-        if  [item for item in self.canvas.find_all() if idOfCanvasObj == item] == []:
+            '''
+             This should return the canvasID of the moons parent. Not sure what it's supposed to do but
+             currently, the moons are drawn orbiting the star
+             moon[0].orbited is the parent object
+            self.planetWidgets are the id's of the canvas objects drawn - orbital paths and blue circles
+            self.planetNames are the name labels.
+            
+            We need to set id_of_canvas_obj to be moon[0].orbited.name
+            '''
+            name_id = self.planetName[moon[0].orbited.name] #This is the next canvas obj after the planet circle
+            id_of_canvas_obj = name_id - 1
+            
+
+        if  [item for item in self.canvas.find_all() if id_of_canvas_obj == item] == []:
             #Should this be an isExistsCanvasID(Canvas, ID)   ?
 
             #need to zoom in more
             self.cz.adjustZoomLevel(18)
             self.generateCanvas()
             #centre the canvas on the object for its parent (planet/ moon)
-        self.centreOnPlanet(idOfCanvasObj)
+        self.centreOnPlanet(id_of_canvas_obj)
 
 
-    def createTreeviewSystemData(self, system, itemID):
+    def createTreeviewSystemData(self, system, star_ID):
         '''
 
         :param system: the system from self.current_system
-        :param itemID: The last item inserted into the Treeview - used as the parent
+        :param star_ID: The last item inserted into the Treeview - used as the parent
         :return:
         '''
+
         system.generate()
         textType = ''
-        parent = tempID =  ''
-        #for j in range(1, len(self.current_system.children)):
-        for body in game.current_system.children:
-            if isinstance(body, Orbitals.Planet):
+        parent = body_ID = planet_ID =  ''
+        body_type = ''
+        '''
+        Any planets we add to the treeview will go under star_ID,
+        we want moons to be placed under the planet so we record each additional entry as body_ID which will become
+        the parent for the first moon afterwards
+        '''
+        for body in game.current_system.children[1:]: # Ignore star as that is already under Systems
+            body_type = body.get_class_name() # isinstance returns parent classes for subclassses
+            if body_type == 'Planet':
                 textType = 'PLANET'
-                parent = itemID
-            elif isinstance(body, Orbitals.Moon):
+                parent = star_ID  # Under the star
+                planet_ID = '' # Reset for any moons around this body
+            elif body_type == 'Moon':
                 textType = 'MOON'
-                if parent == itemID:
-                    parent = tempID
-            tempID = self.treeview.insert(parent, 'end',
+                if planet_ID == '': # Is this the first moon?
+                    planet_ID = body_ID
+                parent = planet_ID
+            body_ID = self.treeview.insert(parent, 'end',
                                         ":".join((textType, body.name)),
                                         text=body.name)
 
@@ -256,20 +335,20 @@ class PageOne(canvasMenu.GameFrame):
         self.planetWidgets = []
         self.planetName = {}
         for p in game.current_system.children:
-            if isinstance(p, Orbitals.Star):
+            if p.get_class_name() == 'Star':
                 applyColor = game.current_system.get_star_color()
                 radius = self.starRadius
                 self.planetWidgets.append(self.circle(self.starX, self.starY, radius, fill=applyColor))
                 self.planetName[p.name] = self.canvas.create_text(self.starX, self.starY + self.starTextOffset, text=p.name)
-            elif isinstance(p, Orbitals.Planet):
+            elif p.get_class_name() == 'Planet':
                 applyColor = "blue"
                 pX, pY = self.getCanvasXY(p)
                 self.drawPlanetsAndMoon(self.starX, self.starY,
                                         p.orbitalDistance, self.starRadius, self.planetRadius,
                                         applyColor, pX, pY, p.name)
-            elif isinstance(p, Orbitals.Moon):
+            elif p.get_class_name() == 'Moon':
                 applyColor = "blue"
-                parentX, parentY = self.getCanvasXY(p.planet_orbited)
+                parentX, parentY = self.getCanvasXY(p.orbited)
                 pX, pY = self.getCanvasXY(p)
                 pX += parentX - self.starX
                 pY += parentY - self.starY

@@ -62,14 +62,26 @@ class StarSystem(Orbitals.Orbitals):
                     x = random.randint(0, 100)
                 #Create the planet object
                 #print(" ".join(('Planet Number is', str(planetNumber))))
-                myPlanet = Orbitals.Planet(orbitalDistance, " ".join( (self.name, suffix[planetNumber - 1])),
-                                           pType, pMass, moons )
+                myPlanet = Orbitals.Planet(orbitalDistance=orbitalDistance,
+                                           name=" ".join( (self.name, suffix[planetNumber - 1])),
+                                           p_type = pType,
+                                           p_mass = pMass,
+                                           num_moons = moons,
+                                           orbits = myStar
+                                           )
                 self.addChild(myPlanet)
                 myPlanet.generate()
+
+                # Now create the moons orbiting the planet object just created.
                 for j in range(moons):
-                    myMoon = Orbitals.Moon(j * 60000000 +  100000000 * random.random() ** 2, " ".join((myPlanet.name, chr(65 + j))), (pMass * 0.2 * random.random()), myPlanet)
+                    myMoon = Orbitals.Moon(orbitalDistance= j * 60000000 + 100000000 * random.random() ** 2,
+                                           name=" ".join((myPlanet.name, chr(65 + j))),
+                                           mMass=(pMass * 0.2 * random.random()),
+                                           pOrb=myPlanet
+                                           )
                     self.addChild(myMoon)
                     myMoon.generate()
+
 
         #last object in system
         self.maxOrbitalDistance = myPlanet.orbitalDistance * 3

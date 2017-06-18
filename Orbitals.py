@@ -80,7 +80,8 @@ class Orbitals(object):
         G = 6.67408 * 10 ** -11
         return (math.sqrt((4 * math.pi**2/ (G * mass)) * radius ** 3))
 
-
+    def get_class_name(self):
+        return self.__class__.__name__
 
 
 class Star(Orbitals):
@@ -98,31 +99,46 @@ class Star(Orbitals):
 
 
 class Planet(Orbitals):
-    def __init__(self, orbitalDistance, name, pType, pMass, moons):
+    def __init__(self, orbitalDistance, name, p_type, p_mass, num_moons, orbits):
         Orbitals.__init__(self, orbitalDistance)
         self.name = name
-        self.planetType = pType
-        self.mass = pMass
-        self.moons = moons
+        self.planetType = p_type
+        self.mass = p_mass
+        self.moons = num_moons
+        self.orbited = orbits
         self.angle = (random.randrange(360) / 360) * 2 * math.pi
 
 
     def generate(self):
         #Note, parents and childen are not set during __init__.
-        self.orbitalPeriod = self.kepler3(self.orbitalDistance, self.parent.children[0].mass)
+        self.orbitalPeriod = self.kepler3(self.orbitalDistance, self.orbited.mass)
 
-class Moon(Orbitals):
+class Moon(Planet):
     def __init__(self, orbitalDistance, name, mMass, pOrb):
-        Orbitals.__init__(self, orbitalDistance)
-        self.name = name
-        self.moonMass = mMass
-        self.planet_orbited = pOrb
-        self.angle = (random.randrange(360) / 360) * 2 * math.pi
+        Planet.__init__(self, orbitalDistance, name, num_moons=0, p_type='', p_mass=0, orbits='')
+        #self.name = name
+        self.mass = mMass
+        self.orbited = pOrb
+        #self.angle = (random.randrange(360) / 360) * 2 * math.pi
 
 
 
-    def generate(self):
-        self.orbitalPeriod = self.kepler3(self.orbitalDistance, self.planet_orbited.mass )
-        print('planet orbited mass is ', str(self.planet_orbited.mass))
-        print('Orbital period is ', str(self.orbitalPeriod))
+    # def generate(self):
+    #     self.orbitalPeriod = self.kepler3(self.orbitalDistance, self.orbited.mass )
+    #     print('planet orbited mass is ', str(self.orbited.mass))
+    #     print('Orbital period is ', str(self.orbitalPeriod))
 
+class World():
+    def __init__(self):
+        self.minerals = {
+                        'First':0,
+                        'Second':0,
+                        'Third':0,
+                        'Fourth':0,
+                        'Fifth':0,
+                        'Sixth':0,
+                        'Seventh':0,
+                        'Eighth':0}
+
+    def generate_minerals(self, mass):
+        pass
