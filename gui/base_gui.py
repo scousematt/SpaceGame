@@ -33,7 +33,7 @@ def load_defaults():
 	return(which)
 
 
-class Errors:
+class BaseGui:
 	def __init__(self):
 		self.error = {}
 		
@@ -60,9 +60,9 @@ class Errors:
 		return False
 
 
-class DefaultLabel(Errors):
-	def __init__(self, text, panel, x, y, justify='left', default_dict=load_defaults()):
-		Errors.__init__(self)
+class DefaultLabel(BaseGui):
+	def __init__(self, text, panel, x, y, justify='left', default_dict=load_defaults(), fontsize=None):
+		BaseGui.__init__(self)
 		
 		self.default_dict = default_dict
 		self.panel = panel
@@ -74,12 +74,14 @@ class DefaultLabel(Errors):
 		self.justify = justify    #left or right, on centre y
 		self.text_color = self.default_dict['label_color']
 		self.fontname = self.default_dict['label_font']
-		self.fontsize = self.default_dict['label_fontsize']
+		if fontsize == None:
+			self.fontsize = self.default_dict['label_fontsize']
+		else:
+			self.fontsize = fontsize
 		try:
 			self.font = pygame.font.Font(self.fontname, self.fontsize)
 		except:
 			self.error['font'] = True
-		print(self.error)
 		self.change_text(self.text)
 		
 
@@ -94,8 +96,12 @@ class DefaultLabel(Errors):
 
 		if self.justify == 'left':
 			self.text_rect.topleft = self.x, self.y 
-		else:
+		elif self.justify == 'right':
 			self.text_rect.topright = self.x, self.y
+		else:
+			print(self.panel.x)
+
+			self.text_rect.topleft = self.panel.x + (self.panel.width - self.text_rect.width) / 2, self.y
 		#Check to see if label is within panel
 		if not self.panel.rect.contains(self.text_rect):
 			self.error['out_of_panel'] = self
@@ -111,11 +117,11 @@ class DefaultLabel(Errors):
 			self.on_error()
 			return
 		self.panel.screen.blit(self.text_surface, self.text_rect)
-	
 
-class DefaultButton(Errors):
+
+class DefaultButton(BaseGui):
 	def __init__(self, text, panel, x, y, function_list, default_dict=load_defaults()):
-		Errors.__init__(self)
+		BaseGui.__init__(self)
 		
 		
 		self.text = text
@@ -225,16 +231,15 @@ class DefaultButton(Errors):
 															self.y - self.panel.y,
 															self.text))
 	
-class DefaultPanel(Errors):
+class DefaultPanel(BaseGui):
 	def __init__(self, x, y, width, height, screen, default_dict=load_defaults()):
-		Errors.__init__(self)
+		BaseGui.__init__(self)
 		self.x = x
 		self.y = y
 		self.width = width
 		self.height = height
 		self.screen = screen
 		self.error = {}
-		
 		self.default_dict = default_dict
 		self.background_color = self.default_dict['panel_background_color']
 		self.border_color = self.default_dict['panel_border_color']
@@ -256,7 +261,7 @@ class DefaultPanel(Errors):
 		self.border = pygame.draw.rect(	self.screen, 
 							self.border_color,
 							self.rect,
-							4)
+							self.default_dict['panel_border'])
 		
 
 	def change_background_color(self, color):
@@ -270,8 +275,11 @@ class DefaultPanel(Errors):
 	def create_button(self, text, x, y, some_func):
 		self.children.append(DefaultButton(text, self, x, y, some_func, self.default_dict))
 
-	def create_label(self, text, x, y, justify='left'):
-		self.children.append(DefaultLabel(text, self, x, y, justify, self.default_dict))
+	def create_label(self, text, x, y, justify='left', fontsize=None):
+		self.children.append(DefaultLabel(text, self, x, y, justify, self.default_dict, fontsize))
+
+	def create_background_color(self, color, rect):
+		self.children.append(pygame.draw.rect(self.screen, color, rect))
 
 	def __str__(self):
 		return('Panel object at {}, {} with width {} and height {}'.format(self.x, self.y,

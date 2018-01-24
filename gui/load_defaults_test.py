@@ -13,7 +13,47 @@ panels = []
 active_panel = None
 panels.append(my_panel)
 
+
+def message_box(title, text, screen, gui_defaults):
+	'''
+	Need to determine the size of the box in order to create a panel large enough
+
+	Bottons will be stacked vertically
+	:param text:
+	:param buttons:
+	:return:
+	'''
+
+	panel = base_gui.DefaultPanel(150,20, 500, 500, screen, gui_defaults)
+	paragraphs = text.split('\n')
+	formatted_text = []
+	for paragraph in paragraphs:
+		words = paragraph.split(' ')
+		line = '   '
+		for word in words:
+			if len(line) + len(word) + 7 < gui_defaults['msg_chars_on_line']:
+				line += word + ' '
+			else:
+				formatted_text.append(line)
+				line = word + ' '
+		formatted_text.append(line)
 	
+
+	#Write the text to the panel as labels
+
+	panel.create_background_color(gui_defaults['msg_title_background_color'],
+										(panel.x + gui_defaults['panel_border'],
+										panel.y + gui_defaults['panel_border'],
+										panel.width - gui_defaults['panel_border'] * 2, gui_defaults['msg_title_height']))
+	panel.create_label('This is the heading here',
+						gui_defaults['msg_title_x'],
+						gui_defaults['msg_title_y'],
+						justify='center')
+	for i, line in enumerate(formatted_text):
+		panel.create_label(line,
+						   gui_defaults['msg_text_x'],
+						   gui_defaults['msg_text_y'] + i*(gui_defaults['msg_label_fontsize'] + 5),
+						   fontsize=gui_defaults['msg_label_fontsize'])
 	
 def some_func(button):
 	button.panel.change_background_color((23,0,100))
@@ -27,7 +67,7 @@ def func3(button):
 	button.panel.change_background_color((23,200,100))
 	button.change_text('test3')
 	
-my_panel.create_label('This is a label', 10,10)
+my_panel.create_label('sdfsdfs a label', 10,10)
 my_panel.create_label('Another label', 10, 50)
 my_panel.create_label('This is a label', 10,90)
 my_panel.create_label('Another label', 10, 130)
@@ -47,7 +87,9 @@ my_panel.create_button('rrt', 200, 250, [some_func, another_func, func3])
 
 #Testing out method passing to an object
 
-
+title = 'This is a message box'
+text = '''Don't let NPCs steal the player's thunder. Having an NPC accompany the players is not uncommon because it provides a good in-character avenue for the characters to ask questions or get information. \nJust make sure the NPC is not some super powerful badass who one shots all the enemies. Then the players will just feel like side kicks instead of heroes. Ideally, combat NPCs should take a supporting role. Nobody likes an NPC stealing their kills, but everyone likes an NPC who buffs and heals them'''
+message_box(title, text, screen, gui_defaults)
 
 done = False
 
