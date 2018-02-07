@@ -7,3 +7,4 @@ text_width:__str__:Text is wider than the element width
 text_height:__str__:Text is taller than the element height
 invalid_color:Variable:Either not a tuple, not len(3) or invalid values contained within 
 out_of_panel:__str__:The element rect is not contained within the parent panel
+invalid_panel_name:__str__:The name variable sent gui manager is not found within GuiManager.panels
