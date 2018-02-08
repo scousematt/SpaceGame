@@ -60,8 +60,61 @@ class BaseGui:
 		self.error['invalid_color'] = color
 		return False
 
+class MessageBox(BaseGui):
+	def __init__(self, name, title, text, gui, default_dict=load_defaults()):
+		BaseGui.__init__(self)
+		self.default_dict = default_dict
+		self.title = title
+		self.text = text
+		self.gui = gui
+		self.screen = self.gui.screen
+		# Make existing panels on the screen inactive to the input
+		self.gui.panels_inactivate()
+		paragraphs = self.text.split('\n')
+		formatted_text = []
+		for paragraph in paragraphs:
+			words = paragraph.split(' ')
+			line = '   '
+			for word in words:
+				if len(line) + len(word) + 7 < self.default_dict['msg_chars_on_line']:
+					line += word + ' '
+				else:
+					formatted_text.append(line)
+					line = word + ' '
+			formatted_text.append(line)
+		end_of_text_y = (2 * self.default_dict['msg_text_y']) + (self.default_dict['msg_label_fontsize'] + 5) * len(
+			formatted_text)
+		# Create the main panel
+		gui.create_panel(name, 150, 20, 500,
+						 end_of_text_y + self.default_dict['button_height'] + self.default_dict['msg_text_y'])
+
+		# Get the active panel name
+		self.panel = gui.panel_dict[name]
+		# Set the correct background color rather than panel defaults
+		self.panel.change_background_color(self.default_dict['msg_background_color'])
+
+		# Create background for title
+		self.title_background = DefaultColorBlock(self.panel, self.default_dict['msg_title_background_color'],
+													  (self.panel.rect.x + self.default_dict['panel_border'],
+													   self.panel.rect.y + self.default_dict['panel_border'],
+													   self.panel.rect.width - self.default_dict['panel_border'] * 2,
+													   self.default_dict['msg_title_height']))
+		# panel.children.append(title_background)
+		self.title_background.drag_with_mouse = True
+		self.panel.create_label(title,
+						   self.default_dict['msg_title_x'],
+						   self.default_dict['msg_title_y'],
+						   justify='center')
+		for i, line in enumerate(formatted_text):
+			self.panel.create_label(line,
+							   self.default_dict['msg_text_x'],
+							   self.default_dict['msg_text_y'] + i * (self.default_dict['msg_label_fontsize'] + 5),
+							   fontsize=self.default_dict['msg_label_fontsize'])
+		self.gui.create_button_ok(self.panel, self.default_dict['msg_text_x'], end_of_text_y)
+
 
 class DefaultLabel(BaseGui):
+
 	def __init__(self, text, panel, x, y, justify='left', default_dict=load_defaults(), fontsize=None, name=None):
 		BaseGui.__init__(self)
 		
@@ -329,7 +382,6 @@ class DefaultPanel(BaseGui):
 		self.rect = self.rect.move(x, y)
 		self.gui.screen.fill((0,0,0))
 		for c in self.children:
-			print(c)
 			c.rect = c.rect.move(x, y)
 			if type(c) == ButtonOK:
 				c.update()
@@ -475,3 +527,6 @@ class GuiManager(BaseGui):
 
 		self.error['invalid_panel_name'] = '{} not found in GuiManger.panels'.format(name)
 		print(self.error)
+
+	def create_message_box(self, name, title, text, gui_defaults):
+		MessageBox(name, title, text, self)

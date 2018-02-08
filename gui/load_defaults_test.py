@@ -117,7 +117,7 @@ gui.create_button('Main', 'rrt', 200, 250, [some_func, another_func, func3])
 name = 'Message Box'
 title = 'This is a message box'
 text = '''Don't let NPCs steal the player's thunder. Having an NPC accompany the players is not uncommon because it provides a good in-character avenue for the characters to ask questions or get information. \nJust make sure the NPC is not some super powerful badass who one shots all the enemies. Then the players will just feel like side kicks instead of heroes. Ideally, combat NPCs should take a supporting role. Nobody likes an NPC stealing their kills, but everyone likes an NPC who buffs and heals them'''
-message_box(name, title, text, screen, gui_defaults)
+gui.create_message_box(name, title, text, gui_defaults)
 
 done = False
 
