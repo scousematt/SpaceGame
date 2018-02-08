@@ -24,9 +24,8 @@ def message_box(name, title, text, screen, gui_defaults):
 	:param buttons:
 	:return:
 	'''
-	#Make existing panels on the screen inactive to the input
+	# Make existing panels on the screen inactive to the input
 	gui.panels_inactivate()
-	gui.create_panel(name, 150,20, 500, 500)
 	paragraphs = text.split('\n')
 	formatted_text = []
 	for paragraph in paragraphs:
@@ -39,15 +38,24 @@ def message_box(name, title, text, screen, gui_defaults):
 				formatted_text.append(line)
 				line = word + ' '
 		formatted_text.append(line)
-	
+	end_of_text_y = (2 * gui_defaults['msg_text_y']) + (gui_defaults['msg_label_fontsize'] + 5) * len(formatted_text)
+	# Create the main panel
+	gui.create_panel(name, 150,20, 500, end_of_text_y + gui_defaults['button_height'] + gui_defaults['msg_text_y'])
 
-	#Write the text to the panel as labels
+	# Get the active panel name
 	panel = gui.panel_dict[name]
+	# Set the correct background color rather than panel defaults
+	panel.change_background_color(gui_defaults['msg_background_color'])
+
+
 	# Create background for title
 	title_background = base_gui.DefaultColorBlock(panel, gui_defaults['msg_title_background_color'],
-										(panel.x + gui_defaults['panel_border'],
-										panel.y + gui_defaults['panel_border'],
-										panel.width - gui_defaults['panel_border'] * 2, gui_defaults['msg_title_height']))
+										(panel.rect.x + gui_defaults['panel_border'],
+										panel.rect.y + gui_defaults['panel_border'],
+										panel.rect.width - gui_defaults['panel_border'] * 2,
+										gui_defaults['msg_title_height']))
+	#panel.children.append(title_background)
+	title_background.drag_with_mouse = True
 	panel.create_label(title,
 						gui_defaults['msg_title_x'],
 						gui_defaults['msg_title_y'],
@@ -58,7 +66,7 @@ def message_box(name, title, text, screen, gui_defaults):
 						   gui_defaults['msg_text_y'] + i*(gui_defaults['msg_label_fontsize'] + 5),
 						   fontsize=gui_defaults['msg_label_fontsize'])
 
-	end_of_text_y = (2 * gui_defaults['msg_text_y']) + (gui_defaults['msg_label_fontsize'] + 5) * len(formatted_text)
+
 	gui.create_button_ok(panel, gui_defaults['msg_text_x'], end_of_text_y)
 
 class Game():
@@ -118,6 +126,8 @@ while not done:
 		if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
 			#Find out which panel we are in
 			gui.on_lmb_click(event.pos)
+		elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
+			gui.on_lmb_up(event.pos)
 
 		elif event.type == pygame.QUIT:
 			done = True

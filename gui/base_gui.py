@@ -101,18 +101,16 @@ class DefaultLabel(BaseGui):
 		self.text_surface = self.font.render(	self.text,
 												True, 
 												self.text_color)
-		self.text_rect = self.text_surface.get_rect()
+		self.rect = self.text_surface.get_rect()
 
 		if self.justify == 'left':
-			self.text_rect.topleft = self.x, self.y 
+			self.rect.topleft = self.x, self.y
 		elif self.justify == 'right':
-			self.text_rect.topright = self.x, self.y
+			self.rect.topright = self.x, self.y
 		else:
-			print(self.panel.x)
-
-			self.text_rect.topleft = self.panel.x + (self.panel.width - self.text_rect.width) / 2, self.y
+			self.rect.topleft = self.panel.x + (self.panel.width - self.rect.width) / 2, self.y
 		#Check to see if label is within panel
-		if not self.panel.rect.contains(self.text_rect):
+		if not self.panel.rect.contains(self.rect):
 			self.error['out_of_panel'] = self
 		self.display()		
 
@@ -125,23 +123,34 @@ class DefaultLabel(BaseGui):
 		if self.is_error():
 			self.on_error()
 			return
-		self.panel.screen.blit(self.text_surface, self.text_rect)
+		self.panel.screen.blit(self.text_surface, self.rect)
 
 class DefaultColorBlock(BaseGui):
 
-	def __init__(self, parent, color, rect):
+	def __init__(self, parent, color, rect, drag_with_mouse=False):
 		# This is for things internal to panels where a block of color is needed, things like message box title background
 		# it is essentially a colored pygame.rect
 		self.parent = parent
 		self.color = color
-		self.rect = rect
-		self.parent.children.insert(0, self)
+		self.rect = pygame.Rect(rect)
+		self.drag_with_mouse = drag_with_mouse
+		self.add_to_children()
+
+	def add_to_children(self):
+		self.parent.children.insert(1, self)
 
 	def display(self):
 		pygame.draw.rect(self.parent.screen,
 						 self.color,
 						 self.rect)
 
+class PanelColorBlock(DefaultColorBlock):
+
+	def __init__(self, parent, color, rect, drag_with_mouse=False):
+		DefaultColorBlock.__init__(self, parent, color, rect, drag_with_mouse=False)
+
+	def add_to_children(self):
+		self.parent.children.insert(0, self)
 
 class DefaultButton(BaseGui):
 	def __init__(self, text, panel, x, y, function_list, default_dict=load_defaults()):
@@ -174,12 +183,12 @@ class DefaultButton(BaseGui):
 		self.width = default_dict['button_width']
 		self.height = default_dict['button_height']
 				
-		self.top_rect = pygame.Rect(self.x, self.y, self.width, self.height)
+		self.rect = pygame.Rect(self.x, self.y, self.width, self.height)
 
 		self.offset = default_dict['button_highlight_offset']
 		
 		# This is the rect that contains the whole button
-		self.rect = self.top_rect.inflate(self.offset * 2, self.offset * 2)
+		self.shadow_rect = self.rect.inflate(self.offset * 2, self.offset * 2)
 		
 	
 		self.create_highlight_coords()	
@@ -193,7 +202,12 @@ class DefaultButton(BaseGui):
 		print(self.function_list)
 		self.on_click_method = self.function_list[self.function_index]
 	
-		
+
+	def update(self):
+		self.text_rect.center = ((self.rect.x + self.rect.width // 2, self.rect.y + self.rect.height // 2))
+		self.create_highlight_coords()
+		self.shadow_rect = self.rect.inflate(self.offset * 2, self.offset * 2)
+
 	def on_click(self):
 		# External function requires self, internal do not.
 		try:
@@ -207,7 +221,6 @@ class DefaultButton(BaseGui):
 		return return_method
 
 	def close_panel(self):
-		print('Got to close panel')
 		self.panel.screen.fill((0,0,0))
 		self.panel.visible = False
 		self.panel.active = False
@@ -222,6 +235,7 @@ class DefaultButton(BaseGui):
 			self.error['text_height'] = True
 
 	def change_text(self, new_text):
+		# TODO text should be a label, so it can update position correctly
 		self.text = new_text
 		self.text_surface = self.font.render(	new_text, 
 												True, 
@@ -236,12 +250,12 @@ class DefaultButton(BaseGui):
 
 	def create_highlight_coords(self):
 		
-		self.highlight_coords = [(self.top_rect.x - self.offset, self.top_rect.y - self.offset),
-							(self.top_rect.x + self.top_rect.w + self.offset, self.top_rect.y - self.offset),
-							(self.top_rect.x + self.top_rect.w, self.top_rect.y),
-							(self.top_rect.x, self.top_rect.y),
-							(self.top_rect.x, self.top_rect.y + self.top_rect.h),
-							(self.top_rect.x - self.offset, self.top_rect.y + self.top_rect.h + self.offset)]
+		self.highlight_coords = [(self.rect.x - self.offset, self.rect.y - self.offset),
+							(self.rect.x + self.rect.w + self.offset, self.rect.y - self.offset),
+							(self.rect.x + self.rect.w, self.rect.y),
+							(self.rect.x, self.rect.y),
+							(self.rect.x, self.rect.y + self.rect.h),
+							(self.rect.x - self.offset, self.rect.y + self.rect.h + self.offset)]
 	
 	def display(self):
 		if self.is_error():
@@ -249,7 +263,7 @@ class DefaultButton(BaseGui):
 			return()
 		pygame.draw.rect(	self.panel.screen,
 							self.button_shadow_color,
-							self.rect)
+							self.shadow_rect)
 		
 		pygame.draw.polygon(	self.panel.screen,
 								self.button_highlight_color,
@@ -257,7 +271,7 @@ class DefaultButton(BaseGui):
 									
 		pygame.draw.rect(	self.panel.screen,
 							self.button_color,
-							self.top_rect)
+							self.rect)
 		
 		self.panel.screen.blit(self.text_surface, self.text_rect)
 		
@@ -274,15 +288,16 @@ class ButtonOK(DefaultButton):
 		DefaultButton.__init__(self, text, panel, x, y, function_list=[])
 		self.width = panel.width - (2 * self.default_dict['msg_text_x'])
 		self.text = 'OK'
-		self.top_rect = pygame.Rect(self.x, self.y, self.width, self.height)
+		self.rect = pygame.Rect(self.x, self.y, self.width, self.height)
 
 		self.offset = default_dict['button_highlight_offset']
 
 		# This is the rect that contains the whole button
-		self.rect = self.top_rect.inflate(self.offset * 2, self.offset * 2)
+		self.shadow_rect = self.rect.inflate(self.offset * 2, self.offset * 2)
 
 		self.create_highlight_coords()
 		self.change_text(text)
+
 
 
 class DefaultPanel(BaseGui):
@@ -304,28 +319,34 @@ class DefaultPanel(BaseGui):
 		self.background_color = self.default_dict['panel_background_color']
 		self.border_color = self.default_dict['panel_border_color']
 		
-		self.rect = pygame.Rect(self.x, self.y, self.width, self.height)
 		self.changed = False
 		self.children = []
-		self.background = DefaultColorBlock(self, self.background_color, self.rect)
+		self.rect = pygame.Rect(self.x, self.y, self.width, self.height)
+		self.background = PanelColorBlock(self, self.background_color, self.rect)
 		self.named_children_dict = {}
+
+	def update_pos(self, x, y):
+		self.rect = self.rect.move(x, y)
+		self.gui.screen.fill((0,0,0))
+		for c in self.children:
+			print(c)
+			c.rect = c.rect.move(x, y)
+			if type(c) == ButtonOK:
+				c.update()
 
 	def display(self):
 		if self.is_error():
 			self.on_error()
 			return
 
-		#self.background = DefaultColorBlock(self, self.background_color, self.rect)
-		# self.background = pygame.draw.rect(	self.screen,
-		# 					self.background_color,
-		# 					self.rect)
-		self.border = pygame.draw.rect(	self.screen, 
-							self.border_color,
-							self.rect,
-							self.default_dict['panel_border'])
 		for child in self.children:
 			child.display()
-		
+
+		self.border = pygame.draw.rect(self.screen,
+								   self.border_color,
+								   self.rect,
+								   self.default_dict['panel_border'])
+
 
 	def change_background_color(self, color):
 		if self.valid_color(color):
@@ -366,6 +387,10 @@ class GuiManager(BaseGui):
 		self.panels = []
 		self.panel_dict = {}
 		self.buttons = [DefaultButton, ButtonOK]
+		self.lmb_pressed = False
+		self.mouse_x = 0
+		self.mouse_y = 0
+		self.panel_moving = False
 
 
 	def show_panel(self, panel_name):
@@ -387,9 +412,25 @@ class GuiManager(BaseGui):
 		for panel_name, panel in self.panel_dict.items():
 			if panel.active and panel.rect.collidepoint(pos):
 				for element in panel.children:
-					if (type(element) in self.buttons)and element.rect.collidepoint(pos):
-						element.on_click()
+					if not self.lmb_pressed:
+						if (type(element) in self.buttons)and element.rect.collidepoint(pos):
+							element.on_click()
+						if type(element) == DefaultColorBlock:
+							if element.drag_with_mouse and element.rect.collidepoint(pos):
+								self.lmb_pressed = True
+								self.mouse_x = pos[0]
+								self.mouse_y = pos[1]
+								self.panel_moving = panel
 
+
+	def on_lmb_up(self, pos):
+		self.lmb_pressed = False
+		if self.panel_moving:
+			x_diff = pos[0] - self.mouse_x
+			y_diff = pos[1] - self.mouse_y
+			print('change of {}, {}'.format(x_diff, y_diff))
+			self.panel_moving.update_pos(x_diff, y_diff)
+			self.panel_moving = False
 
 	def panels_inactivate(self):
 		for panel in self.panels:
