@@ -15,59 +15,7 @@ gui.create_panel('Main', 150,150,510,400)
 
 
 
-def message_box(name, title, text, screen, gui_defaults):
-	'''
-	Need to determine the size of the box in order to create a panel large enough
 
-	Bottons will be stacked vertically
-	:param text:
-	:param buttons:
-	:return:
-	'''
-	# Make existing panels on the screen inactive to the input
-	gui.panels_inactivate()
-	paragraphs = text.split('\n')
-	formatted_text = []
-	for paragraph in paragraphs:
-		words = paragraph.split(' ')
-		line = '   '
-		for word in words:
-			if len(line) + len(word) + 7 < gui_defaults['msg_chars_on_line']:
-				line += word + ' '
-			else:
-				formatted_text.append(line)
-				line = word + ' '
-		formatted_text.append(line)
-	end_of_text_y = (2 * gui_defaults['msg_text_y']) + (gui_defaults['msg_label_fontsize'] + 5) * len(formatted_text)
-	# Create the main panel
-	gui.create_panel(name, 150,20, 500, end_of_text_y + gui_defaults['button_height'] + gui_defaults['msg_text_y'])
-
-	# Get the active panel name
-	panel = gui.panel_dict[name]
-	# Set the correct background color rather than panel defaults
-	panel.change_background_color(gui_defaults['msg_background_color'])
-
-
-	# Create background for title
-	title_background = base_gui.DefaultColorBlock(panel, gui_defaults['msg_title_background_color'],
-										(panel.rect.x + gui_defaults['panel_border'],
-										panel.rect.y + gui_defaults['panel_border'],
-										panel.rect.width - gui_defaults['panel_border'] * 2,
-										gui_defaults['msg_title_height']))
-	#panel.children.append(title_background)
-	title_background.drag_with_mouse = True
-	panel.create_label(title,
-						gui_defaults['msg_title_x'],
-						gui_defaults['msg_title_y'],
-						justify='center')
-	for i, line in enumerate(formatted_text):
-		panel.create_label(line,
-						   gui_defaults['msg_text_x'],
-						   gui_defaults['msg_text_y'] + i*(gui_defaults['msg_label_fontsize'] + 5),
-						   fontsize=gui_defaults['msg_label_fontsize'])
-
-
-	gui.create_button_ok(panel, gui_defaults['msg_text_x'], end_of_text_y)
 
 class Game():
 
@@ -108,6 +56,7 @@ gui.create_label('Info', 0, 280, 10, justify='right', label_name='game_value')
 
 
 gui.create_button('Main', 'rrt', 200, 250, [some_func, another_func, func3])
+gui.create_scrollbar('Main', orientation='vertical')
 
 
 #my_button = Button('This is text', my_panel, 200, 50)
@@ -117,7 +66,7 @@ gui.create_button('Main', 'rrt', 200, 250, [some_func, another_func, func3])
 name = 'Message Box'
 title = 'This is a message box'
 text = '''Don't let NPCs steal the player's thunder. Having an NPC accompany the players is not uncommon because it provides a good in-character avenue for the characters to ask questions or get information. \nJust make sure the NPC is not some super powerful badass who one shots all the enemies. Then the players will just feel like side kicks instead of heroes. Ideally, combat NPCs should take a supporting role. Nobody likes an NPC stealing their kills, but everyone likes an NPC who buffs and heals them'''
-gui.create_message_box(name, title, text, gui_defaults)
+#gui.create_message_box(name, title, text, gui_defaults)
 
 done = False
 

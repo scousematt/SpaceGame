@@ -183,6 +183,7 @@ class DefaultColorBlock(BaseGui):
 	def __init__(self, parent, color, rect, drag_with_mouse=False):
 		# This is for things internal to panels where a block of color is needed, things like message box title background
 		# it is essentially a colored pygame.rect
+		BaseGui.__init__(self)
 		self.parent = parent
 		self.color = color
 		self.rect = pygame.Rect(rect)
@@ -196,6 +197,38 @@ class DefaultColorBlock(BaseGui):
 		pygame.draw.rect(self.parent.screen,
 						 self.color,
 						 self.rect)
+
+class ScrollbarColorBlock(DefaultColorBlock):
+	def __init__(self, parent, color, rect, line_width, parent_rect, drag_with_mouse=False):
+		DefaultColorBlock.__init__(self, parent, color, rect, drag_with_mouse=False)
+		self.line_width = line_width
+		self.parent_rect = parent_rect
+		self.highlight_color = (self.color[0] + 50, self.color[1] + 50, self.color[2] + 50)
+		self.shadow_color = (self.color[0] - 50, self.color[1] - 50, self.color[2] - 50)
+
+	def display(self):
+
+		pygame.draw.polygon(self.parent.screen,
+						 self.highlight_color,
+						  [ self.rect.bottomleft, self.rect.topleft, self.rect.topright],
+						  0
+						 )
+		pygame.draw.polygon(self.parent.screen,
+						self.shadow_color,
+						[self.rect.topright, self.rect.bottomright, self.rect.bottomleft],
+						0
+						)
+		pygame.draw.rect(self.parent.screen,
+						 self.color,
+						 self.rect.inflate(-self.line_width, -self.line_width))
+
+	def update_pos(self, x, y):
+		self.rect.y += y
+		if self.rect.y < self.parent_rect.y:
+			self.rect.y = self.parent_rect.y
+		elif self.rect.bottom > self.parent_rect.bottom:
+			self.rect.bottom = self.parent_rect.bottom
+
 
 class PanelColorBlock(DefaultColorBlock):
 
@@ -351,6 +384,27 @@ class ButtonOK(DefaultButton):
 		self.create_highlight_coords()
 		self.change_text(text)
 
+class Scrollbar(BaseGui):
+	def __init__(self, panel, default_dict=load_defaults()):
+		BaseGui.__init__(self)
+		self.panel = panel
+		self.default_dict = default_dict
+		self.height = panel.height - 2 * self.default_dict['scrollbar_top_margin']
+		self.width = self.default_dict['scrollbar_width']
+		self.x = self.panel.rect.right - self.width - self.default_dict['scrollbar_margin_right']
+		self.y = self.panel.rect.top + self.default_dict['scrollbar_top_margin']
+		self.rect = pygame.Rect(self.x, self.y, self.width, self.height)
+		self.button_rect = pygame.Rect(self.x, self.y, self.width, self.default_dict['scrollbar_button_height'])
+		self.line_width = self.default_dict['scrollbar_button_highlight_width']
+		self.children=[]
+
+		self.children.append(DefaultColorBlock(self.panel, self.default_dict['scrollbar_color'], self.rect))
+		self.children.append(ScrollbarColorBlock(self.panel, self.default_dict['scrollbar_button_color'],
+												 self.button_rect, self.line_width, self.rect, drag_with_mouse=True))
+
+	def display(self):
+		for child in self.children:
+			child.display()
 
 
 class DefaultPanel(BaseGui):
@@ -412,6 +466,10 @@ class DefaultPanel(BaseGui):
 	def create_button_ok(self, text, x, y):
 		self.children.append(ButtonOK(text, self, x, y, [], self.default_dict))
 
+	def create_scrollbar(self, orientation):
+		if orientation == 'vertical':
+			#Change to a horizontal and vertical
+			self.children.append(Scrollbar(self))
 
 	def create_label(self, text, x, y, justify='left', fontsize=None, label_name=False):
 		self.children.append(DefaultLabel(text, self, x, y, justify, self.default_dict, fontsize, label_name))
@@ -442,7 +500,7 @@ class GuiManager(BaseGui):
 		self.lmb_pressed = False
 		self.mouse_x = 0
 		self.mouse_y = 0
-		self.panel_moving = False
+		self.element_moving = False
 
 
 	def show_panel(self, panel_name):
@@ -465,24 +523,30 @@ class GuiManager(BaseGui):
 			if panel.active and panel.rect.collidepoint(pos):
 				for element in panel.children:
 					if not self.lmb_pressed:
+						#Button is not currently held down
 						if (type(element) in self.buttons)and element.rect.collidepoint(pos):
 							element.on_click()
-						if type(element) == DefaultColorBlock:
+						elif type(element) == DefaultColorBlock:
 							if element.drag_with_mouse and element.rect.collidepoint(pos):
 								self.lmb_pressed = True
 								self.mouse_x = pos[0]
 								self.mouse_y = pos[1]
-								self.panel_moving = panel
+								self.element_moving = panel
+						elif type(element) == ScrollbarColorBlock and element.rect.collidepoint(pos):
+							self.lmb_pressed = True
+							self.mouse_y = pos[1]
+							self.element_moving = element
+
 
 
 	def on_lmb_up(self, pos):
 		self.lmb_pressed = False
-		if self.panel_moving:
+		if self.element_moving:
 			x_diff = pos[0] - self.mouse_x
 			y_diff = pos[1] - self.mouse_y
 			print('change of {}, {}'.format(x_diff, y_diff))
-			self.panel_moving.update_pos(x_diff, y_diff)
-			self.panel_moving = False
+			self.element_moving.update_pos(x_diff, y_diff)
+			self. element_moving = False
 
 	def panels_inactivate(self):
 		for panel in self.panels:
@@ -508,7 +572,12 @@ class GuiManager(BaseGui):
 		if self.is_error() == False:
 			panel.create_button_ok('OK', x, y)
 
-
+	def create_scrollbar(self, panel_name, orientation='vertical'):
+		if not orientation in ['vertical', 'horizontal']:
+			self.error['scrollbar_orientation'] = 'Scrollbar in panel {}'.format(panel)
+		panel = self.panel_dict[panel_name]
+		if self.is_error() == False:
+			panel.create_scrollbar(orientation)
 
 	def create_label(self, panel_name, text, x, y, justify='left', fontsize=None, label_name=False):
 		panel = self.panel_dict[panel_name]
