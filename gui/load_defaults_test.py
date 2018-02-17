@@ -10,8 +10,7 @@ gui_defaults = base_gui.load_defaults()
 
 gui = base_gui.GuiManager(screen, gui_defaults)
 
-#Make a panel called 'Main'. The numbers are x, y, width, height
-gui.create_panel('Main', 150,150,510,400)
+
 
 
 
@@ -39,24 +38,63 @@ def another_func(button):
 def func3(button):
 	button.panel.change_background_color((23,200,100))
 	button.change_text('test3')
-	
-gui.create_label('Main', 'sdfsdfs a label', 10,10)
-gui.create_label('Main', 'Another label', 10, 50)
-gui.create_label('Main', 'This is a label', 10,90)
-gui.create_label('Main', 'Another label', 10, 130)
 
-gui.create_label('Main', '3415', 280,10, justify='right')
-gui.create_label('Main', '1265', 280,50, justify='right', fontsize=14)
-gui.create_label('Main', '13', 280,90, justify='right')
-gui.create_label('Main', '142323', 280,130, justify='right')
-
-gui.create_panel('Info', 150,10,510,130)
-gui.create_label('Info', 'Value is', 10, 10)
-gui.create_label('Info', 0, 280, 10, justify='right', label_name='game_value')
+func_dict = {}
+func_dict['some_func'] = some_func
+func_dict['another_func'] = another_func
+func_dict['func3'] = func3
 
 
-gui.create_button('Main', 'rrt', 200, 250, [some_func, another_func, func3])
-gui.create_scrollbar('Main', orientation='vertical')
+def test_func_arg(function, *args, **kwargs):
+	function(*args, **kwargs)
+
+def test_copy(function, *args, **kwargs):
+	print(args)
+	function(*args, **kwargs)
+
+
+with open('gui_data.txt','r') as file:
+	which = {}
+	for line in file:
+		if not line[0] == '#':
+			args = line.strip().split(',')
+			kw_dict = {}
+			gui_type = args.pop(0)
+			new_args = []
+			for i in args:
+				# if there is an '='  we need to not use args and use keywords
+				# keywords = {'fontsize' : 12, 'name' : 'fred'}
+				list_i = i.split('=')
+				if len(list_i) == 1:
+					if ':' in i and gui_type == 'button':
+						# We the element is a list. Currently only button but lets check
+						list_b_name = i.split(':')
+						list_b = []
+						for b in list_b_name:
+							list_b.append(func_dict[b])
+						new_args.append(list_b)
+					else:
+						new_args.append(base_gui.return_correct_type(i))
+				else:
+					kw_dict[list_i[0]] = base_gui.return_correct_type(list_i[1])
+			args = new_args
+			if gui_type == 'panel':
+				test_func_arg(gui.create_panel, *args, **kw_dict)
+			elif gui_type == 'label':
+				test_func_arg(gui.create_label, *args, **kw_dict)
+			elif gui_type == 'button':
+				test_func_arg(gui.create_button, *args, **kw_dict)
+			elif gui_type == 'scrollbar':
+				test_func_arg(gui.create_scrollbar, *args, **kw_dict)
+file.close()
+
+gui.create_label('Main', 'manually added', 10, 200)
+
+
+arguments = ['Main', 'add function', 210, 160]
+keyword_args =  {'justify': 'right'}
+#test_copy(gui.create_label, *arguments)
+test_func_arg(gui.create_label, *arguments, **keyword_args)
 
 
 #my_button = Button('This is text', my_panel, 200, 50)

@@ -32,6 +32,30 @@ def load_defaults():
 	default_file.close()
 	return(which)
 
+def format_text(text, line_length):
+	'''
+
+	:param text: String. Raw text input, with line breaks
+	:param line_length: Int.
+	:return: List. Lines formatted to be under the line length
+	'''
+	output = []
+	paragraphs = text.split('\n')
+	for p in paragraphs:
+		words = p.split(' ')
+		# Indent for start of paragraph
+		line = '    '
+		for w in words:
+			if len(line) + len(w) + 7 < line_length:
+				line = ' '.join([line, w])
+			else:
+				output.append(line)
+				# Add a space to the end of the current line
+				line = w.ljust(len(w)+1)
+		output.append(line)
+	return(output)
+
+
 
 class BaseGui:
 	def __init__(self):
@@ -60,6 +84,7 @@ class BaseGui:
 		self.error['invalid_color'] = color
 		return False
 
+
 class MessageBox(BaseGui):
 	def __init__(self, name, title, text, gui, default_dict=load_defaults()):
 		BaseGui.__init__(self)
@@ -70,20 +95,9 @@ class MessageBox(BaseGui):
 		self.screen = self.gui.screen
 		# Make existing panels on the screen inactive to the input
 		self.gui.panels_inactivate()
-		paragraphs = self.text.split('\n')
-		formatted_text = []
-		for paragraph in paragraphs:
-			words = paragraph.split(' ')
-			line = '   '
-			for word in words:
-				if len(line) + len(word) + 7 < self.default_dict['msg_chars_on_line']:
-					line += word + ' '
-				else:
-					formatted_text.append(line)
-					line = word + ' '
-			formatted_text.append(line)
+		formatted_text = format_text(self.text, self.default_dict['msg_chars_on_line'] )
 		end_of_text_y = (2 * self.default_dict['msg_text_y']) + (self.default_dict['msg_label_fontsize'] + 5) * len(
-			formatted_text)
+																										formatted_text)
 		# Create the main panel
 		gui.create_panel(name, 150, 20, 500,
 						 end_of_text_y + self.default_dict['button_height'] + self.default_dict['msg_text_y'])
@@ -115,9 +129,8 @@ class MessageBox(BaseGui):
 
 class DefaultLabel(BaseGui):
 
-	def __init__(self, text, panel, x, y, justify='left', default_dict=load_defaults(), fontsize=None, name=None):
+	def __init__(self, text, panel, x, y, justify='left', default_dict=load_defaults(), fontsize=None, label_name=None):
 		BaseGui.__init__(self)
-		
 		self.default_dict = default_dict
 		self.panel = panel
 		self.text = text
@@ -125,7 +138,7 @@ class DefaultLabel(BaseGui):
 			#here we can test to see if we want colored numbers (red , green) or brackets around -ve
 			str(self.text)
 
-		self.name = name
+		self.name = label_name
 
 		self.x = x + self.panel.x
 		self.y = y + self.panel.y
@@ -136,7 +149,7 @@ class DefaultLabel(BaseGui):
 		if fontsize == None:
 			self.fontsize = self.default_dict['label_fontsize']
 		else:
-			self.fontsize = fontsize
+			self.fontsize = return_correct_type(fontsize)
 		try:
 			self.font = pygame.font.Font(self.fontname, self.fontsize)
 		except:
@@ -165,12 +178,14 @@ class DefaultLabel(BaseGui):
 		#Check to see if label is within panel
 		if not self.panel.rect.contains(self.rect):
 			self.error['out_of_panel'] = self
-		self.display()		
+		self.panel.changed = True
+
 
 		
 	def change_color(self, color):
 		if self.valid_color(color):
 			self.text_color = color
+		self.panel.changed = True
 	
 	def display(self):
 		if self.is_error():
@@ -178,65 +193,69 @@ class DefaultLabel(BaseGui):
 			return
 		self.panel.screen.blit(self.text_surface, self.rect)
 
+	def __str__(self):
+		if self.justify == 'right':
+			return('Label "{}" from Panel "{}" right justified x is rhs'.format(self.text, self.panel.name))
+		else:
+			return ('Label "{}" from Panel "{}"'.format(self.text, self.panel.name))
+
 class DefaultColorBlock(BaseGui):
 
-	def __init__(self, parent, color, rect, drag_with_mouse=False):
+	def __init__(self, panel, color, rect, drag_with_mouse=False):
 		# This is for things internal to panels where a block of color is needed, things like message box title background
 		# it is essentially a colored pygame.rect
 		BaseGui.__init__(self)
-		self.parent = parent
+		self.panel = panel
 		self.color = color
 		self.rect = pygame.Rect(rect)
 		self.drag_with_mouse = drag_with_mouse
 		self.add_to_children()
 
 	def add_to_children(self):
-		self.parent.children.insert(1, self)
+		self.panel.children.insert(1, self)
 
 	def display(self):
-		pygame.draw.rect(self.parent.screen,
+		pygame.draw.rect(self.panel.screen,
 						 self.color,
 						 self.rect)
 
 class ScrollbarColorBlock(DefaultColorBlock):
-	def __init__(self, parent, color, rect, line_width, parent_rect, drag_with_mouse=False):
-		DefaultColorBlock.__init__(self, parent, color, rect, drag_with_mouse=False)
-		self.line_width = line_width
-		self.parent_rect = parent_rect
+	def __init__(self, panel, color, rect, parent, drag_with_mouse=False):
+		DefaultColorBlock.__init__(self, panel, color, rect, drag_with_mouse=False)
+		self.parent = parent
+		self.line_width = self.parent.line_width
+		self.color = color
+		self.rect = self.rect
 		self.highlight_color = (self.color[0] + 50, self.color[1] + 50, self.color[2] + 50)
 		self.shadow_color = (self.color[0] - 50, self.color[1] - 50, self.color[2] - 50)
 
 	def display(self):
 
-		pygame.draw.polygon(self.parent.screen,
+		pygame.draw.polygon(self.panel.screen,
 						 self.highlight_color,
 						  [ self.rect.bottomleft, self.rect.topleft, self.rect.topright],
 						  0
 						 )
-		pygame.draw.polygon(self.parent.screen,
+		pygame.draw.polygon(self.panel.screen,
 						self.shadow_color,
-						[self.rect.topright, self.rect.bottomright, self.rect.bottomleft],
+						[self.rect.topright, self.rect.bottomright, [self.rect.left + 2, self.rect.bottom],
+						 [self.rect.right - 2, self.rect.top]],
 						0
 						)
-		pygame.draw.rect(self.parent.screen,
+		pygame.draw.rect(self.panel.screen,
 						 self.color,
 						 self.rect.inflate(-self.line_width, -self.line_width))
 
-	def update_pos(self, x, y):
-		self.rect.y += y
-		if self.rect.y < self.parent_rect.y:
-			self.rect.y = self.parent_rect.y
-		elif self.rect.bottom > self.parent_rect.bottom:
-			self.rect.bottom = self.parent_rect.bottom
+
 
 
 class PanelColorBlock(DefaultColorBlock):
 
-	def __init__(self, parent, color, rect, drag_with_mouse=False):
-		DefaultColorBlock.__init__(self, parent, color, rect, drag_with_mouse=False)
+	def __init__(self, panel, color, rect, drag_with_mouse=False):
+		DefaultColorBlock.__init__(self, panel, color, rect, drag_with_mouse=False)
 
 	def add_to_children(self):
-		self.parent.children.insert(0, self)
+		self.panel.children.insert(0, self)
 
 class DefaultButton(BaseGui):
 	def __init__(self, text, panel, x, y, function_list, default_dict=load_defaults()):
@@ -280,7 +299,7 @@ class DefaultButton(BaseGui):
 		self.create_highlight_coords()	
 		self.change_text(text)
 
-		self.display()
+		self.panel.changed = True
 		self.function_list = function_list
 		if self.function_list == []:
 			self.function_list = [self.close_panel]
@@ -295,6 +314,9 @@ class DefaultButton(BaseGui):
 		self.shadow_rect = self.rect.inflate(self.offset * 2, self.offset * 2)
 
 	def on_click(self):
+		#
+		# Note. A button can change things in other panels. self.panel.changed ??
+		#
 		# External function requires self, internal do not.
 		try:
 			return_method =  self.on_click_method(self)
@@ -385,9 +407,10 @@ class ButtonOK(DefaultButton):
 		self.change_text(text)
 
 class Scrollbar(BaseGui):
-	def __init__(self, panel, default_dict=load_defaults()):
+	def __init__(self, panel, max_v, default_dict=load_defaults()):
 		BaseGui.__init__(self)
 		self.panel = panel
+		self.max_v = max_v    # The total height of the rect_data that scrollbar is controlling the views of
 		self.default_dict = default_dict
 		self.height = panel.height - 2 * self.default_dict['scrollbar_top_margin']
 		self.width = self.default_dict['scrollbar_width']
@@ -399,13 +422,22 @@ class Scrollbar(BaseGui):
 		self.children=[]
 
 		self.children.append(DefaultColorBlock(self.panel, self.default_dict['scrollbar_color'], self.rect))
-		self.children.append(ScrollbarColorBlock(self.panel, self.default_dict['scrollbar_button_color'],
-												 self.button_rect, self.line_width, self.rect, drag_with_mouse=True))
+		self.children.append(ScrollbarColorBlock(self.panel,  self.default_dict['scrollbar_button_color'],
+		 											self.button_rect, self, drag_with_mouse=True))
+		#Created
+		self.panel.changed = True
 
 	def display(self):
 		for child in self.children:
 			child.display()
 
+	def update_pos(self, x, y):
+		self.children[1].rect.y += y
+		if self.children[1].rect.y < self.rect.y:
+			self.children[1].rect.y = self.rect.y
+		elif self.children[1].rect.bottom > self.rect.bottom:
+			self.children[1].rect.bottom = self.rect.bottom
+		self.panel.changed = True
 
 class DefaultPanel(BaseGui):
 
@@ -426,7 +458,7 @@ class DefaultPanel(BaseGui):
 		self.background_color = self.default_dict['panel_background_color']
 		self.border_color = self.default_dict['panel_border_color']
 		
-		self.changed = False
+		self.changed = False # updated by self.children objects
 		self.children = []
 		self.rect = pygame.Rect(self.x, self.y, self.width, self.height)
 		self.background = PanelColorBlock(self, self.background_color, self.rect)
@@ -458,7 +490,7 @@ class DefaultPanel(BaseGui):
 		if self.valid_color(color):
 			# self.background is a DefaultColorBlock object
 			self.background.color = color
-
+			self.changed = True
 
 	def create_button(self, text, x, y, some_func):
 		self.children.append(DefaultButton(text, self, x, y, some_func, self.default_dict))
@@ -469,20 +501,53 @@ class DefaultPanel(BaseGui):
 	def create_scrollbar(self, orientation):
 		if orientation == 'vertical':
 			#Change to a horizontal and vertical
-			self.children.append(Scrollbar(self))
+			# TODO Add max_v
+			self.children.append(Scrollbar(self, 100))
 
 	def create_label(self, text, x, y, justify='left', fontsize=None, label_name=False):
 		self.children.append(DefaultLabel(text, self, x, y, justify, self.default_dict, fontsize, label_name))
 		if label_name:
 			self.named_children_dict[label_name] = self.children[-1]
-			print(self.named_children_dict)
 
 	def create_background_color(self, color, rect):
 		self.children.append(pygame.draw.rect(self.screen, color, rect))
+		self.changed = True
 
 	def __str__(self):
 		return('Panel object at {}, {} with width {} and height {}'.format(self.x, self.y,
 																		self.width, self.height))
+
+
+class PanelScrollbar(DefaultPanel):
+	def __init__(self, gui, name, x, y, width, height, element_list,  default_dict=load_defaults(), visible=True, active=True):
+		DefaultPanel.__init__(self, gui, name, x, y, width, height, default_dict=load_defaults(), visible=True,
+							  active=True)
+		#
+		#
+		# There will be 3 rects, the normal rect which is the position on the screen,
+		# a view_rect which is the same size as the rect, and a data rect which is calculated when the
+		# whole panel is built. Also data rect will be changed via update. So we need a boolean to check
+		self.updated = True
+		# We need a way of building the complete data panel and then running the update. So something in gui.panel needs
+		# a list of functions [create_label, etd] to which we can append self.update on the end.
+		self.rect_view = self.rect
+		self.element_list = element_list
+		self.rect_data = pygame.Rect()
+		# The rect_view will be moved to the correct part of rect_data and then moved to rect and copied over
+		# Add scrollbar need height of data_rect
+		self.scrollbar = self.gui.create_scrollbar(name, self.rect_data.height)
+
+	# Note, the width available is now reduced by the size of the scrollbar
+
+	def update(self):
+		if self.updated:
+			# The data panel has changed? But this happens off screen so it's already changed in the data.
+			# I suppose we use this opportunity to change the scrollbar, if stuff has been added after rect_view the scrollbar block
+			# Needs making smaller and moving, converse for items deleted.
+			for element in self.element_list:
+				# create_label(self, text, x, y, justify='left', fontsize=None, label_name=False)
+				# [ [func_name, and then what?? some form of label_dict????
+				element()
 
 class GuiManager(BaseGui):
 
@@ -495,6 +560,7 @@ class GuiManager(BaseGui):
 
 
 		self.panels = []
+		self.panels_on_screen = []
 		self.panel_dict = {}
 		self.buttons = [DefaultButton, ButtonOK]
 		self.lmb_pressed = False
@@ -504,19 +570,23 @@ class GuiManager(BaseGui):
 
 
 	def show_panel(self, panel_name):
+		# Think this is replaced by the panel_dict
 		for panel in self.panels:
 			if panel.name == panel_name:
 				panel.visible = True
 
 	def hide_panel(self, panel_name):
+		# Think this is replaced with the panel_dict
 		for panel in self.panels:
 			if panel.name == panel_name:
 				panel.visible = False
 
 	def display(self):
 		for panel_name, panel in self.panel_dict.items():
-			if panel.visible == True:
+			# TODO check to see if panel is changed
+			if panel.visible == True and panel.changed:
 				panel.display()
+				panel.changed = False
 
 	def on_lmb_click(self, pos):
 		for panel_name, panel in self.panel_dict.items():
@@ -535,13 +605,15 @@ class GuiManager(BaseGui):
 						elif type(element) == ScrollbarColorBlock and element.rect.collidepoint(pos):
 							self.lmb_pressed = True
 							self.mouse_y = pos[1]
-							self.element_moving = element
+							# we want the scrollbar to update itself, not a scrollbar element
+							self.element_moving = element.parent
 
 
 
 	def on_lmb_up(self, pos):
 		self.lmb_pressed = False
 		if self.element_moving:
+
 			x_diff = pos[0] - self.mouse_x
 			y_diff = pos[1] - self.mouse_y
 			print('change of {}, {}'.format(x_diff, y_diff))
@@ -549,11 +621,11 @@ class GuiManager(BaseGui):
 			self. element_moving = False
 
 	def panels_inactivate(self):
-		for panel in self.panels:
+		for panel in self.panels_on_screen:
 			panel.active = False
 
 	def panels_activate(self):
-		for panel in self.panels:
+		for panel in self.panels_on_screen:
 			if panel.visible:
 				panel.active = True
 
@@ -562,6 +634,8 @@ class GuiManager(BaseGui):
 			dict = self.default_dict
 		self.panel_dict[name] = DefaultPanel(self, name, x, y, width, height, dict, visible, active)
 		self.panels.append(self.panel_dict[name])
+		if visible:
+			self.panels_on_screen.append(self.panel_dict[name])
 
 	def create_button(self, name, text, x, y, functions):
 		panel = self.panel_dict[name]

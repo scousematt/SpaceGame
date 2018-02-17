@@ -1,0 +1,16 @@
+# There are args and kwargs delimited by ',' and also list delimited by ':'
+# No spaces
+panel,Main,150,150,510,400
+label,Main,sdfsdfs a label,10,10
+label,Main,Another label,10,50
+label,Main,This is a label,10,90
+label,Main,Another label,10,130
+label,Main,3415,280,10,justify=right
+label,Main,1265,280,50,justify=right,fontsize=14
+label,Main,13,280,90,justify=right
+label,Main,142323,280,130,justify=right
+panel,Info,150,10,510,130
+label,Info,Value is,10,10
+label,Info,0,280,10,justify=right,label_name=game_value
+button,Main,rrt,200,250,some_func:another_func:func3
+scrollbar,Main,orientation=vertical
