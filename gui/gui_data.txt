@@ -14,3 +14,4 @@ label,Info,Value is,10,10
 label,Info,0,280,10,justify=right,label_name=game_value
 button,Main,rrt,200,250,some_func:another_func:func3
 scrollbar,Main,orientation=vertical
+panel,Scroll,200,100,400,400,visible=False

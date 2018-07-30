@@ -56,7 +56,6 @@ def format_text(text, line_length):
 	return(output)
 
 
-
 class BaseGui:
 	def __init__(self):
 		self.error = {}
@@ -134,7 +133,7 @@ class DefaultLabel(BaseGui):
 		self.default_dict = default_dict
 		self.panel = panel
 		self.text = text
-		if type(self.text) == int:
+		if isinstance(self.text, int):
 			#here we can test to see if we want colored numbers (red , green) or brackets around -ve
 			str(self.text)
 
@@ -151,7 +150,11 @@ class DefaultLabel(BaseGui):
 		else:
 			self.fontsize = return_correct_type(fontsize)
 		try:
+			# Check to see if a font object has already been created
+			self.font = self.panel.gui.font_dict[''.join([self.fontname, str(self.fontsize)])]
+		except KeyError:
 			self.font = pygame.font.Font(self.fontname, self.fontsize)
+			self.panel.gui.font_dict[''.join([self.fontname, str(self.fontsize)])] = self.font
 		except:
 			self.error['font'] = True
 		self.change_text(self.text)
@@ -177,7 +180,11 @@ class DefaultLabel(BaseGui):
 			self.rect.topleft = self.panel.x + (self.panel.width - self.rect.width) / 2, self.y
 		#Check to see if label is within panel
 		if not self.panel.rect.contains(self.rect):
-			self.error['out_of_panel'] = self
+			if self.panel.rect.left > self.rect.left or self.panel.rect.right > self.rect.right:
+				self.error['out_of_panel_horizontal'] = self
+			elif self.panel.rect.top > self.rect.top or self.panel.rect.bottom > self.rect.bottom:
+				self.error['out_of_panel_vertical'] = self
+
 		self.panel.changed = True
 
 
@@ -506,8 +513,11 @@ class DefaultPanel(BaseGui):
 
 	def create_label(self, text, x, y, justify='left', fontsize=None, label_name=False):
 		self.children.append(DefaultLabel(text, self, x, y, justify, self.default_dict, fontsize, label_name))
-		if label_name:
-			self.named_children_dict[label_name] = self.children[-1]
+		if self.children[-1].error:
+			del self.children[-1]
+		else:
+			if label_name:
+				self.named_children_dict[label_name] = self.children[-1]
 
 	def create_background_color(self, color, rect):
 		self.children.append(pygame.draw.rect(self.screen, color, rect))
@@ -518,8 +528,8 @@ class DefaultPanel(BaseGui):
 																		self.width, self.height))
 
 
-class PanelScrollbar(DefaultPanel):
-	def __init__(self, gui, name, x, y, width, height, element_list,  default_dict=load_defaults(), visible=True, active=True):
+class PanelScroll(DefaultPanel):
+	def __init__(self, gui, name, x, y, width, height, default_dict=load_defaults(), visible=True, active=True):
 		DefaultPanel.__init__(self, gui, name, x, y, width, height, default_dict=load_defaults(), visible=True,
 							  active=True)
 		#
@@ -527,15 +537,14 @@ class PanelScrollbar(DefaultPanel):
 		# There will be 3 rects, the normal rect which is the position on the screen,
 		# a view_rect which is the same size as the rect, and a data rect which is calculated when the
 		# whole panel is built. Also data rect will be changed via update. So we need a boolean to check
-		self.updated = True
+		self.updated = False
 		# We need a way of building the complete data panel and then running the update. So something in gui.panel needs
 		# a list of functions [create_label, etd] to which we can append self.update on the end.
 		self.rect_view = self.rect
-		self.element_list = element_list
 		self.rect_data = pygame.Rect()
 		# The rect_view will be moved to the correct part of rect_data and then moved to rect and copied over
 		# Add scrollbar need height of data_rect
-		self.scrollbar = self.gui.create_scrollbar(name, self.rect_data.height)
+		self.scrollbar = False
 
 	# Note, the width available is now reduced by the size of the scrollbar
 
@@ -548,6 +557,22 @@ class PanelScrollbar(DefaultPanel):
 				# create_label(self, text, x, y, justify='left', fontsize=None, label_name=False)
 				# [ [func_name, and then what?? some form of label_dict????
 				element()
+		self.updated = True
+
+
+	def create_label(self, text, x, y, justify='left', fontsize=None, label_name=False):
+		self.children.append(DefaultLabel(text, self, x, y, justify, self.default_dict, fontsize, label_name))
+		if self.children[-1].error['out_of_panel_vertical']:
+			# We are in need of a scrollbar and the panel displayed is only an part of the full panel
+			# TODO Anything above the panel top is still wrong - change label
+			self.rect.bottom = self.children[-1].bottom + self.default_dict['panel_border']
+			if not self.scrollbar:
+				self.gui.create_scrollbar(self.name, self.rect.height)
+		elif self.children[-1].error['out_of_panel_horizontal']:
+			pass
+		if label_name:
+			self.named_children_dict[label_name] = self.children[-1]
+		self.updated = False
 
 class GuiManager(BaseGui):
 
@@ -560,6 +585,7 @@ class GuiManager(BaseGui):
 
 
 		self.panels = []
+		self.font_dict = {}
 		self.panels_on_screen = []
 		self.panel_dict = {}
 		self.buttons = [DefaultButton, ButtonOK]
@@ -629,11 +655,15 @@ class GuiManager(BaseGui):
 			if panel.visible:
 				panel.active = True
 
-	def create_panel(self, name, x, y, width, height, dict=None, visible=True, active=True):
+	def create_panel(self, name, x, y, width, height, dict=None, visible=True, active=True, scrollable=False):
 		if dict == None:
 			dict = self.default_dict
-		self.panel_dict[name] = DefaultPanel(self, name, x, y, width, height, dict, visible, active)
-		self.panels.append(self.panel_dict[name])
+			if scrollable:
+				self.panel_dict[name] = PanelScroll(self, name, x, y, width, height, dict, visible, active)
+			else:
+				self.panel_dict[name] = DefaultPanel(self, name, x, y, width, height, dict, visible, active)
+
+			self.panels.append(self.panel_dict[name])
 		if visible:
 			self.panels_on_screen.append(self.panel_dict[name])
 

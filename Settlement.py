@@ -34,7 +34,7 @@ class Settlement(object):
         self.planet = planet
         self.star = self.planet
         self.latitude = random.randint(-90, 90)
-        self.meanTemp = interp(self.latitude)
+        self.temperature = -20 + 40 * math.cos(self.latitude * 3.142 / 180)
         '''The temperature depends on the atmosphere rather than the solar energy hitting the
         surface. Also, does the planet temperature need to be here. should be in Orbitals.'''
         self.population = population

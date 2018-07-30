@@ -38,6 +38,9 @@ def another_func(button):
 def func3(button):
 	button.panel.change_background_color((23,200,100))
 	button.change_text('test3')
+	gui.get_panel_by_name('Scroll').visible = True
+	gui.get_panel_by_name('Scroll').changed = True
+	gui.get_panel_by_name('Scroll').create_label('Scroll', 10, 10)
 
 func_dict = {}
 func_dict['some_func'] = some_func
