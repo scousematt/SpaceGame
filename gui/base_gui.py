@@ -128,10 +128,10 @@ class MessageBox(BaseGui):
 
 class DefaultLabel(BaseGui):
 
-	def __init__(self, text, panel, x, y, justify='left', default_dict=load_defaults(), fontsize=None, label_name=None):
+	def __init__(self, text, parent, x, y, justify='left', default_dict=load_defaults(), fontsize=None, label_name=None):
 		BaseGui.__init__(self)
 		self.default_dict = default_dict
-		self.panel = panel
+		self.parent = parent
 		self.text = text
 		if isinstance(self.text, int):
 			#here we can test to see if we want colored numbers (red , green) or brackets around -ve
@@ -139,25 +139,36 @@ class DefaultLabel(BaseGui):
 
 		self.name = label_name
 
-		self.x = x + self.panel.x
-		self.y = y + self.panel.y
+		self.x = x + self.parent.x
+		self.y = y + self.parent.y
 		self.default_dict = default_dict
 		self.justify = justify    #left or right, on centre y
 		self.text_color = self.default_dict['label_color']
 		self.fontname = self.default_dict['label_font']
+
 		if fontsize == None:
 			self.fontsize = self.default_dict['label_fontsize']
 		else:
 			self.fontsize = return_correct_type(fontsize)
+
 		try:
 			# Check to see if a font object has already been created
-			self.font = self.panel.gui.font_dict[''.join([self.fontname, str(self.fontsize)])]
+			self.font = self.parent.gui.font_dict[''.join([self.fontname, str(self.fontsize)])]
 		except KeyError:
 			self.font = pygame.font.Font(self.fontname, self.fontsize)
-			self.panel.gui.font_dict[''.join([self.fontname, str(self.fontsize)])] = self.font
+			self.parent.gui.font_dict[''.join([self.fontname, str(self.fontsize)])] = self.font
 		except:
-			self.error['font'] = True
-		self.change_text(self.text)
+			try:
+				#A dropdown list is the parent, rather than a panel
+				self.font = self.parent.parent.gui.font_dict[''.join([self.fontname, str(self.fontsize)])]
+			except KeyError:
+				self.font = pygame.font.Font(self.fontname, self.fontsize)
+				self.parent.parent.gui.font_dict[''.join([self.fontname, str(self.fontsize)])] = self.font
+
+			except:
+				self.error['font'] = True
+		if not self.is_error():
+			self.change_text(self.text)
 		
 
 			
@@ -177,34 +188,34 @@ class DefaultLabel(BaseGui):
 		elif self.justify == 'right':
 			self.rect.topright = self.x, self.y
 		else:
-			self.rect.topleft = self.panel.x + (self.panel.width - self.rect.width) / 2, self.y
+			self.rect.topleft = self.parent.x + (self.parent.width - self.rect.width) / 2, self.y
 		#Check to see if label is within panel
-		if not self.panel.rect.contains(self.rect):
-			if self.panel.rect.left > self.rect.left or self.panel.rect.right > self.rect.right:
+		if not self.parent.rect.contains(self.rect):
+			if self.parent.rect.left > self.rect.left or self.parent.rect.right > self.rect.right:
 				self.error['out_of_panel_horizontal'] = self
-			elif self.panel.rect.top > self.rect.top or self.panel.rect.bottom > self.rect.bottom:
+			elif self.parent.rect.top > self.rect.top or self.parent.rect.bottom > self.rect.bottom:
 				self.error['out_of_panel_vertical'] = self
 
-		self.panel.changed = True
+		self.parent.changed = True
 
 
 		
 	def change_color(self, color):
 		if self.valid_color(color):
 			self.text_color = color
-		self.panel.changed = True
+		self.parent.changed = True
 	
 	def display(self):
 		if self.is_error():
 			self.on_error()
 			return
-		self.panel.screen.blit(self.text_surface, self.rect)
+		self.parent.screen.blit(self.text_surface, self.rect)
 
 	def __str__(self):
 		if self.justify == 'right':
-			return('Label "{}" from Panel "{}" right justified x is rhs'.format(self.text, self.panel.name))
+			return('Label "{}" from Panel "{}" right justified x is rhs'.format(self.text, self.parent.name))
 		else:
-			return ('Label "{}" from Panel "{}"'.format(self.text, self.panel.name))
+			return ('Label "{}" from Panel "{}"'.format(self.text, self.parent.name))
 
 class DefaultColorBlock(BaseGui):
 
@@ -253,8 +264,40 @@ class ScrollbarColorBlock(DefaultColorBlock):
 						 self.color,
 						 self.rect.inflate(-self.line_width, -self.line_width))
 
+class DropList(BaseGui):
+	def __init__(self, parent, text, x, y, entries_list):
+		self.parent = parent
+		self.text = text
+		self.x = x
+		self.y = y
+		self.entries_list = entries_list
+		self.justify = 'left'
+		self.default_dict = load_defaults()
+		self.fontsize = self.default_dict['label_fontsize']
+		self.children = []
+		self.children.append(DefaultLabel(self.text, self.parent, x, y, self.justify, default_dict=self.default_dict, fontsize=self.fontsize, label_name='drop_list'))
+		self.display_switch = False
 
 
+	def display(self):
+		for element in self.children:
+			element.display()
+			print(self.display_switch)
+			if self.display_switch == True:
+				self.display_list()
+
+	def display_list(self):
+		print('Clicked on drop list')
+		height = 30 * 3 + 15
+		x = self.x + self.parent.x - 10
+		y = self.y + self.parent.y + 30
+		self.parent.gui.create_panel('Drop Down', self.x + self.parent.x - 10, y + self.parent.y, 190, height)
+		y = 10
+		for entry in self.entries_list:
+			self.parent.gui.create_label('Drop Down',entry, 10, y)
+			print(entry)
+			y += 25
+		self.parent.gui.dropdown_active = None
 
 class PanelColorBlock(DefaultColorBlock):
 
@@ -511,6 +554,9 @@ class DefaultPanel(BaseGui):
 			# TODO Add max_v
 			self.children.append(Scrollbar(self, 100))
 
+	def create_dropdown(self, text, x, y, entries_list):
+		self.children.append(DropList(self, text, x, y, entries_list))
+
 	def create_label(self, text, x, y, justify='left', fontsize=None, label_name=False):
 		self.children.append(DefaultLabel(text, self, x, y, justify, self.default_dict, fontsize, label_name))
 		if self.children[-1].error:
@@ -593,6 +639,7 @@ class GuiManager(BaseGui):
 		self.mouse_x = 0
 		self.mouse_y = 0
 		self.element_moving = False
+		self.dropdown_active = None
 
 
 	def show_panel(self, panel_name):
@@ -633,7 +680,15 @@ class GuiManager(BaseGui):
 							self.mouse_y = pos[1]
 							# we want the scrollbar to update itself, not a scrollbar element
 							self.element_moving = element.parent
-
+						elif type(element) == DropList and element.children[0].rect.collidepoint(pos):
+							self.lmb_pressed = True
+							print('Pressed')
+							element.display_switch = True
+							self.dropdown_active = element
+						elif type(element) == DefaultLabel and element.parent.name == 'Drop Down' and element.rect.collidepoint(pos):
+							print(element.text)
+		if self.dropdown_active:
+			self.dropdown_active.display_list()
 
 
 	def on_lmb_up(self, pos):
@@ -682,6 +737,11 @@ class GuiManager(BaseGui):
 		panel = self.panel_dict[panel_name]
 		if self.is_error() == False:
 			panel.create_scrollbar(orientation)
+
+	def create_dropdown(self, panel_name, text, x, y, entries_list):
+		panel = self.panel_dict[panel_name]
+		if self.is_error() == False:
+			panel.create_dropdown(text, x, y, entries_list)
 
 	def create_label(self, panel_name, text, x, y, justify='left', fontsize=None, label_name=False):
 		panel = self.panel_dict[panel_name]

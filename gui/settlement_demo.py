@@ -45,8 +45,10 @@ gui.create_label('Data','Name', 10,10)
 gui.create_label('Data',s.name, 300,10)
 gui.create_label('Data','Population', 10, 40)
 gui.create_label('Data',s.pop_int, 300, 40, label_name='pop')
+gui.create_dropdown('Toolbar', 'Select Planet', 200, 10, ['Welling Town', 'Friedrich Strasse','Furlong'] )
 
-
+# TODO We have a drop box that we can click on, now it needs to refresh the information in 'Data' and redraw it. Also make the
+# drop list panel the only active panel, which will disappear when clicking is done elsewhere, and of course the scrollbar.
 
 
 done = False
