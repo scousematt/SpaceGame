@@ -265,29 +265,27 @@ class ScrollbarColorBlock(DefaultColorBlock):
 						 self.rect.inflate(-self.line_width, -self.line_width))
 
 class DropList(BaseGui):
-	def __init__(self, parent, text, x, y, entries_list):
+	def __init__(self, parent, text, x, y, entries_list, function):
+		BaseGui.__init__(self)
 		self.parent = parent
 		self.text = text
 		self.x = x
 		self.y = y
 		self.entries_list = entries_list
+		self.function = function
+
 		self.justify = 'left'
 		self.default_dict = load_defaults()
 		self.fontsize = self.default_dict['label_fontsize']
 		self.children = []
 		self.children.append(DefaultLabel(self.text, self.parent, x, y, self.justify, default_dict=self.default_dict, fontsize=self.fontsize, label_name='drop_list'))
-		self.display_switch = False
 
 
 	def display(self):
 		for element in self.children:
 			element.display()
-			print(self.display_switch)
-			if self.display_switch == True:
-				self.display_list()
 
 	def display_list(self):
-		print('Clicked on drop list')
 		height = 30 * 3 + 15
 		x = self.x + self.parent.x - 10
 		y = self.y + self.parent.y + 30
@@ -295,8 +293,12 @@ class DropList(BaseGui):
 		y = 10
 		for entry in self.entries_list:
 			self.parent.gui.create_label('Drop Down',entry, 10, y)
-			print(entry)
 			y += 25
+
+	def on_click(self, name):
+		# When an element from the drop down list is clicked
+		self.function(name)
+		self.parent.gui.hide_panel('Drop Down')
 		self.parent.gui.dropdown_active = None
 
 class PanelColorBlock(DefaultColorBlock):
@@ -554,8 +556,8 @@ class DefaultPanel(BaseGui):
 			# TODO Add max_v
 			self.children.append(Scrollbar(self, 100))
 
-	def create_dropdown(self, text, x, y, entries_list):
-		self.children.append(DropList(self, text, x, y, entries_list))
+	def create_dropdown(self, text, x, y, entries_list, function):
+		self.children.append(DropList(self, text, x, y, entries_list, function))
 
 	def create_label(self, text, x, y, justify='left', fontsize=None, label_name=False):
 		self.children.append(DefaultLabel(text, self, x, y, justify, self.default_dict, fontsize, label_name))
@@ -640,7 +642,7 @@ class GuiManager(BaseGui):
 		self.mouse_y = 0
 		self.element_moving = False
 		self.dropdown_active = None
-
+		self.dropdown_text_selected = None
 
 	def show_panel(self, panel_name):
 		# Think this is replaced by the panel_dict
@@ -648,20 +650,27 @@ class GuiManager(BaseGui):
 			if panel.name == panel_name:
 				panel.visible = True
 
-	def hide_panel(self, panel_name):
-		# Think this is replaced with the panel_dict
-		for panel in self.panels:
-			if panel.name == panel_name:
+	def hide_panel(self, name_of_panel):
+
+		for panel_name, panel in self.panel_dict.items():
+			if panel.name == name_of_panel:
 				panel.visible = False
+				panel.active = False
+			if panel.visible == True:
+				panel.changed = True
+
+		self.display()
 
 	def display(self):
 		for panel_name, panel in self.panel_dict.items():
 			# TODO check to see if panel is changed
-			if panel.visible == True and panel.changed:
+			if panel.visible == True and panel.changed == True:
 				panel.display()
 				panel.changed = False
 
 	def on_lmb_click(self, pos):
+
+		dropdown_text = None
 		for panel_name, panel in self.panel_dict.items():
 			if panel.active and panel.rect.collidepoint(pos):
 				for element in panel.children:
@@ -682,11 +691,13 @@ class GuiManager(BaseGui):
 							self.element_moving = element.parent
 						elif type(element) == DropList and element.children[0].rect.collidepoint(pos):
 							self.lmb_pressed = True
-							print('Pressed')
-							element.display_switch = True
 							self.dropdown_active = element
-						elif type(element) == DefaultLabel and element.parent.name == 'Drop Down' and element.rect.collidepoint(pos):
-							print(element.text)
+						elif panel.name == 'Drop Down':
+							if type(element) == DefaultLabel and element.rect.collidepoint(pos):
+								# get drop list and work update on the clicked element
+								self.lmb_pressed = True
+								self.dropdown_active.on_click(element.text) # that works, the Data panel is updated
+
 		if self.dropdown_active:
 			self.dropdown_active.display_list()
 
@@ -738,10 +749,10 @@ class GuiManager(BaseGui):
 		if self.is_error() == False:
 			panel.create_scrollbar(orientation)
 
-	def create_dropdown(self, panel_name, text, x, y, entries_list):
+	def create_dropdown(self, panel_name, text, x, y, entries_list, function):
 		panel = self.panel_dict[panel_name]
 		if self.is_error() == False:
-			panel.create_dropdown(text, x, y, entries_list)
+			panel.create_dropdown(text, x, y, entries_list, function)
 
 	def create_label(self, panel_name, text, x, y, justify='left', fontsize=None, label_name=False):
 		panel = self.panel_dict[panel_name]

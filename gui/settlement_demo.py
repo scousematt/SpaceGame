@@ -1,6 +1,6 @@
 import pygame
 import base_gui
-
+import game
 
 pygame.init()
 screen = pygame.display.set_mode((800,600))
@@ -15,37 +15,24 @@ gui = base_gui.GuiManager(screen, gui_defaults)
 
 
 
-class Settlement():
-    def __init__(self, name, pop):
-        self.name = name
-        self.pop = pop
-        self.pop_int = int(self.pop)
-
-    def update30(self):
-        self.update(30)
-        print('Got to update30')
-        # todo move this is a game class that can update every settlement and only change display on current view
-        self.display()
-
-    def update(self, time):
-        self.pop += time * self.pop * 2.78 ** -10.5
-        self.pop_int = int(self.pop)
-
-    def display(self):
-        #Note that this will always be shown in the smae panel
-        gui.change_label_text('Data', 'pop', self.pop_int)
+g = game.Game(gui, 'Data')
+g.add_settlement('Welling Town', 2594,)
+g.add_settlement('Plantain', 2583)
+g.add_settlement('Fire Creek', 3002)
+g.add_settlement('Ford Wilson', 1300)
+g.add_settlement('Chess Line', 1845)
+g.add_settlement('Withering Wild', 2015)
 
 #button,Main,rrt,200,250,some_func:another_func:func3
 
-s = Settlement('Welling Town', 2594)
 gui.create_panel('Toolbar', 100, 0, 600, 98)
-gui.create_button('Toolbar', '30 day', 10, 10, [s.update30])
+gui.create_button('Toolbar', '30 day', 10, 10, [g.update30])
 gui.create_panel('Data', 100, 100, 600, 400) #Note panel is not changed until it has something in it
 gui.create_label('Data','Name', 10,10)
-gui.create_label('Data',s.name, 300,10)
+gui.create_label('Data',g.settlement_names[0], 300,10, label_name='name')
 gui.create_label('Data','Population', 10, 40)
-gui.create_label('Data',s.pop_int, 300, 40, label_name='pop')
-gui.create_dropdown('Toolbar', 'Select Planet', 200, 10, ['Welling Town', 'Friedrich Strasse','Furlong'] )
+gui.create_label('Data',g.settlements[g.settlement_names[0]].pop_int, 300, 40, label_name='pop')
+gui.create_dropdown('Toolbar', 'Select Planet', 200, 10, g.settlement_names, g.display_settlement )
 
 # TODO We have a drop box that we can click on, now it needs to refresh the information in 'Data' and redraw it. Also make the
 # drop list panel the only active panel, which will disappear when clicking is done elsewhere, and of course the scrollbar.
@@ -66,5 +53,7 @@ while not done:
 
         gui.display()
         pygame.display.flip()
+    if gui.dropdown_text_selected:
+        gui.hide_panel('Drop Down')
 
 
