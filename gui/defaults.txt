@@ -10,6 +10,7 @@ button_width:100
 button_height:28
 #Label
 label_color:(20,20,20)
+label_highlight_color:(80,80,80)
 label_font:freesansbold.ttf
 label_fontsize:20
 #MessageBox

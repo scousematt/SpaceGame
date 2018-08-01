@@ -203,6 +203,7 @@ class DefaultLabel(BaseGui):
 	def change_color(self, color):
 		if self.valid_color(color):
 			self.text_color = color
+			self.change_text(self.text) # recaulate the text surface
 		self.parent.changed = True
 	
 	def display(self):
@@ -642,7 +643,7 @@ class GuiManager(BaseGui):
 		self.mouse_y = 0
 		self.element_moving = False
 		self.dropdown_active = None
-		self.dropdown_text_selected = None
+
 
 	def show_panel(self, panel_name):
 		# Think this is replaced by the panel_dict
@@ -711,6 +712,17 @@ class GuiManager(BaseGui):
 			print('change of {}, {}'.format(x_diff, y_diff))
 			self.element_moving.update_pos(x_diff, y_diff)
 			self. element_moving = False
+
+	def on_mousemove_dropdown(self, pos):
+		panel = self.panel_dict['Drop Down']
+		if panel.rect.collidepoint(pos):
+			#We are over drop down panel with the mouse
+			for child in panel.children:
+				if type(child) is DefaultLabel and child.rect.collidepoint(pos):
+					child.change_color(child.default_dict['label_highlight_color'])
+				elif type(child) is DefaultLabel:
+					child.change_color(child.default_dict['label_color'])
+
 
 	def panels_inactivate(self):
 		for panel in self.panels_on_screen:

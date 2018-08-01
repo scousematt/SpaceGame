@@ -47,13 +47,14 @@ while not done:
             gui.on_lmb_click(event.pos)
         elif event.type == pygame.MOUSEBUTTONUP and event.button == 1:
             gui.on_lmb_up(event.pos)
+        elif event.type == pygame.MOUSEMOTION:
+            if gui.dropdown_active:
+                gui.on_mousemove_dropdown(event.pos)
 
         elif event.type == pygame.QUIT:
             done = True
 
         gui.display()
         pygame.display.flip()
-    if gui.dropdown_text_selected:
-        gui.hide_panel('Drop Down')
 
 
