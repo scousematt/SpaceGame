@@ -31,9 +31,16 @@ panel_border:4
 #Scrollbar
 scrollbar_top_margin:10
 scrollbar_width:16
-scrollbar_margin_right:8
+scrollbar_margin_right:4
 scrollbar_color:(120,120,120)
 scrollbar_button_color:(80,80,80)
 scrollbar_button_height:100
 scrollbar_button_highlight_width:4
+#Dropdown
+dropdown_line_height:25
+dropdown_line_header:10
+dropdown_x_offset:-10
+dropdown_y_offset:30
+dropdown_label_left_margin:10
+dropdown_width:190
 #EOF
