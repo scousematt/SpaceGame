@@ -6,6 +6,10 @@ They will be overwritten if a different look, color etc is required.
 """
 import pygame
 
+
+
+print('Importing BaseGui')
+
 def return_correct_type(var_in):
 	try:
 		if int(var_in):
@@ -126,146 +130,8 @@ class MessageBox(BaseGui):
 		self.gui.create_button_ok(self.panel, self.default_dict['msg_text_x'], end_of_text_y)
 
 
-class DefaultLabel(BaseGui):
 
-	def __init__(self, text, parent, x, y, justify='left', default_dict=load_defaults(), fontsize=None, label_name=None):
-		BaseGui.__init__(self)
-		self.default_dict = default_dict
-		self.parent = parent
-		self.text = text
-		if isinstance(self.text, int):
-			#here we can test to see if we want colored numbers (red , green) or brackets around -ve
-			str(self.text)
-
-		self.name = label_name
-
-		self.x = x + self.parent.x
-		self.y = y + self.parent.y
-		self.default_dict = default_dict
-		self.justify = justify    #left or right, on centre y
-		self.text_color = self.default_dict['label_color']
-		self.fontname = self.default_dict['label_font']
-
-		if fontsize == None:
-			self.fontsize = self.default_dict['label_fontsize']
-		else:
-			self.fontsize = return_correct_type(fontsize)
-
-		try:
-			# Check to see if a font object has already been created
-			self.font = self.parent.gui.font_dict[''.join([self.fontname, str(self.fontsize)])]
-		except KeyError:
-			self.font = pygame.font.Font(self.fontname, self.fontsize)
-			self.parent.gui.font_dict[''.join([self.fontname, str(self.fontsize)])] = self.font
-		except:
-			try:
-				#A dropdown list is the parent, rather than a panel
-				self.font = self.parent.parent.gui.font_dict[''.join([self.fontname, str(self.fontsize)])]
-			except KeyError:
-				self.font = pygame.font.Font(self.fontname, self.fontsize)
-				self.parent.parent.gui.font_dict[''.join([self.fontname, str(self.fontsize)])] = self.font
-
-			except:
-				self.error['font'] = True
-		if not self.is_error():
-			self.change_text(self.text)
-		
-
-			
-				
-	def change_text(self, new_text):
-		self.text = new_text
-		if type(self.text) == int:
-			#here we can test to see if we want colored numbers (red , green) or brackets around -ve
-			self.text  = str(self.text)
-		self.text_surface = self.font.render(	self.text,
-												True, 
-												self.text_color)
-		self.rect = self.text_surface.get_rect()
-
-		if self.justify == 'left':
-			self.rect.topleft = self.x, self.y
-		elif self.justify == 'right':
-			self.rect.topright = self.x, self.y
-		else:
-			self.rect.topleft = self.parent.x + (self.parent.width - self.rect.width) / 2, self.y
-		#Check to see if label is within panel
-		if not self.parent.rect.contains(self.rect):
-			if self.parent.rect.left > self.rect.left or self.parent.rect.right > self.rect.right:
-				self.error['out_of_panel_horizontal'] = self
-			elif self.parent.rect.top > self.rect.top or self.parent.rect.bottom > self.rect.bottom:
-				self.error['out_of_panel_vertical'] = self
-
-		self.parent.changed = True
-
-
-		
-	def change_color(self, color):
-		if self.valid_color(color):
-			self.text_color = color
-			self.change_text(self.text) # recaulate the text surface
-		self.parent.changed = True
-	
-	def display(self):
-		if self.is_error():
-			self.on_error()
-			return
-		self.parent.screen.blit(self.text_surface, self.rect)
-
-	def __str__(self):
-		if self.justify == 'right':
-			return('Label "{}" from Panel "{}" right justified x is rhs'.format(self.text, self.parent.name))
-		else:
-			return ('Label "{}" from Panel "{}"'.format(self.text, self.parent.name))
-
-class DefaultColorBlock(BaseGui):
-
-	def __init__(self, panel, color, rect, drag_with_mouse=False):
-		# This is for things internal to panels where a block of color is needed, things like message box title background
-		# it is essentially a colored pygame.rect
-		BaseGui.__init__(self)
-		self.panel = panel
-		self.color = color
-		self.rect = pygame.Rect(rect)
-		self.drag_with_mouse = drag_with_mouse
-		self.add_to_children()
-
-	def add_to_children(self):
-		self.panel.children.insert(1, self)
-
-	def display(self):
-		pygame.draw.rect(self.panel.screen,
-						 self.color,
-						 self.rect)
-
-class ScrollbarColorBlock(DefaultColorBlock):
-	def __init__(self, panel, color, rect, parent, drag_with_mouse=False):
-		DefaultColorBlock.__init__(self, panel, color, rect, drag_with_mouse=False)
-		self.parent = parent
-		self.line_width = self.parent.line_width
-		self.color = color
-		self.rect = rect
-		self.highlight_color = (self.color[0] + 50, self.color[1] + 50, self.color[2] + 50)
-		self.shadow_color = (self.color[0] - 50, self.color[1] - 50, self.color[2] - 50)
-
-	def display(self):
-
-		pygame.draw.polygon(self.panel.screen,
-						 self.highlight_color,
-						  [ self.rect.bottomleft, self.rect.topleft, self.rect.topright],
-						  0
-						 )
-		pygame.draw.polygon(self.panel.screen,
-						self.shadow_color,
-						[self.rect.topright, self.rect.bottomright, [self.rect.left + 2, self.rect.bottom],
-						 [self.rect.right - 2, self.rect.top]],
-						0
-						)
-		pygame.draw.rect(self.panel.screen,
-						 self.color,
-						 self.rect.inflate(-self.line_width, -self.line_width))
-
-class DropList(BaseGui):
+class DropDown(BaseGui):
 	def __init__(self, parent, text, x, y, num_visible_entries, entries_list, function):
 		BaseGui.__init__(self)
 		self.default_dict = load_defaults()
@@ -278,14 +144,15 @@ class DropList(BaseGui):
 		self.max_height = len(entries_list) * self.default_dict['dropdown_line_height'] + 2 * self.default_dict['dropdown_line_header']
 		self.function = function
 
+		self.panel_name = 'Drop Down'
 		self.justify = 'left'
 		self.default_dict = load_defaults()
 		self.fontsize = self.default_dict['label_fontsize']
 		self.children = []
-		self.children.append(DefaultLabel(self.text, self.parent, x, y, self.justify, default_dict=self.default_dict, fontsize=self.fontsize, label_name='drop_list'))
+		self.children.append(labels.DropDownLabel(self.text, self.parent, x, y, self.justify, default_dict=self.default_dict, fontsize=self.fontsize, label_name='drop_list'))
 		self.height = self.default_dict['dropdown_line_height'] * self.num_visible_entries + self.default_dict['dropdown_line_header']
 		self.display_list_visible = False
-		self.list_index = 0
+
 
 	def display(self):
 		# This should display only the label
@@ -293,57 +160,38 @@ class DropList(BaseGui):
 			element.display()
 
 	def display_list(self):
-		# The label has been clicked so we need a panel to open, populated and with a scrollbar if necessary
-		panel_name = 'Drop Down'
-
-		new_index = 0
-		#x = self.x + self.parent.x + self.default_dict['dropdown_x_offset']
+		#creates new panel_dropdown_scroll object and populates it
 		y = self.y + self.parent.y + self.default_dict['dropdown_y_offset']
-		print(self.display_list_visible)
 
-		try:
-			new_index = self.panel.children[3].list_element
-		except:
-			self.list_index = 0
-		if new_index != self.list_index:
-			self.list_index = new_index
-			self.display_list_visible = False
-
-		print('list index', self.list_index)
 		if not self.display_list_visible:
-			print('display list false')
-			self.parent.gui.create_scroll_panel(panel_name, self.x + self.parent.x - self.default_dict['dropdown_label_left_margin'],
+			# First time the window opens
+			self.parent.gui.create_dropdown_scroll_panel(self.panel_name, self.x + self.parent.x - self.default_dict['dropdown_label_left_margin'],
 										y + self.parent.y, self.default_dict['dropdown_width'], self.height,
-										self.entries_list, self.num_visible_entries)
-			print(self.parent.gui.panel_dict)
-			self.panel = self.parent.gui.panel_dict[panel_name]
-			self.parent.gui.create_scrollbar(panel_name, self.max_height, len(self.entries_list), self.num_visible_entries, 'vertical')
+										self.entries_list, self.num_visible_entries, self)
+			self.panel = self.parent.gui.panel_dict[self.panel_name]
+			self.parent.gui.create_scrollbar(self.panel_name, self.max_height, len(self.entries_list), self.num_visible_entries, 'vertical')
+			self.populate_list()
 
-
-			y = self.default_dict['dropdown_line_header']
-
-			for entry in self.entries_list[self.list_index: self.list_index + self.num_visible_entries]:
-				self.parent.gui.create_label(panel_name, entry, self.default_dict['dropdown_label_left_margin'], y)
-				y += self.default_dict['dropdown_line_height']
 		self.display_list_visible = True
 
 
+	def populate_list(self):
+		# Get rid of the labels in the panel and add the new ones
+		y = self.default_dict['dropdown_line_header']
+		self.panel.children = self.panel.children[:2]
+		for entry in self.panel.get_output_list():
+			self.parent.gui.create_label(self.panel_name, entry, self.default_dict['dropdown_label_left_margin'], y)
+			y += self.default_dict['dropdown_line_height']
 
 	def on_click(self, name):
 		# When an element from the drop down list is clicked
 		self.function(name)
 		self.parent.gui.hide_panel('Drop Down')
-		self.parent.gui.dropdown_active = None
+		self.parent.gui.dropdown_active = False
 		self.display_list_visible = False
 		self.parent.gui.panel_dict['Drop Down'].children = []
 
-class PanelColorBlock(DefaultColorBlock):
 
-	def __init__(self, panel, color, rect, drag_with_mouse=False):
-		DefaultColorBlock.__init__(self, panel, color, rect, drag_with_mouse=False)
-
-	def add_to_children(self):
-		self.panel.children.insert(0, self)
 
 class DefaultButton(BaseGui):
 	def __init__(self, text, panel, x, y, function_list, default_dict=load_defaults()):
@@ -514,11 +362,15 @@ class Scrollbar(BaseGui):
 
 		self.children=[]
 
-		self.children.append(DefaultColorBlock(self.panel, self.default_dict['scrollbar_color'], self.rect))
-		self.children.append(ScrollbarColorBlock(self.panel,  self.default_dict['scrollbar_button_color'],
+		self.children.append(color_block.DefaultColorBlock(self.panel, self.default_dict['scrollbar_color'], self.rect))
+		self.children.append(color_block.ScrollbarColorBlock(self.panel,  self.default_dict['scrollbar_button_color'],
 		 											self.button_rect, self, drag_with_mouse=True))
+		print('In scrollbar we have just created the 2 color blocks')
+		for child in self.children:
+			print(type(child))
 		#Created
 		self.panel.changed = True
+		self.panel.scrollbar = self
 
 	def display(self):
 		for child in self.children:
@@ -530,10 +382,10 @@ class Scrollbar(BaseGui):
 		traverse = self.height - self.button_height
 		step = (traverse / (self.max_entries - self.visible_entries)) // 1
 		cur_pos = self.children[1].rect.y - self.panel.rect.top
-		print('traverse', traverse, 'step', step, 'cur_pos', cur_pos)
 		return int(cur_pos // step)
 
 	def update_pos(self, x, y):
+		print('Updating scrollbar positiob')
 		max_y = self.y + self.height - self.button_height
 		self.children[1].rect.y += y
 		if self.children[1].rect.y < self.y:
@@ -541,109 +393,21 @@ class Scrollbar(BaseGui):
 		elif self.children[1].rect.y > self.y + self.height - self.button_height:
 			self.children[1].rect.y = self.y + self.height - self.button_height
 		self.panel.changed = True
+		self.panel.scrollbar_changed = True
 		self.panel.visible = True
 		self.list_element = self.get_element()
-		print('before')
-
-class DefaultPanel(BaseGui):
-
-	def __init__(self, gui, name, x, y, width, height, default_dict=load_defaults(), visible=True, active=True):
-		BaseGui.__init__(self)
-
-		self.visible = visible
-		self.active = active
-		self.name = name
-		self.x = x
-		self.y = y
-		self.width = width
-		self.height = height
-		self.gui = gui
-		self.screen = self.gui.screen
-		self.error = {}
-		self.default_dict = default_dict
-		self.background_color = self.default_dict['panel_background_color']
-		self.border_color = self.default_dict['panel_border_color']
-		
-		self.changed = False # updated by self.children objects
-		self.children = []
-		print(self.name, self.x, self.y, self.width, self.height)
-		self.rect = pygame.Rect(self.x, self.y, self.width, self.height)
-		self.background = PanelColorBlock(self, self.background_color, self.rect)
-		self.named_children_dict = {}
-
-	def update_pos(self, x, y):
-		self.rect = self.rect.move(x, y)
-		self.gui.screen.fill((0,0,0))
-		for c in self.children:
-			c.rect = c.rect.move(x, y)
-			if type(c) == ButtonOK:
-				c.update()
-
-	def display(self):
-		if self.is_error():
-			self.on_error()
-			return
-
-		for child in self.children:
-			child.display()
-
-		self.border = pygame.draw.rect(self.screen,
-								   self.border_color,
-								   self.rect,
-								   self.default_dict['panel_border'])
 
 
-	def change_background_color(self, color):
-		if self.valid_color(color):
-			# self.background is a DefaultColorBlock object
-			self.background.color = color
-			self.changed = True
+################################################################################
+#
+# Do imports here
 
-	def create_button(self, text, x, y, some_func):
-		self.children.append(DefaultButton(text, self, x, y, some_func, self.default_dict))
+# from panels import DefaultPanel, PanelScroll, PanelDropDownScroll
+# from labels import DefaultLabel, DropDownLabel
+# #from color_block import DefaultColorBlock,  ScrollbarColorBlock, DropDownColorBlock, PanelColorBlock
+# from color_block import *
 
-	def create_button_ok(self, text, x, y):
-		self.children.append(ButtonOK(text, self, x, y, [], self.default_dict))
-
-	def create_scrollbar(self, max_height, max_entries, visible_entries, orientation='vertical'):
-		if orientation == 'vertical':
-			#Change to a horizontal and vertical
-			# TODO Add max_v
-			print(max_height, self.height, self.height * (self.height / max_height))
-			self.children.append(Scrollbar(self, max_height, max_entries, visible_entries))
-
-	def create_dropdown(self, text, x, y, num_entries_visible, entries_list, function):
-		self.children.append(DropList(self, text, x, y, num_entries_visible, entries_list, function))
-
-	def create_label(self, text, x, y, justify='left', fontsize=None, label_name=False):
-		self.children.append(DefaultLabel(text, self, x, y, justify, self.default_dict, fontsize, label_name))
-		if self.children[-1].error:
-			del self.children[-1]
-		else:
-			if label_name:
-				self.named_children_dict[label_name] = self.children[-1]
-
-	def create_background_color(self, color, rect):
-		self.children.append(pygame.draw.rect(self.screen, color, rect))
-		self.changed = True
-
-	def __str__(self):
-		return('Panel object at {}, {} with width {} and height {}'.format(self.x, self.y,
-																		self.width, self.height))
-
-class PanelScroll(DefaultPanel):
-	def __init__(self, gui, name, x, y, width, height, full_list, view_num, default_dict=load_defaults(), visible=True, active=True):
-		# DefaultPanel.__init__(self, gui, name, x, y, width, height, default_dict=load_defaults(), visible=True,
-		# 					  active=True)
-		DefaultPanel.__init__(self, gui, name, x, y, width, height)
-
-
-		self.full_list = full_list
-		self.view_num = view_num
-
-	def get_output_list(self, first_index):
-		return self.full_list[first_index: first_index + self.view_num]
-
+import panels, labels, color_block
 
 
 class GuiManager(BaseGui):
@@ -702,23 +466,24 @@ class GuiManager(BaseGui):
 						#Button is not currently held down
 						if (type(element) in self.buttons)and element.rect.collidepoint(pos):
 							element.on_click()
-						elif type(element) == DefaultColorBlock:
+						elif type(element) == color_block.DefaultColorBlock:
 							if element.drag_with_mouse and element.rect.collidepoint(pos):
 								self.lmb_pressed = True
 								self.mouse_x = pos[0]
 								self.mouse_y = pos[1]
 								self.element_moving = panel
-						elif type(element) == ScrollbarColorBlock and element.rect.collidepoint(pos):
-							self.lmb_pressed = True
-							self.mouse_x = pos[0]
-							self.mouse_y = pos[1]
-							# we want the scrollbar to update itself, not a scrollbar element
-							self.element_moving = element.parent
-						elif type(element) == DropList and element.children[0].rect.collidepoint(pos):
+						elif type(element) == Scrollbar and element.children[1].rect.collidepoint(pos):
+								print('Clicked on a scrollbar color clock')
+								self.lmb_pressed = True
+								self.mouse_x = pos[0]
+								self.mouse_y = pos[1]
+								# we want the scrollbar to update itself, not a scrollbar element
+								self.element_moving = element
+						elif type(element) == DropDown and element.children[0].background_rect.collidepoint(pos):
 							self.lmb_pressed = True
 							self.dropdown_active = element
 						elif panel.name == 'Drop Down':
-							if type(element) == DefaultLabel and element.rect.collidepoint(pos):
+							if type(element) == labels.DefaultLabel and element.rect.collidepoint(pos):
 								# get drop list and work update on the clicked element
 								self.lmb_pressed = True
 								self.dropdown_active.on_click(element.text) # that works, the Data panel is updated
@@ -730,7 +495,7 @@ class GuiManager(BaseGui):
 	def on_lmb_up(self, pos):
 		self.lmb_pressed = False
 		if self.element_moving:
-
+			# TODO - add scrollbar to PanelScrollbar, makes things easier - I want to try to move the labels while mouse is pressed
 			x_diff = pos[0] - self.mouse_x
 			y_diff = pos[1] - self.mouse_y
 			print('change of {}, {}'.format(x_diff, y_diff))
@@ -738,13 +503,14 @@ class GuiManager(BaseGui):
 			self.element_moving = False
 
 	def on_mousemove_dropdown(self, pos):
+		#This highlights the text when mouseover
 		panel = self.panel_dict['Drop Down']
 		if panel.rect.collidepoint(pos):
 			#We are over drop down panel with the mouse
 			for child in panel.children:
-				if type(child) is DefaultLabel and child.rect.collidepoint(pos):
+				if type(child) is labels.DefaultLabel and child.rect.collidepoint(pos):
 					child.change_color(child.default_dict['label_highlight_color'])
-				elif type(child) is DefaultLabel:
+				elif type(child) is labels.DefaultLabel:
 					child.change_color(child.default_dict['label_color'])
 
 
@@ -759,12 +525,17 @@ class GuiManager(BaseGui):
 
 
 	def create_scroll_panel(self, name, x, y, width, height, full_list, num_visible, dict=None, visible=True, active=True, scrollable=False):
-		self.panel_dict[name] = (PanelScroll(self, name, x, y, width, height, full_list, num_visible, visible=True, active=True))
+		self.panel_dict[name] = (panels.PanelScroll(self, name, x, y, width, height, full_list, num_visible, visible=True, active=True))
+
+	def create_dropdown_scroll_panel(self, name, x, y, width, height, full_list, num_visible, dropdown, dict=None,
+									 visible=True, active=True, scrollable=False):
+		self.panel_dict[name] = (panels.PanelDropDownScroll(self, name, x, y, width, height, full_list, num_visible, dropdown, visible=True, active=True))
+
 
 	def create_panel(self, name, x, y, width, height, dict=None, visible=True, active=True, scrollable=False):
 		if dict == None:
 			dict = self.default_dict
-		self.panel_dict[name] = DefaultPanel(self, name, x, y, width, height, dict, visible, active)
+		self.panel_dict[name] = panels.DefaultPanel(self, name, x, y, width, height, dict, visible, active)
 
 		self.panels.append(self.panel_dict[name])
 		if visible:
@@ -784,7 +555,9 @@ class GuiManager(BaseGui):
 			self.error['scrollbar_orientation'] = 'Scrollbar in panel {}'.format(panel_name)
 		panel = self.panel_dict[panel_name]
 		if self.is_error() == False:
+			print('gui create scrollbar before it goes to panel', type(panel))
 			panel.create_scrollbar(max_height, num_entries, visible_entries, orientation)
+
 
 	def create_dropdown(self, panel_name, text, x, y, num_entries_visible, entries_list, function):
 		panel = self.panel_dict[panel_name]

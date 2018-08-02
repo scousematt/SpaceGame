@@ -25,7 +25,7 @@ msg_text_x:25
 msg_text_y:43
 msg_background_color:(210,200,200)
 #Panel
-panel_background_color:(240,0,0)
+panel_background_color:(220,240,240)
 panel_border_color:(90,25,25)
 panel_border:4
 #Scrollbar
@@ -42,5 +42,6 @@ dropdown_line_header:10
 dropdown_x_offset:-10
 dropdown_y_offset:30
 dropdown_label_left_margin:10
+dropdown_label_back_color:(200,200,200)
 dropdown_width:190
 #EOF
