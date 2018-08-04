@@ -143,13 +143,12 @@ class DropDown(BaseGui):
 		self.num_visible_entries = num_visible_entries
 		self.max_height = len(entries_list) * self.default_dict['dropdown_line_height'] + 2 * self.default_dict['dropdown_line_header']
 		self.function = function
-
 		self.panel_name = 'Drop Down'
 		self.justify = 'left'
 		self.default_dict = load_defaults()
 		self.fontsize = self.default_dict['label_fontsize']
 		self.children = []
-		self.children.append(labels.DropDownLabel(self.text, self.parent, x, y, self.justify, default_dict=self.default_dict, fontsize=self.fontsize, label_name='drop_list'))
+		self.children.append(labels.DropDownTitleLabel(self.text, self.parent, x, y, self.justify, default_dict=self.default_dict, fontsize=self.fontsize, label_name='drop_list'))
 		self.height = self.default_dict['dropdown_line_height'] * self.num_visible_entries + self.default_dict['dropdown_line_header']
 		self.display_list_visible = False
 
@@ -160,6 +159,7 @@ class DropDown(BaseGui):
 			element.display()
 
 	def display_list(self):
+		# self.parent.gui.dropdown_active = True # Lets the main event loop know it is looking at mouse over the panel
 		#creates new panel_dropdown_scroll object and populates it
 		y = self.y + self.parent.y + self.default_dict['dropdown_y_offset']
 
@@ -180,6 +180,7 @@ class DropDown(BaseGui):
 		y = self.default_dict['dropdown_line_header']
 		self.panel.children = self.panel.children[:2]
 		for entry in self.panel.get_output_list():
+			# the label created is overwritten in a panel drop down list panel
 			self.parent.gui.create_label(self.panel_name, entry, self.default_dict['dropdown_label_left_margin'], y)
 			y += self.default_dict['dropdown_line_height']
 
@@ -364,10 +365,8 @@ class Scrollbar(BaseGui):
 
 		self.children.append(color_block.DefaultColorBlock(self.panel, self.default_dict['scrollbar_color'], self.rect))
 		self.children.append(color_block.ScrollbarColorBlock(self.panel,  self.default_dict['scrollbar_button_color'],
-		 											self.button_rect, self, drag_with_mouse=True))
-		print('In scrollbar we have just created the 2 color blocks')
-		for child in self.children:
-			print(type(child))
+													self.button_rect, self, drag_with_mouse=True))
+
 		#Created
 		self.panel.changed = True
 		self.panel.scrollbar = self
@@ -379,14 +378,12 @@ class Scrollbar(BaseGui):
 
 	def get_element(self):
 		# This will return the index of the first line to be visible
-		traverse = self.height - self.button_height
+		traverse = self.height# - self.button_height
 		step = (traverse / (self.max_entries - self.visible_entries)) // 1
 		cur_pos = self.children[1].rect.y - self.panel.rect.top
 		return int(cur_pos // step)
 
 	def update_pos(self, x, y):
-		print('Updating scrollbar positiob')
-		max_y = self.y + self.height - self.button_height
 		self.children[1].rect.y += y
 		if self.children[1].rect.y < self.y:
 			self.children[1].rect.y = self.y
@@ -451,10 +448,15 @@ class GuiManager(BaseGui):
 
 	def display(self):
 		for panel_name, panel in self.panel_dict.items():
-			# TODO check to see if panel is changed
 			if panel.visible == True and panel.changed == True:
 				panel.display()
 				panel.changed = False
+
+	def check_instance_in_list(self, list_, obj_):
+		for l in list_:
+			if isinstance(l, type(obj_)):
+				return True
+		return False
 
 	def on_lmb_click(self, pos):
 
@@ -464,26 +466,26 @@ class GuiManager(BaseGui):
 				for element in panel.children:
 					if not self.lmb_pressed:
 						#Button is not currently held down
-						if (type(element) in self.buttons)and element.rect.collidepoint(pos):
+						if self.check_instance_in_list(self.buttons, element)and element.rect.collidepoint(pos):
 							element.on_click()
-						elif type(element) == color_block.DefaultColorBlock:
+						elif isinstance(element, color_block.DefaultColorBlock):
 							if element.drag_with_mouse and element.rect.collidepoint(pos):
 								self.lmb_pressed = True
 								self.mouse_x = pos[0]
 								self.mouse_y = pos[1]
 								self.element_moving = panel
-						elif type(element) == Scrollbar and element.children[1].rect.collidepoint(pos):
-								print('Clicked on a scrollbar color clock')
+						elif isinstance(element, Scrollbar) and element.children[1].rect.collidepoint(pos):
 								self.lmb_pressed = True
+								# TODO change to vector2 to allow pos - mouse_clicked_pos
 								self.mouse_x = pos[0]
 								self.mouse_y = pos[1]
 								# we want the scrollbar to update itself, not a scrollbar element
 								self.element_moving = element
-						elif type(element) == DropDown and element.children[0].background_rect.collidepoint(pos):
+						elif isinstance(element, DropDown) and element.children[0].background_rect.collidepoint(pos):
 							self.lmb_pressed = True
 							self.dropdown_active = element
 						elif panel.name == 'Drop Down':
-							if type(element) == labels.DefaultLabel and element.rect.collidepoint(pos):
+							if isinstance(element, labels.DefaultLabel) and element.rect.collidepoint(pos):
 								# get drop list and work update on the clicked element
 								self.lmb_pressed = True
 								self.dropdown_active.on_click(element.text) # that works, the Data panel is updated
@@ -498,20 +500,35 @@ class GuiManager(BaseGui):
 			# TODO - add scrollbar to PanelScrollbar, makes things easier - I want to try to move the labels while mouse is pressed
 			x_diff = pos[0] - self.mouse_x
 			y_diff = pos[1] - self.mouse_y
-			print('change of {}, {}'.format(x_diff, y_diff))
+			# print('change of {}, {}'.format(x_diff, y_diff))
 			self.element_moving.update_pos(x_diff, y_diff)
 			self.element_moving = False
 
 	def on_mousemove_dropdown(self, pos):
+		# Run from main pygame loop
 		#This highlights the text when mouseover
 		panel = self.panel_dict['Drop Down']
 		if panel.rect.collidepoint(pos):
 			#We are over drop down panel with the mouse
+			if self.lmb_pressed:
+				panel.scrollbar.update_pos(pos[0] - self.mouse_x, pos[1] - self.mouse_y)
+			####################################################################
+			#
+			# THE child is created anew whenever the mouse moves, so I need to remember which is the
+			# highlighted label, also convert the labels to a new subclass that can retain a background_color
+
+
+
 			for child in panel.children:
-				if type(child) is labels.DefaultLabel and child.rect.collidepoint(pos):
-					child.change_color(child.default_dict['label_highlight_color'])
-				elif type(child) is labels.DefaultLabel:
-					child.change_color(child.default_dict['label_color'])
+				if isinstance(child, labels.DropDownListLabel) and child.rect.collidepoint(pos):
+					panel.highlight = child.text
+					if panel.highlight != panel.old_highlight:
+						panel.changed = True
+						panel.old_highlight = panel.highlight
+		else:
+			panel.changed = True
+			panel.highlight = None
+
 
 
 	def panels_inactivate(self):
@@ -555,7 +572,6 @@ class GuiManager(BaseGui):
 			self.error['scrollbar_orientation'] = 'Scrollbar in panel {}'.format(panel_name)
 		panel = self.panel_dict[panel_name]
 		if self.is_error() == False:
-			print('gui create scrollbar before it goes to panel', type(panel))
 			panel.create_scrollbar(max_height, num_entries, visible_entries, orientation)
 
 
@@ -568,6 +584,12 @@ class GuiManager(BaseGui):
 		panel = self.panel_dict[panel_name]
 		if self.is_error() == False:
 			panel.create_label(text, x, y, justify, fontsize, label_name)
+
+	def create_dropdown_list_label(self, panel_name, text, x, y, justify='left', fontsize=None, label_name=False):
+		panel = self.panel_dict[panel_name]
+		if self.is_error() == False:
+			panel.create_dropdown_list_label(text, x, y, justify, fontsize, label_name)
+
 
 	def change_label_text(self, panel_name, label_name, text):
 		panel = self.panel_dict[panel_name]
