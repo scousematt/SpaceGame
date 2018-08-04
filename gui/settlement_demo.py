@@ -33,6 +33,7 @@ gui.create_label('Data',g.settlement_names[0], 300,10, label_name='name')
 gui.create_label('Data','Population', 10, 40)
 gui.create_label('Data',g.settlements[g.settlement_names[0]].pop_int, 300, 40, label_name='pop')
 gui.create_dropdown('Toolbar', 'Select Planet', 200, 10, 3, g.settlement_names, g.display_settlement )
+gui.create_dropdown('Toolbar', 'Time', 500, 10, 5, g.time_increments, g.set_time_increment)
 
 # TODO We have a drop box that we can click on, now it needs to refresh the information in 'Data' and redraw it. Also make the
 # drop list panel the only active panel, which will disappear when clicking is done elsewhere, and of course the scrollbar.

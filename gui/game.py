@@ -30,6 +30,8 @@ class Game:
         self.settlements = {}
         self.settlement_names = []
         self.cur_settlement = None
+        self.time_increment = 30
+        self.time_increments = ['a', 'b', 'c', 'd', 'e', 'f', 'g']
 
     def add_settlement(self, name, pop, player_id=0):
         self.settlements[name] = (Settlement(name, pop, self, player_id))
@@ -45,6 +47,10 @@ class Game:
             self.settlements[settlement].update(30)
             print('Got to update30')
         self.settlements[self.cur_settlement].display()
+
+    def set_time_increment(self, inc):
+        self.time_increment = inc
+
 
 
 

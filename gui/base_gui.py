@@ -184,6 +184,7 @@ class DropDown(BaseGui):
 			self.parent.gui.create_label(self.panel_name, entry, self.default_dict['dropdown_label_left_margin'], y)
 			y += self.default_dict['dropdown_line_height']
 
+
 	def on_click(self, name):
 		# When an element from the drop down list is clicked
 		self.function(name)
@@ -377,8 +378,8 @@ class Scrollbar(BaseGui):
 			child.display()
 
 	def get_element(self):
-		# This will return the index of the first line to be visible
-		traverse = self.height# - self.button_height
+		# This will return the index of the first line to be visible and doesnt work
+		traverse = self.height - self.button_height
 		step = (traverse / (self.max_entries - self.visible_entries)) // 1
 		cur_pos = self.children[1].rect.y - self.panel.rect.top
 		return int(cur_pos // step)
@@ -399,10 +400,6 @@ class Scrollbar(BaseGui):
 #
 # Do imports here
 
-# from panels import DefaultPanel, PanelScroll, PanelDropDownScroll
-# from labels import DefaultLabel, DropDownLabel
-# #from color_block import DefaultColorBlock,  ScrollbarColorBlock, DropDownColorBlock, PanelColorBlock
-# from color_block import *
 
 import panels, labels, color_block
 
@@ -466,24 +463,25 @@ class GuiManager(BaseGui):
 				for element in panel.children:
 					if not self.lmb_pressed:
 						#Button is not currently held down
-						if self.check_instance_in_list(self.buttons, element)and element.rect.collidepoint(pos):
-							element.on_click()
-						elif isinstance(element, color_block.DefaultColorBlock):
-							if element.drag_with_mouse and element.rect.collidepoint(pos):
-								self.lmb_pressed = True
-								self.mouse_x = pos[0]
-								self.mouse_y = pos[1]
-								self.element_moving = panel
-						elif isinstance(element, Scrollbar) and element.children[1].rect.collidepoint(pos):
+						if not self.dropdown_active:
+							if self.check_instance_in_list(self.buttons, element)and element.rect.collidepoint(pos):
+								element.on_click()
+							elif isinstance(element, color_block.DefaultColorBlock):
+								if element.drag_with_mouse and element.rect.collidepoint(pos):
+									self.lmb_pressed = True
+									self.mouse_x = pos[0]
+									self.mouse_y = pos[1]
+									self.element_moving = panel
+							elif isinstance(element, Scrollbar) and element.children[1].rect.collidepoint(pos):
 								self.lmb_pressed = True
 								# TODO change to vector2 to allow pos - mouse_clicked_pos
 								self.mouse_x = pos[0]
 								self.mouse_y = pos[1]
 								# we want the scrollbar to update itself, not a scrollbar element
 								self.element_moving = element
-						elif isinstance(element, DropDown) and element.children[0].background_rect.collidepoint(pos):
-							self.lmb_pressed = True
-							self.dropdown_active = element
+							elif isinstance(element, DropDown) and element.children[0].background_rect.collidepoint(pos):
+								self.lmb_pressed = True
+								self.dropdown_active = element
 						elif panel.name == 'Drop Down':
 							if isinstance(element, labels.DefaultLabel) and element.rect.collidepoint(pos):
 								# get drop list and work update on the clicked element
