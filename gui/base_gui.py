@@ -73,9 +73,9 @@ class BaseGui:
 			
 			
 	def on_error(self):
-		print('Errors detected in {}'.format(self))
+		print(f'Errors detected in {self}')
 		for value in self.error:
-			print('{} : {}'.format(value, self.error[value]))
+			print('{value} : {self.error[value]}')
 			
 	def valid_color(self, color):
 		if type(color) == tuple and len(color) == 3:
@@ -107,11 +107,11 @@ class MessageBox(BaseGui):
 
 		# Get the active panel name
 		self.panel = gui.panel_dict[name]
-		# Set the correct background color rather than panel defaults
+		# Set the correct background color rather than panel default_dict
 		self.panel.change_background_color(self.default_dict['msg_background_color'])
 
 		# Create background for title
-		self.title_background = DefaultColorBlock(self.panel, self.default_dict['msg_title_background_color'],
+		self.title_background = color_block.DefaultColorBlock(self.panel, self.default_dict['msg_title_background_color'],
 													  (self.panel.rect.x + self.default_dict['panel_border'],
 													   self.panel.rect.y + self.default_dict['panel_border'],
 													   self.panel.rect.width - self.default_dict['panel_border'] * 2,
@@ -425,6 +425,14 @@ class GuiManager(BaseGui):
 		self.element_moving = False
 		self.dropdown_active = None
 
+		self.initial_setup()
+
+	def initial_setup(self):
+		screen_rect = self.screen.get_rect()
+		self.create_panel('Main Panel', 0, 0, screen_rect.width, screen_rect.height,
+						  default_dict=None, visible=True, active=True, scrollable=False)
+		self.panel_dict['Main Panel'].change_background_color( (122,0,0) )#self.default_dict['main_panel_background_color'])
+		self.panel_dict['Main Panel'].display()
 
 	def show_panel(self, panel_name):
 		# Think this is replaced by the panel_dict
@@ -432,18 +440,32 @@ class GuiManager(BaseGui):
 			if panel.name == panel_name:
 				panel.visible = True
 
-	def hide_panel(self, name_of_panel):
-
-		for panel_name, panel in self.panel_dict.items():
-			if panel.name == name_of_panel:
-				panel.visible = False
-				panel.active = False
-			if panel.visible == True:
-				panel.changed = True
-
+	def hide_panel(self, panel_name):
+		panel = self.panel_dict[panel_name]
+		panel.visible = False
+		panel.active = False
+		redraw_screen = False
+		if panel.visible == True:
+			panel.changed = True
+		for p in self.panels:
+			# When removing a panel, check to make sure panels below are re displayed
+			if p.visible:
+				if p.rect.colliderect(panel.rect):
+					p.changed = True
 		self.display()
 
 	def display(self):
+
+		#########################################################
+		#
+		#
+		#
+		#
+		# TODO Need to fill the rect of any disappearing panel with project background color and then make each visible panel
+		# underneath it changed.
+
+
+
 		for panel_name, panel in self.panel_dict.items():
 			if panel.visible == True and panel.changed == True:
 				panel.display()
@@ -472,16 +494,19 @@ class GuiManager(BaseGui):
 									self.mouse_x = pos[0]
 									self.mouse_y = pos[1]
 									self.element_moving = panel
-							elif isinstance(element, Scrollbar) and element.children[1].rect.collidepoint(pos):
-								self.lmb_pressed = True
-								# TODO change to vector2 to allow pos - mouse_clicked_pos
-								self.mouse_x = pos[0]
-								self.mouse_y = pos[1]
-								# we want the scrollbar to update itself, not a scrollbar element
-								self.element_moving = element
+
 							elif isinstance(element, DropDown) and element.children[0].background_rect.collidepoint(pos):
 								self.lmb_pressed = True
 								self.dropdown_active = element
+
+						elif isinstance(element, Scrollbar) and element.children[1].rect.collidepoint(pos):
+							self.lmb_pressed = True
+							# TODO change to vector2 to allow pos - mouse_clicked_pos
+							self.mouse_x = pos[0]
+							self.mouse_y = pos[1]
+							# we want the scrollbar to update itself, not a scrollbar element
+							self.element_moving = element
+
 						elif panel.name == 'Drop Down':
 							if isinstance(element, labels.DefaultLabel) and element.rect.collidepoint(pos):
 								# get drop list and work update on the clicked element
@@ -494,11 +519,12 @@ class GuiManager(BaseGui):
 
 	def on_lmb_up(self, pos):
 		self.lmb_pressed = False
+		print(f'element moving {self.element_moving}')
 		if self.element_moving:
 			# TODO - add scrollbar to PanelScrollbar, makes things easier - I want to try to move the labels while mouse is pressed
 			x_diff = pos[0] - self.mouse_x
 			y_diff = pos[1] - self.mouse_y
-			# print('change of {}, {}'.format(x_diff, y_diff))
+			print('change of {}, {}'.format(x_diff, y_diff))
 			self.element_moving.update_pos(x_diff, y_diff)
 			self.element_moving = False
 
@@ -510,13 +536,6 @@ class GuiManager(BaseGui):
 			#We are over drop down panel with the mouse
 			if self.lmb_pressed:
 				panel.scrollbar.update_pos(pos[0] - self.mouse_x, pos[1] - self.mouse_y)
-			####################################################################
-			#
-			# THE child is created anew whenever the mouse moves, so I need to remember which is the
-			# highlighted label, also convert the labels to a new subclass that can retain a background_color
-
-
-
 			for child in panel.children:
 				if isinstance(child, labels.DropDownListLabel) and child.rect.collidepoint(pos):
 					panel.highlight = child.text
@@ -539,18 +558,21 @@ class GuiManager(BaseGui):
 				panel.active = True
 
 
-	def create_scroll_panel(self, name, x, y, width, height, full_list, num_visible, dict=None, visible=True, active=True, scrollable=False):
+	def create_scroll_panel(self, name, x, y, width, height, full_list, num_visible, default_dict=None, visible=True, active=True, scrollable=False):
 		self.panel_dict[name] = (panels.PanelScroll(self, name, x, y, width, height, full_list, num_visible, visible=True, active=True))
 
-	def create_dropdown_scroll_panel(self, name, x, y, width, height, full_list, num_visible, dropdown, dict=None,
+	def create_dropdown_scroll_panel(self, name, x, y, width, height, full_list, num_visible, dropdown, default_dict=None,
 									 visible=True, active=True, scrollable=False):
 		self.panel_dict[name] = (panels.PanelDropDownScroll(self, name, x, y, width, height, full_list, num_visible, dropdown, visible=True, active=True))
 
 
-	def create_panel(self, name, x, y, width, height, dict=None, visible=True, active=True, scrollable=False):
-		if dict == None:
-			dict = self.default_dict
-		self.panel_dict[name] = panels.DefaultPanel(self, name, x, y, width, height, dict, visible, active)
+	def create_panel(self, name, x, y, width, height, default_dict=None, visible=True, active=True, scrollable=False):
+		if default_dict == None:
+			default_dict = self.default_dict
+		if name in self.panel_dict:
+			self.error['panel_name_exists'] = name
+			return
+		self.panel_dict[name] = panels.DefaultPanel(self, name, x, y, width, height, default_dict, visible, active)
 
 		self.panels.append(self.panel_dict[name])
 		if visible:
@@ -599,7 +621,7 @@ class GuiManager(BaseGui):
 			if name == panel.name:
 				return(panel)
 
-		self.error['invalid_panel_name'] = '{} not found in GuiManger.panels'.format(name)
+		self.error['unknown_panel_name'] = '{} not found in GuiManger.panels'.format(name)
 		print(self.error)
 
 	def create_message_box(self, name, title, text, gui_defaults):

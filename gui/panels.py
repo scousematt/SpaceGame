@@ -37,6 +37,7 @@ class DefaultPanel(base_gui.BaseGui):
 	def display(self):
 		if self.is_error():
 			self.on_error()
+			print('Are we in an error')
 			return
 
 		for child in self.children:
@@ -50,7 +51,9 @@ class DefaultPanel(base_gui.BaseGui):
 	def change_background_color(self, color):
 		if self.valid_color(color):
 			# self.background is a DefaultColorBlock object
-			self.background.color = color
+
+			self.background_color = color
+			self.children[0].color = self.background_color
 			self.changed = True
 
 	def create_button(self, text, x, y, some_func):

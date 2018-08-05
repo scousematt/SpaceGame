@@ -1,3 +1,5 @@
+#Game
+main_panel_background_color:(0, 0, 0)
 #Button
 button_font:freesansbold.ttf
 button_fontsize:25
