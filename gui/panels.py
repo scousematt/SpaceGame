@@ -64,9 +64,9 @@ class DefaultPanel(base_gui.BaseGui):
 
 
 
-	def create_dropdown(self, text, x, y, num_entries_visible, entries_list, function):
+	def create_dropdown_title(self, text, x, y, num_entries_visible, entries_list, function, length):
 		# The dropdown list creates its own panel, but looks like a defaultLabel at present found in another panel
-		self.children.append(base_gui.DropDown(self, text, x, y, num_entries_visible, entries_list, function))
+		self.children.append(base_gui.DropDown(self, text, x, y, num_entries_visible, entries_list, function, length))
 
 	def create_label(self, text, x, y, justify='left', fontsize=None, label_name=False):
 		self.children.append(labels.DefaultLabel(text, self, x, y, justify, self.default_dict, fontsize, label_name))

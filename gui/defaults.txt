@@ -2,7 +2,7 @@
 main_panel_background_color:(0, 0, 0)
 #Button
 button_font:freesansbold.ttf
-button_fontsize:25
+button_fontsize:20
 button_color:(80, 80, 80)
 button_shadow_color:(30, 30, 30)
 button_highlight_color:(130, 130, 130)

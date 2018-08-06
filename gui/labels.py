@@ -8,10 +8,11 @@ class DefaultLabel(base_gui.BaseGui):
 		base_gui.BaseGui.__init__(self)
 		self.default_dict = default_dict
 		self.parent = parent
-		self.text = text
-		if isinstance(self.text, int):
+		self.text = '' # We establish self.text in the method self.change_text(text)
+
+		if isinstance(text, (int, float)):
 			# here we can test to see if we want colored numbers (red , green) or brackets around -ve
-			str(self.text)
+			text = f'{text}'
 
 		self.name = label_name
 
@@ -44,13 +45,24 @@ class DefaultLabel(base_gui.BaseGui):
 			except:
 				self.error['font'] = True
 		if not self.is_error():
-			self.change_text(self.text)
+			self.change_text(text)
 
 	def change_text(self, new_text):
-		self.text = new_text
-		if type(self.text) == int:
+		if isinstance(new_text, (int, float)):
 			# here we can test to see if we want colored numbers (red , green) or brackets around -ve
-			self.text = str(self.text)
+
+			new_text = f'{new_text}'
+		elif isinstance(new_text, str) == False:
+			# We have sent something other than an int or a str to be text.
+			self.error['label_change_text_not_str'] = True
+			return
+
+		if self.text == new_text:
+			# Do nothing, nothing has changed
+			return
+
+		self.text = new_text
+
 		self.text_surface = self.font.render(self.text,
 											 True,
 											 self.text_color)
@@ -81,6 +93,7 @@ class DefaultLabel(base_gui.BaseGui):
 		if self.is_error():
 			self.on_error()
 			return
+		print(self.text)
 		self.parent.screen.blit(self.text_surface, self.rect)
 
 	def __str__(self):
@@ -96,7 +109,7 @@ class DropDownTitleLabel(DefaultLabel):
 				 label_name=None):
 		DefaultLabel.__init__(self, text, parent, x, y, justify='left', default_dict=base_gui.load_defaults(), fontsize=None,
 				 label_name=None)
-
+		print(text)
 		self.background_rect = self.rect.inflate(24,2)
 		self.background_rect.x += 10
 		self.image = pygame.image.load('images/dropdown.png')

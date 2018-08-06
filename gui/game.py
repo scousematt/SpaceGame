@@ -13,9 +13,10 @@ class Settlement():
     def display(self):
         #Note that this will always be shown in the smae panel
         #gui.change_label_text('Data', 'pop', self.pop_int)
+        # TODO this is clumsy, I should just remake the Data panel with a new settlement
         self.parent.gui.change_label_text(self.parent.settlement_panel_name, 'name', self.name)
         self.parent.gui.change_label_text(self.parent.settlement_panel_name, 'pop', self.pop_int)
-        print(self.name, str(self.pop_int), str(self.player_id))
+        print(f'Settlement {self.name}, {self.pop_int} pop, player {self.player_id}')
 
 
     def update(self, time):
@@ -32,21 +33,23 @@ class Game:
         self.settlement_names = []
         self.cur_settlement = None
         self.time_increment = 30
-        self.time_increments = ['a', 'b', 'c', 'd', 'e', 'f', 'g']
+        self.time_increments = ['5s', '30s', '2m', '5m', '20m', '1h', '3h', '6h', '1d', '2d', '5d', '30d']
 
     def add_settlement(self, name, pop, player_id=0):
         self.settlements[name] = (Settlement(name, pop, self, player_id))
         self.settlement_names.append(name)
-        self.cur_settlement = name
+        self.cur_settlement = name # The button is not tied to this on startup
 
     def display_settlement(self, name):
+        self.cur_settlement = name
         self.settlements[name].display()
 
 
-    def update30(self):
+
+    def update(self):
         for settlement in self.settlement_names:
             self.settlements[settlement].update(30)
-            print('Got to update30')
+        print('Got to update30')
         self.settlements[self.cur_settlement].display()
 
     def set_time_increment(self, inc):

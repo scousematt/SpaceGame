@@ -75,7 +75,7 @@ class BaseGui:
 	def on_error(self):
 		print(f'Errors detected in {self}')
 		for value in self.error:
-			print('{value} : {self.error[value]}')
+			print(f'{value} : {self.error[value]}')
 			
 	def valid_color(self, color):
 		if type(color) == tuple and len(color) == 3:
@@ -132,26 +132,36 @@ class MessageBox(BaseGui):
 
 
 class DropDown(BaseGui):
-	def __init__(self, parent, text, x, y, num_visible_entries, entries_list, function):
+	def __init__(self, parent, name, x, y, num_visible_entries, entries_list, function, length):
 		BaseGui.__init__(self)
 		self.default_dict = load_defaults()
 		self.parent = parent
-		self.text = text
+		self.name = name
 		self.x = x
 		self.y = y
 		self.entries_list = entries_list
 		self.num_visible_entries = num_visible_entries
 		self.max_height = len(entries_list) * self.default_dict['dropdown_line_height'] + 2 * self.default_dict['dropdown_line_header']
 		self.function = function
-		self.panel_name = 'Drop Down'
+		self.length = length
+		self.set_length_of_text(self.name)
+
+		self.panel_name = 'Drop Down' #only 1 drop down active at a time, so when a new drop down is activated it overwrites this
 		self.justify = 'left'
 		self.default_dict = load_defaults()
 		self.fontsize = self.default_dict['label_fontsize']
 		self.children = []
-		self.children.append(labels.DropDownTitleLabel(self.text, self.parent, x, y, self.justify, default_dict=self.default_dict, fontsize=self.fontsize, label_name='drop_list'))
+		self.children.append(labels.DropDownTitleLabel(self.name, self.parent, x, y, self.justify, default_dict=self.default_dict, fontsize=self.fontsize, label_name='drop_list'))
 		self.height = self.default_dict['dropdown_line_height'] * self.num_visible_entries + self.default_dict['dropdown_line_header']
 		self.display_list_visible = False
 
+	def set_length_of_text(self, text_):
+		if self.length == 0:
+			return
+		elif self.length < len(text_):
+			self.error['dropdown_title_text_length'] = f'Length is {len(self.length)} chars, text_ is {len(text_)}'
+		elif self.length >= len(text_):
+			self.text = f'{text_:{self.length}}'
 
 	def display(self):
 		# This should display only the label
@@ -188,6 +198,8 @@ class DropDown(BaseGui):
 	def on_click(self, name):
 		# When an element from the drop down list is clicked
 		self.function(name)
+		self.set_length_of_text(name)
+		self.children[0].change_text(name)
 		self.parent.gui.hide_panel('Drop Down')
 		self.parent.gui.dropdown_active = False
 		self.display_list_visible = False
@@ -486,7 +498,7 @@ class GuiManager(BaseGui):
 					if not self.lmb_pressed:
 						#Button is not currently held down
 						if not self.dropdown_active:
-							if self.check_instance_in_list(self.buttons, element)and element.rect.collidepoint(pos):
+							if isinstance(element, (DefaultButton, ButtonOK))and element.rect.collidepoint(pos):
 								element.on_click()
 							elif isinstance(element, color_block.DefaultColorBlock):
 								if element.drag_with_mouse and element.rect.collidepoint(pos):
@@ -595,10 +607,11 @@ class GuiManager(BaseGui):
 			panel.create_scrollbar(max_height, num_entries, visible_entries, orientation)
 
 
-	def create_dropdown(self, panel_name, text, x, y, num_entries_visible, entries_list, function):
+	def create_dropdown_title(self, panel_name, text, x, y, num_entries_visible, entries_list, function, length=0):
+		# This creates the special label for drop down titles, clicking this will open a new panel with a scrollbar
 		panel = self.panel_dict[panel_name]
 		if self.is_error() == False:
-			panel.create_dropdown(text, x, y, num_entries_visible, entries_list, function)
+			panel.create_dropdown_title(text, x, y, num_entries_visible, entries_list, function, length)
 
 	def create_label(self, panel_name, text, x, y, justify='left', fontsize=None, label_name=False):
 		panel = self.panel_dict[panel_name]

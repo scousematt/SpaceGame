@@ -10,3 +10,5 @@ out_of_panel:__str__:The element rect is not contained within the parent panel
 unknown_panel_name:__str__:The name variable sent gui manager is not found within GuiManager.panels
 panel_name_exists:__str__:The panel name is already in use
 scrollbar_orientation:_str_:Orientation should be vertical or horizontal
+dropdown_title_text_length:__str__:Title text longer than length
+label_change_text_not_str:__str__:On label.change_text(new_text), new_text is not a string or a number
