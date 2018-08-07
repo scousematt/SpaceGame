@@ -7,9 +7,6 @@ They will be overwritten if a different look, color etc is required.
 import pygame
 
 
-
-print('Importing BaseGui')
-
 def return_correct_type(var_in):
 	try:
 		if int(var_in):

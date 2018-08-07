@@ -105,10 +105,11 @@ class DefaultLabel(base_gui.BaseGui):
 
 class DropDownTitleLabel(DefaultLabel):
 	# This is the drop down title label
-	def __init__(self, text, parent, x, y, justify='left', default_dict=base_gui.load_defaults(), fontsize=None,
+	def __init__(self, text, parent, x, y, justify='left', default_dict=base_gui.load_defaults(),fontsize=None,
 				 label_name=None):
 		DefaultLabel.__init__(self, text, parent, x, y, justify='left', default_dict=base_gui.load_defaults(), fontsize=None,
 				 label_name=None)
+
 		print(text)
 		self.background_rect = self.rect.inflate(24,2)
 		self.background_rect.x += 10
