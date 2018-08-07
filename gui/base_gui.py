@@ -203,156 +203,6 @@ class DropDown(BaseGui):
 		self.parent.gui.panel_dict['Drop Down'].children = []
 
 
-
-class DefaultButton(BaseGui):
-	def __init__(self, text, panel, x, y, function_list, default_dict=load_defaults()):
-		BaseGui.__init__(self)
-		
-		
-		self.text = text
-		self.panel = panel
-		
-		#self.error = error
-		self.x = x + panel.x
-		self.y = y + panel.y
-
-		
-		self.default_dict = default_dict
-		
-		self.button_color = default_dict['button_color']
-		self.button_shadow_color = default_dict['button_shadow_color']
-		self.button_highlight_color = default_dict['button_highlight_color']
-		self.text_color = default_dict['button_text_color']
-		
-		#Fonts
-		self.fontname = default_dict['button_font']
-		self.fontsize = default_dict['button_fontsize']
-		try:
-			self.font = pygame.font.Font(self.fontname, self.fontsize)
-		except:
-			self.error['font'] = True
-
-		self.width = default_dict['button_width']
-		self.height = default_dict['button_height']
-				
-		self.rect = pygame.Rect(self.x, self.y, self.width, self.height)
-
-		self.offset = default_dict['button_highlight_offset']
-		
-		# This is the rect that contains the whole button
-		self.shadow_rect = self.rect.inflate(self.offset * 2, self.offset * 2)
-		
-	
-		self.create_highlight_coords()	
-		self.change_text(text)
-
-		self.panel.changed = True
-		self.function_list = function_list
-		if self.function_list == []:
-			self.function_list = [self.close_panel]
-		self.function_index = 0
-		print(self.function_list)
-		self.on_click_method = self.function_list[self.function_index]
-	
-
-	def update(self):
-		self.text_rect.center = ((self.rect.x + self.rect.width // 2, self.rect.y + self.rect.height // 2))
-		self.create_highlight_coords()
-		self.shadow_rect = self.rect.inflate(self.offset * 2, self.offset * 2)
-
-	def on_click(self):
-		#
-		# Note. A button can change things in other panels. self.panel.changed ??
-		#
-		# External function requires self, internal do not.
-		try:
-			return_method =  self.on_click_method(self)
-		except TypeError:
-			return_method = self.on_click_method()
-		self.function_index += 1
-		if self.function_index == len(self.function_list):
-			self.function_index = 0
-		self.on_click_method = self.function_list[self.function_index]
-		return return_method
-
-	def close_panel(self):
-		self.panel.screen.fill((0,0,0))
-		self.panel.visible = False
-		self.panel.active = False
-		for panel in self.panel.gui.panels:
-			if panel.visible:
-				panel.active = True
-
-	def check_text_size(self):
-		if self.text_rect.width > self.width:
-			self.error['text_width'] = True
-		if self.text_rect.height > self.height:
-			self.error['text_height'] = True
-
-	def change_text(self, new_text):
-		# TODO text should be a label, so it can update position correctly
-		self.text = new_text
-		self.text_surface = self.font.render(	new_text, 
-												True, 
-												self.text_color)
-		self.text_rect = self.text_surface.get_rect()
-		self.check_text_size()
-
-		self.text_rect.center = ((self.x + self.width//2, self.y + self.height//2))
-		if not self.panel.rect.contains(self.text_rect):
-			self.error['out_of_bounds'] = self
-		self.display()
-
-	def create_highlight_coords(self):
-		
-		self.highlight_coords = [(self.rect.x - self.offset, self.rect.y - self.offset),
-							(self.rect.x + self.rect.w + self.offset, self.rect.y - self.offset),
-							(self.rect.x + self.rect.w, self.rect.y),
-							(self.rect.x, self.rect.y),
-							(self.rect.x, self.rect.y + self.rect.h),
-							(self.rect.x - self.offset, self.rect.y + self.rect.h + self.offset)]
-	
-	def display(self):
-		if self.is_error():
-			self.on_error()
-			return()
-		pygame.draw.rect(	self.panel.screen,
-							self.button_shadow_color,
-							self.shadow_rect)
-		
-		pygame.draw.polygon(	self.panel.screen,
-								self.button_highlight_color,
-								self.highlight_coords)
-									
-		pygame.draw.rect(	self.panel.screen,
-							self.button_color,
-							self.rect)
-		
-		self.panel.screen.blit(self.text_surface, self.text_rect)
-		
-	
-	def __str__(self):
-		return('Button object at {}, {} with text "{}"'.format(self.x - self.panel.x,
-															self.y - self.panel.y,
-															self.text))
-	
-
-class ButtonOK(DefaultButton):
-
-	def __init__(self, text, panel, x, y, function_list=[], default_dict=load_defaults()):
-		DefaultButton.__init__(self, text, panel, x, y, function_list=[])
-		self.width = panel.width - (2 * self.default_dict['msg_text_x'])
-		self.text = 'OK'
-		self.rect = pygame.Rect(self.x, self.y, self.width, self.height)
-
-		self.offset = default_dict['button_highlight_offset']
-
-		# This is the rect that contains the whole button
-		self.shadow_rect = self.rect.inflate(self.offset * 2, self.offset * 2)
-
-		self.create_highlight_coords()
-		self.change_text(text)
-
 class Scrollbar(BaseGui):
 	def __init__(self, panel, button_max_height, max_entries, visible_entries, default_dict=load_defaults()):
 		BaseGui.__init__(self)
@@ -410,7 +260,7 @@ class Scrollbar(BaseGui):
 # Do imports here
 
 
-import panels, labels, color_block
+import panels, labels, color_block, buttons
 
 
 class GuiManager(BaseGui):
@@ -427,7 +277,6 @@ class GuiManager(BaseGui):
 		self.font_dict = {}
 		self.panels_on_screen = []
 		self.panel_dict = {}
-		self.buttons = [DefaultButton, ButtonOK]
 		self.lmb_pressed = False
 		self.mouse_x = 0
 		self.mouse_y = 0
@@ -443,11 +292,11 @@ class GuiManager(BaseGui):
 		self.panel_dict['Main Panel'].change_background_color( (122,0,0) )#self.default_dict['main_panel_background_color'])
 		self.panel_dict['Main Panel'].display()
 
-	def show_panel(self, panel_name):
-		# Think this is replaced by the panel_dict
-		for panel in self.panels:
-			if panel.name == panel_name:
-				panel.visible = True
+	# def show_panel(self, panel_name):
+	# 	# Think this is replaced by the panel_dict
+	# 	for panel in self.panels:
+	# 		if panel.name == panel_name:
+	# 			panel.visible = True
 
 	def hide_panel(self, panel_name):
 		panel = self.panel_dict[panel_name]
@@ -465,26 +314,10 @@ class GuiManager(BaseGui):
 
 	def display(self):
 
-		#########################################################
-		#
-		#
-		#
-		#
-		# TODO Need to fill the rect of any disappearing panel with project background color and then make each visible panel
-		# underneath it changed.
-
-
-
 		for panel_name, panel in self.panel_dict.items():
 			if panel.visible == True and panel.changed == True:
 				panel.display()
 				panel.changed = False
-
-	def check_instance_in_list(self, list_, obj_):
-		for l in list_:
-			if isinstance(l, type(obj_)):
-				return True
-		return False
 
 	def on_lmb_click(self, pos):
 
@@ -495,7 +328,7 @@ class GuiManager(BaseGui):
 					if not self.lmb_pressed:
 						#Button is not currently held down
 						if not self.dropdown_active:
-							if isinstance(element, (DefaultButton, ButtonOK))and element.rect.collidepoint(pos):
+							if isinstance(element, (buttons.DefaultButton, buttons.ButtonOK))and element.rect.collidepoint(pos):
 								element.on_click()
 							elif isinstance(element, color_block.DefaultColorBlock):
 								if element.drag_with_mouse and element.rect.collidepoint(pos):
@@ -530,7 +363,6 @@ class GuiManager(BaseGui):
 		self.lmb_pressed = False
 		print(f'element moving {self.element_moving}')
 		if self.element_moving:
-			# TODO - add scrollbar to PanelScrollbar, makes things easier - I want to try to move the labels while mouse is pressed
 			x_diff = pos[0] - self.mouse_x
 			y_diff = pos[1] - self.mouse_y
 			print('change of {}, {}'.format(x_diff, y_diff))
@@ -556,15 +388,15 @@ class GuiManager(BaseGui):
 			panel.highlight = None
 
 
-
-	def panels_inactivate(self):
-		for panel in self.panels_on_screen:
-			panel.active = False
-
-	def panels_activate(self):
-		for panel in self.panels_on_screen:
-			if panel.visible:
-				panel.active = True
+	#
+	# def panels_inactivate(self):
+	# 	for panel in self.panels_on_screen:
+	# 		panel.active = False
+	#
+	# def panels_activate(self):
+	# 	for panel in self.panels_on_screen:
+	# 		if panel.visible:
+	# 			panel.active = True
 
 
 	def create_scroll_panel(self, name, x, y, width, height, full_list, num_visible, default_dict=None, visible=True, active=True, scrollable=False):

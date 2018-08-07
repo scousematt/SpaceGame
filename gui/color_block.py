@@ -10,12 +10,33 @@ class DefaultColorBlock(base_gui.BaseGui):
 		base_gui.BaseGui.__init__(self)
 		self.panel = panel
 		self.color = color
-		self.rect = pygame.Rect(rect)
+		self.rect = rect
 
 	def display(self):
 		pygame.draw.rect(self.panel.screen,
 						 self.color,
 						 self.rect)
+
+class Triangles2ColorBlock(DefaultColorBlock):
+	def __init__(self, panel, color, rect, color2):
+		DefaultColorBlock.__init__(self, panel, color, rect)
+		self.panel = panel
+		self.color = color
+		self.color2 = color2
+		self.rect = rect
+
+	def display(self):
+		pygame.draw.polygon(self.panel.screen,
+							self.color,
+							[[self.rect.right, self.rect.top],
+							 [self.rect.left, self.rect.top],
+							 [self.rect.left, self.rect.bottom]])
+
+		pygame.draw.polygon(self.panel.screen,
+							self.color2,
+							[[self.rect.right, self.rect.top],
+							 [self.rect.left, self.rect.bottom],
+							 [self.rect.right, self.rect.bottom]])
 
 class PanelColorBlock(DefaultColorBlock):
 	def __init__(self, panel, color, rect, drag_with_mouse=False):

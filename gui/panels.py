@@ -57,10 +57,10 @@ class DefaultPanel(base_gui.BaseGui):
 			self.changed = True
 
 	def create_button(self, text, x, y, some_func):
-		self.children.append(base_gui.DefaultButton(text, self, x, y, some_func, self.default_dict))
+		self.children.append(buttons.DefaultButton(text, self, x, y, some_func, self.default_dict))
 
 	def create_button_ok(self, text, x, y):
-		self.children.append(base_gui.ButtonOK(text, self, x, y, [], self.default_dict))
+		self.children.append(buttons.ButtonOK(text, self, x, y, [], self.default_dict))
 
 
 
@@ -147,4 +147,4 @@ class PanelDropDownScroll(PanelScroll):
 # Imports
 
 from color_block import PanelColorBlock
-import labels
+import labels, buttons

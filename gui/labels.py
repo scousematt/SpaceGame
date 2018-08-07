@@ -1,5 +1,5 @@
 import pygame
-import base_gui
+import base_gui, buttons
 
 
 class DefaultLabel(base_gui.BaseGui):
@@ -20,7 +20,10 @@ class DefaultLabel(base_gui.BaseGui):
 		self.y = y + self.parent.y
 		self.default_dict = default_dict
 		self.justify = justify  # left or right, on centre y
+
 		self.text_color = self.default_dict['label_color']
+
+
 		self.fontname = self.default_dict['label_font']
 
 		if fontsize == None:
@@ -36,13 +39,14 @@ class DefaultLabel(base_gui.BaseGui):
 			self.parent.gui.font_dict[''.join([self.fontname, str(self.fontsize)])] = self.font
 		except:
 			try:
-				# A dropdown list is the parent, rather than a panel
+				# A dropdown list is the parent, rather than a panel, same with buttons
 				self.font = self.parent.parent.gui.font_dict[''.join([self.fontname, str(self.fontsize)])]
 			except KeyError:
 				self.font = pygame.font.Font(self.fontname, self.fontsize)
 				self.parent.parent.gui.font_dict[''.join([self.fontname, str(self.fontsize)])] = self.font
 
 			except:
+				print(f'font {self.fontname} fontsize {self.fontsize}')
 				self.error['font'] = True
 		if not self.is_error():
 			self.change_text(text)
@@ -73,7 +77,8 @@ class DefaultLabel(base_gui.BaseGui):
 		elif self.justify == 'right':
 			self.rect.topright = self.x, self.y
 		else:
-			self.rect.topleft = self.parent.x + (self.parent.width - self.rect.width) / 2, self.y
+			print(f'Justify :{self.justify}')
+			self.rect.center = self.parent.rect.center
 		# Check to see if label is within panel
 		if not self.parent.rect.contains(self.rect):
 			if self.parent.rect.left > self.rect.left or self.parent.rect.right > self.rect.right:
@@ -94,13 +99,13 @@ class DefaultLabel(base_gui.BaseGui):
 			self.on_error()
 			return
 		print(self.text)
-		self.parent.screen.blit(self.text_surface, self.rect)
+		if isinstance(self.parent, (buttons.DefaultButton, base_gui.DropDown)):
+			self.parent.parent.screen.blit(self.text_surface, self.rect)
+		else:
+			self.parent.screen.blit(self.text_surface, self.rect)
 
 	def __str__(self):
-		if self.justify == 'right':
-			return ('DefaultLabel "{}" from Panel "{}" right justified x is rhs'.format(self.text, self.parent.name))
-		else:
-			return ('DefaultLabel "{}" from Panel "{}"'.format(self.text, self.parent.name))
+		return f'DefaultLabel {self.text} from Parent {self.parent}, Justify {self.justify}'
 
 
 class DropDownTitleLabel(DefaultLabel):
