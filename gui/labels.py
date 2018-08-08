@@ -1,6 +1,7 @@
 import pygame
-import base_gui, buttons, images
+import base_gui, buttons, fundamentals
 
+OBJECTS_WITH_TEXT_NOT_PANEL = (buttons.DefaultButton, base_gui.DropDown)
 
 class DefaultLabel(base_gui.BaseGui):
 	def __init__(self, text, parent, x, y, justify='left', default_dict=base_gui.load_defaults(), fontsize=None,
@@ -22,7 +23,12 @@ class DefaultLabel(base_gui.BaseGui):
 		self.justify = justify  # left or right, on centre y
 
 		self.text_color = self.default_dict['label_color']
-
+		self.children = []
+		# Set the screen based on the parent type
+		if isinstance(self.parent, OBJECTS_WITH_TEXT_NOT_PANEL):
+			self.screen = self.parent.parent.screen
+		else:
+			self.screen = self.parent.screen
 
 		self.fontname = self.default_dict['label_font']
 
@@ -51,6 +57,20 @@ class DefaultLabel(base_gui.BaseGui):
 		if not self.is_error():
 			self.change_text(text)
 
+	def get_text_surface(self):
+		# The update will check that there is only one text surface
+		list_text_surface_indexes = [i for i, val in enumerate(self.children) if type(val) == fundamentals.TextSurface]
+		# TODO Combine all the surface rects here to allow for other fonts and sizes?
+		return self.children[list_text_surface_indexes[0]]
+
+	def update(self):
+		child = [i for i, val in enumerate(self.children) if type(val) == fundamentals.TextSurface]
+		if len(child) > 1:
+			self.error['label_multiple_texts'] = f'Label {self.text} has multiple TextSurface objects'
+		elif len(child) == 1:
+			self.children.pop(child[0])
+		self.children.append(fundamentals.TextSurface(self.screen, self.text, self.font, self.text_color, self.coords, self.justify))
+
 	def change_text(self, new_text):
 		if isinstance(new_text, (int, float)):
 			# here we can test to see if we want colored numbers (red , green) or brackets around -ve
@@ -58,7 +78,7 @@ class DefaultLabel(base_gui.BaseGui):
 			new_text = f'{new_text}'
 		elif isinstance(new_text, str) == False:
 			# We have sent something other than an int or a str to be text.
-			self.error['label_change_text_not_str'] = True
+			self.error['label_change_text_not_str'] = f'Label text should be str, is {type(new_text)}'
 			return
 
 		if self.text == new_text:
@@ -67,42 +87,40 @@ class DefaultLabel(base_gui.BaseGui):
 
 		self.text = new_text
 
-		self.text_surface = self.font.render(self.text,
-											 True,
-											 self.text_color)
-		self.rect = self.text_surface.get_rect()
+		# self.text_surface = self.font.render(self.text,
+		# 									 True,
+		# 									 self.text_color)
+		# self.rect = self.text_surface.get_rect()
 
 		if self.justify == 'left':
-			self.rect.topleft = self.x, self.y
+			self.coords = (self.x, self.y)
 		elif self.justify == 'right':
-			self.rect.topright = self.x, self.y
+			self.coords = self.x, self.y
 		else:
-			print(f'Justify :{self.justify}')
-			self.rect.center = self.parent.rect.center
+			print(f'Justify :{self.justify} from labels.DefaultLabel.change_text()')
+			self.coords = self.parent.rect.center
 		# Check to see if label is within panel
-		if not self.parent.rect.contains(self.rect):
-			if self.parent.rect.left > self.rect.left or self.parent.rect.right > self.rect.right:
-				self.error['out_of_panel_horizontal'] = self
-			elif self.parent.rect.top > self.rect.top or self.parent.rect.bottom > self.rect.bottom:
-				self.error['out_of_panel_vertical'] = self
-
+		# if not self.parent.rect.contains(self.rect):
+		# 	if self.parent.rect.left > self.rect.left or self.parent.rect.right > self.rect.right:
+		# 		self.error['out_of_panel_horizontal'] = self
+		# 	elif self.parent.rect.top > self.rect.top or self.parent.rect.bottom > self.rect.bottom:
+		# 		self.error['out_of_panel_vertical'] = self
 		self.parent.changed = True
+		# Update the TextSurface
+		self.update()
 
 	def change_color(self, color):
-		if self.valid_color(color):
-			self.text_color = color
-			self.change_text(self.text)  # recaulate the text surface
+		# TODO Determine if the new color is valid or not and prepare an error
+		self.text_color = color
+		self.update()
 		self.parent.changed = True
 
 	def display(self):
 		if self.is_error():
 			self.on_error()
 			return
-		print(self.text)
-		if isinstance(self.parent, (buttons.DefaultButton, base_gui.DropDown)):
-			self.parent.parent.screen.blit(self.text_surface, self.rect)
-		else:
-			self.parent.screen.blit(self.text_surface, self.rect)
+		for child in self.children:
+			child.display()
 
 	def __str__(self):
 		return f'DefaultLabel {self.text} from Parent {self.parent}, Justify {self.justify}'
@@ -115,15 +133,16 @@ class DropDownTitleLabel(DefaultLabel):
 		DefaultLabel.__init__(self, text, parent, x, y, justify='left', default_dict=base_gui.load_defaults(), fontsize=None,
 				 label_name=None)
 
-		print(text)
-		self.background_rect = self.rect.inflate(24,2)
+		self.background_rect = self.children[0].rect.inflate(24,2)
 		self.background_rect.x += 10
 		self.children = []
 		self.children.append(DropDownColorBlock(self.parent,
 										   self.default_dict['dropdown_label_back_color'],
 									   self.background_rect))
 		self.image_rect = pygame.Rect(self.background_rect.right - 20, self.background_rect.top + 2, 20, 20)
-		self.children.append(images.Image('dropdown.png', self.parent.screen, self.image_rect))
+		self.children.append(fundamentals.Image('dropdown.png', self.parent.screen, self.image_rect))
+		self.update()
+		print(self.children)
 
 	def display(self):
 		if self.is_error():
@@ -131,7 +150,7 @@ class DropDownTitleLabel(DefaultLabel):
 			return
 		for child in self.children:
 			child.display()
-		self.parent.screen.blit(self.text_surface, self.rect)
+		#self.parent.screen.blit(self.text_surface, self.rect)
 		#self.parent.screen.blit(self.image, (self.background_rect.right - 20, self.background_rect.top + 2))
 
 
@@ -158,7 +177,9 @@ class DropDownListLabel(DefaultLabel):
 				self.change_color(self.default_dict['label_highlight_color'])
 		elif self.text_color == self.default_dict['label_highlight_color']:
 			self.change_color(self.default_dict['label_color'])
-		self.parent.screen.blit(self.text_surface, self.rect)
+		for child in self.children:
+			child.display()
+		#self.parent.screen.blit(self.text_surface, self.rect)
 
 
 	def __str__(self):
@@ -171,4 +192,4 @@ class DropDownListLabel(DefaultLabel):
 #
 # Imports
 
-from color_block import DropDownColorBlock
+from color_blocks import DropDownColorBlock

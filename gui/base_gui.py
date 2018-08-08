@@ -108,7 +108,7 @@ class MessageBox(BaseGui):
 		self.panel.change_background_color(self.default_dict['msg_background_color'])
 
 		# Create background for title
-		self.title_background = color_block.DefaultColorBlock(self.panel, self.default_dict['msg_title_background_color'],
+		self.title_background = color_blocks.DefaultColorBlock(self.panel, self.default_dict['msg_title_background_color'],
 													  (self.panel.rect.x + self.default_dict['panel_border'],
 													   self.panel.rect.y + self.default_dict['panel_border'],
 													   self.panel.rect.width - self.default_dict['panel_border'] * 2,
@@ -223,8 +223,8 @@ class Scrollbar(BaseGui):
 
 		self.children=[]
 
-		self.children.append(color_block.DefaultColorBlock(self.panel, self.default_dict['scrollbar_color'], self.rect))
-		self.children.append(color_block.ScrollbarColorBlock(self.panel,  self.default_dict['scrollbar_button_color'],
+		self.children.append(color_blocks.DefaultColorBlock(self.panel, self.default_dict['scrollbar_color'], self.rect))
+		self.children.append(color_blocks.ScrollbarColorBlock(self.panel,  self.default_dict['scrollbar_button_color'],
 													self.button_rect, self, drag_with_mouse=True))
 
 		#Created
@@ -260,7 +260,7 @@ class Scrollbar(BaseGui):
 # Do imports here
 
 
-import panels, labels, color_block, buttons
+import panels, labels, color_blocks, buttons
 
 
 class GuiManager(BaseGui):
@@ -330,7 +330,7 @@ class GuiManager(BaseGui):
 						if not self.dropdown_active:
 							if isinstance(element, (buttons.DefaultButton, buttons.ButtonOK))and element.rect.collidepoint(pos):
 								element.on_click()
-							elif isinstance(element, color_block.DefaultColorBlock):
+							elif isinstance(element, color_blocks.DefaultColorBlock):
 								if element.drag_with_mouse and element.rect.collidepoint(pos):
 									self.lmb_pressed = True
 									self.mouse_x = pos[0]
@@ -350,7 +350,7 @@ class GuiManager(BaseGui):
 							self.element_moving = element
 
 						elif panel.name == 'Drop Down':
-							if isinstance(element, labels.DefaultLabel) and element.rect.collidepoint(pos):
+							if isinstance(element, labels.DefaultLabel) and element.get_text_surface().rect.collidepoint(pos):
 								# get drop list and work update on the clicked element
 								self.lmb_pressed = True
 								self.dropdown_active.on_click(element.text) # that works, the Data panel is updated
@@ -378,7 +378,7 @@ class GuiManager(BaseGui):
 			if self.lmb_pressed:
 				panel.scrollbar.update_pos(pos[0] - self.mouse_x, pos[1] - self.mouse_y)
 			for child in panel.children:
-				if isinstance(child, labels.DropDownListLabel) and child.rect.collidepoint(pos):
+				if isinstance(child, labels.DropDownListLabel) and child.get_text_surface().rect.collidepoint(pos):
 					panel.highlight = child.text
 					if panel.highlight != panel.old_highlight:
 						panel.changed = True

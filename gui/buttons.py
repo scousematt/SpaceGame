@@ -1,5 +1,5 @@
 import pygame
-import base_gui, color_block, labels, images
+import base_gui, color_blocks, labels, fundamentals
 
 
 class DefaultButton(base_gui.BaseGui):
@@ -13,12 +13,12 @@ class DefaultButton(base_gui.BaseGui):
 
 
         self.rect = pygame.Rect(self.x, self.y, self.default_dict['button_width'], self.default_dict['button_height'])
-        self.children.append(color_block.Triangles2ColorBlock(self.parent,
+        self.children.append(color_blocks.Triangles2ColorBlock(self.parent,
                                                               self.default_dict['button_highlight_color'],
                                                               self.rect.inflate(self.default_dict['button_highlight_offset'] * 2,
                                                                                 self.default_dict['button_highlight_offset'] * 2),
                                                               self.default_dict['button_shadow_color']))
-        self.children.append(color_block.DefaultColorBlock(self.parent,
+        self.children.append(color_blocks.DefaultColorBlock(self.parent,
                                                            self.default_dict['button_color'],
                                                            self.rect))
 
@@ -105,4 +105,4 @@ class ButtonImage(DefaultButton):
         self.image_rect = pygame.Rect(x_, self.y, self.default_dict['button_height'], self.default_dict['button_height'])
         # Resize image to fit in button
 
-        self.children.append(images.Image('dropdown.png', self.parent.screen, self.image_rect))
+        self.children.append(fundamentals.Image('dropdown.png', self.parent.screen, self.image_rect))

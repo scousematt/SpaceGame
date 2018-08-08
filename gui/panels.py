@@ -154,5 +154,5 @@ class PanelDropDownScroll(PanelScroll):
 #
 # Imports
 
-from color_block import PanelColorBlock
+from color_blocks import PanelColorBlock
 import labels, buttons
