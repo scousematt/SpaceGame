@@ -56,8 +56,16 @@ class DefaultPanel(base_gui.BaseGui):
 			self.children[0].color = self.background_color
 			self.changed = True
 
-	def create_button(self, text, x, y, some_func):
-		self.children.append(buttons.DefaultButton(text, self, x, y, some_func, self.default_dict))
+	def create_button(self, x, y, some_func, text, kind):
+		if kind == 'text':
+			self.children.append(buttons.Button(self, x, y, some_func, text, self.default_dict))
+		elif kind == 'image':
+			self.children.append(buttons.ButtonImage(self, x, y, some_func, text, self.default_dict))
+		elif kind == 'ok':
+			self.children.append(buttons.ButtonOK(self, x, y, some_func, text, self.default_dict))
+		else:
+			self.error['create_invalid_button'] = f'Creating invalid button type {kind} in panel {self.name}'
+
 
 	def create_button_ok(self, text, x, y):
 		self.children.append(buttons.ButtonOK(text, self, x, y, [], self.default_dict))

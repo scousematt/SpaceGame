@@ -1,5 +1,5 @@
 import pygame
-import base_gui, buttons
+import base_gui, buttons, images
 
 
 class DefaultLabel(base_gui.BaseGui):
@@ -118,13 +118,12 @@ class DropDownTitleLabel(DefaultLabel):
 		print(text)
 		self.background_rect = self.rect.inflate(24,2)
 		self.background_rect.x += 10
-		self.image = pygame.image.load('images/dropdown.png')
-		self.image = pygame.transform.scale(self.image, (20, 20))
 		self.children = []
 		self.children.append(DropDownColorBlock(self.parent,
 										   self.default_dict['dropdown_label_back_color'],
 									   self.background_rect))
-
+		self.image_rect = pygame.Rect(self.background_rect.right - 20, self.background_rect.top + 2, 20, 20)
+		self.children.append(images.Image('dropdown.png', self.parent.screen, self.image_rect))
 
 	def display(self):
 		if self.is_error():
@@ -133,14 +132,14 @@ class DropDownTitleLabel(DefaultLabel):
 		for child in self.children:
 			child.display()
 		self.parent.screen.blit(self.text_surface, self.rect)
-		self.parent.screen.blit(self.image, (self.background_rect.right - 20, self.background_rect.top + 2))
+		#self.parent.screen.blit(self.image, (self.background_rect.right - 20, self.background_rect.top + 2))
 
 
 	def __str__(self):
 		if self.justify == 'right':
-			return ('DropDownTitleLabel "{}" from Panel "{}" right justified x is rhs'.format(self.text, self.parent.name))
+			return f'DropDownTitleLabel {self.text} from Panel {self.parent.name} right justified x is rhs'
 		else:
-			return ('DropDownTitleLabel "{}" from Panel "{}"'.format(self.text, self.parent.name))
+			return f'DropDownTitleLabel {self.text} from Panel {self.parent_name}'
 
 class DropDownListLabel(DefaultLabel):
 	def __init__(self, text, parent, x, y, justify='left', default_dict=base_gui.load_defaults(), fontsize=None,

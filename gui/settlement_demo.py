@@ -26,7 +26,7 @@ g.add_settlement('Withering Wild', 2015)
 #button,Main,rrt,200,250,some_func:another_func:func3
 
 gui.create_panel('Toolbar', 100, 0, 600, 98)
-gui.create_button('Toolbar', 'End Turn', 10, 10, [g.update])
+gui.create_button('Toolbar', 10, 10, [g.update], 'End Turn', kind='image')
 gui.create_panel('Data', 100, 100, 600, 400) #Note panel is not changed until it has something in it
 gui.create_label('Data','Name', 10,10)
 gui.create_label('Data',g.settlement_names[0], 300,10, label_name='name')

@@ -419,10 +419,10 @@ class GuiManager(BaseGui):
 		if visible:
 			self.panels_on_screen.append(self.panel_dict[name])
 
-	def create_button(self, name, text, x, y, functions):
-		panel = self.panel_dict[name]
+	def create_button(self, panel_name, x, y, functions, text, kind='text'):
+		panel = self.panel_dict[panel_name]
 		if self.is_error() == False:
-			panel.create_button(text, x, y, functions)
+			panel.create_button(x, y, functions, text, kind)
 
 	def create_button_ok(self, panel, x, y):
 		if self.is_error() == False:
