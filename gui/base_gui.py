@@ -452,6 +452,11 @@ class GuiManager(BaseGui):
 		if self.is_error() == False:
 			panel.create_dropdown_list_label(text, x, y, justify, fontsize, label_name)
 
+	def create_treeview(self, panel_name, name, x, y):
+		panel = self.panel_dict[panel_name]
+		if not self.is_error():
+			return panel.create_treeview(name, x, y)
+
 
 	def change_label_text(self, panel_name, label_name, text):
 		panel = self.panel_dict[panel_name]

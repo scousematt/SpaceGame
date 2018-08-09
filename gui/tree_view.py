@@ -1,10 +1,11 @@
 import pygame
 import random
-import base_gui
+import base_gui, labels
 
 
 class Node(base_gui.BaseGui):
     def __init__(self, parent, text, generation, iid, show_children):
+        base_gui.BaseGui.__init__(self)
         # All variables are going to be iid's
         # The node will actually contain the data to be displayed, color block, text images etc
         self.children = []
@@ -14,12 +15,22 @@ class Node(base_gui.BaseGui):
         self.iid = iid
         self.show_children = show_children
 
+    def display(self):
+        pass
+
     def __str__(self):
         return f'parent {self.parent} iid is {self.iid} show {self.show_children}'
 
-class Treeview(base_gui.BaseGui):
-    def __init__(self):
-
+class TreeView(base_gui.BaseGui):
+    def __init__(self, name, panel, x, y, default_dict):
+        base_gui.BaseGui.__init__(self)
+        self.parent = panel
+        self.name = name
+        self.x = x
+        self.y = y
+        self.original_y = self.y
+        self.default_dict = default_dict
+        self.screen = self.parent.screen
         self.iids = ['000000']
         self.nodes = {'000000' : Node('000000', 'Root', 0, '000000', True)}
         #self.root_node = self.add_node('000000', 0, '')
@@ -29,16 +40,17 @@ class Treeview(base_gui.BaseGui):
         self.packer = '  '
 
 
-    def add_node(self, parent, text, location='end', iid='', show_children=True):
+    def add_node(self, dad, text, location='end', iid='', show_children=True):
         if iid == '':
             iid = self.generate_iid()
 
-        node = Node(parent, text, self.nodes[parent].generation + 1, iid, show_children)
+        node = Node(dad, text, self.nodes[dad].generation + 1, iid, show_children)
         self.nodes[iid] = node
-        if location == 'end' or location > len(self.nodes[parent].children):
-            self.nodes[parent].children.append(node)
+        if location == 'end' or location > len(self.nodes[dad].children):
+            self.nodes[dad].children.append(node)
         else:
-            self.iid_dict[parent].children.insert_node(location)
+            self.iid_dict[dad].children.insert_node(location)
+        self.parent.changed = True
 
         return iid
 
@@ -54,9 +66,18 @@ class Treeview(base_gui.BaseGui):
 
     def display_children(self, node_iid):
         node = self.nodes[node_iid]
-
         print(f'{self.packer * (self.nodes[node.iid].generation) + node.text}')
-
+        x = self.x + 25 * self.nodes[node.iid].generation
+        text = node.text
+        print(node.children)
+        if len(node.children) > 0 and node.show_children:
+            text = f'- {node.text}'
+        elif len(node.children) > 0:
+            text = f'+ {node.text}'
+        else:
+            text = f'   {node.text}'
+        self.parent.children.append(labels.DefaultLabel(text, self.parent, x, self.y ))
+        self.y += 25
 
         if not node.show_children:
             print('Not showing children')
@@ -65,25 +86,13 @@ class Treeview(base_gui.BaseGui):
 
         for child in node.children:
             self.display_children(child.iid)
-            # print(f'{self.packer * (self.nodes[child.iid].generation) + child.text}')
-            # #print(node)
-            # for grandchild in child.children:
-            #     self.display_children(grandchild.iid)
+            # Build up the self.panel.children
+
 
     def display(self):
+        self.y = self.original_y
         self.display_children(self.root)
 
+    def __str__(self):
+        return f'Treeview name {self.name}'
 
-
-########
-# testing
-
-t = Treeview()
-g10 = t.add_node(t.root, 'Alan')
-g11 = t.add_node(t.root, 'Andy')
-g12 = t.add_node(t.root, 'Arnold', show_children=False)
-g1020 = t.add_node(g10, 'Bert')
-g1021 = t.add_node(g10, 'Bill')
-g2020 = t.add_node(g1020, 'Carl')
-g1201 = t.add_node(g12, 'Bessie')
-t.display()

@@ -71,10 +71,10 @@ class Button(DefaultButton):
 
 
 
-    def update(self):
-        self.text_rect.center = ((self.rect.x + self.rect.width // 2, self.rect.y + self.rect.height // 2))
-        self.create_highlight_coords()
-        self.shadow_rect = self.rect.inflate(self.offset * 2, self.offset * 2)
+    # def update(self):
+    #     self.text_rect.center = ((self.rect.x + self.rect.width // 2, self.rect.y + self.rect.height // 2))
+    #     self.create_highlight_coords()
+    #     self.shadow_rect = self.rect.inflate(self.offset * 2, self.offset * 2)
 
 
 
@@ -98,11 +98,62 @@ class ButtonOK(DefaultButton):
 class ButtonImage(DefaultButton):
     def __init__(self, panel, x, y, function_list, image, default_dict=base_gui.load_defaults()):
         DefaultButton.__init__(self, panel, x, y, function_list)
-
-        # Buttons with icons should be square
+        # TODO All images are assumed to be square
+        # Centers the image in the button
         x_ = self.x + 0.5 * (self.default_dict['button_width'] - self.default_dict['button_height'])
         #This rect is for the image size not mouse click detection
         self.image_rect = pygame.Rect(x_, self.y, self.default_dict['button_height'], self.default_dict['button_height'])
         # Resize image to fit in button
+        self.image = image
+        self.setup()
 
-        self.children.append(fundamentals.Image('dropdown.png', self.parent.screen, self.image_rect))
+    def get_image_index(self):
+        idx = [i for i, val in enumerate(self.children) if type(val) == fundamentals.Image]
+        print(f'iundex is {idx}')
+        return idx[0]
+
+    def setup(self):
+        self.children.append(fundamentals.Image(self.image, self.parent.screen, self.image_rect))
+
+class ButtonToggleImage(ButtonImage):
+    def __init__(self, panel, x, y, function_list, image, default_dict=base_gui.load_defaults()):
+        ButtonImage.__init__(self, panel, x, y, function_list, image)
+
+        #self.update()
+
+    def setup(self):
+        self.cur_image = 0
+        self.images = []
+        for image in self.image:
+            self.images.append(fundamentals.Image(image, self.parent.screen, self.image_rect))
+        self.children.append(self.images[0])
+
+    def display(self):
+        # remove the image
+        del self.children[self.get_image_index()]
+        # replace the image
+        self.children.append(self.images[self.cur_image])
+
+        if self.is_error():
+            self.on_error()
+            return ()
+        for child in self.children:
+            child.display()
+
+    def on_click(self):
+        try:
+            return_method =  self.on_click_method(self)
+        except TypeError:
+            return_method = self.on_click_method()
+        self.cur_image += 1
+        if self.cur_image == len(self.images):
+            self.cur_image = 0
+
+        self.function_index += 1
+        if self.function_index == len(self.function_list):
+            self.function_index = 0
+
+        self.on_click_method = self.function_list[self.function_index]
+        print(f'The cur_image is now {self.cur_image}, image is {self.images[self.cur_image]}')
+        self.display()
+        return return_method

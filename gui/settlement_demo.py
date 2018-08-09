@@ -26,7 +26,7 @@ g.add_settlement('Withering Wild', 2015)
 #button,Main,rrt,200,250,some_func:another_func:func3
 
 gui.create_panel('Toolbar', 100, 0, 600, 98)
-gui.create_button('Toolbar', 10, 10, [g.update], 'End Turn', kind='image')
+gui.create_button('Toolbar', 10, 10, [g.update], ['plus.png', 'minus.png'], kind='toggle')
 gui.create_panel('Data', 100, 100, 600, 400) #Note panel is not changed until it has something in it
 gui.create_label('Data','Name', 10,10)
 gui.create_label('Data',g.settlement_names[0], 300,10, label_name='name')
@@ -34,6 +34,26 @@ gui.create_label('Data','Population', 10, 40)
 gui.create_label('Data',g.settlements[g.settlement_names[0]].pop_int, 300, 40, label_name='pop')
 gui.create_dropdown_title('Toolbar', 'Select Planet', 200, 10, 3, g.settlement_names, g.display_settlement, length=20 )
 gui.create_dropdown_title('Toolbar', 'Time', 500, 10, 5, g.time_increments, g.set_time_increment)
+
+gui.create_panel('Tree', 200, 130, 600, 400)
+
+t = gui.create_treeview('Tree', 'Testing', 10, 10)
+print(f'Tree View Object {t}')
+
+########
+# testing
+
+g10 = t.add_node(t.root, 'Alan')
+g11 = t.add_node(t.root, 'Andy')
+g12 = t.add_node(t.root, 'Arnold', show_children=False)
+g1020 = t.add_node(g10, 'Bert')
+g1021 = t.add_node(g10, 'Bill')
+g2020 = t.add_node(g1020, 'Carl')
+g1201 = t.add_node(g12, 'Bessie')
+t.display()
+
+
+
 
 # TODO We have a drop box that we can click on, now it needs to refresh the information in 'Data' and redraw it. Also make the
 # drop list panel the only active panel, which will disappear when clicking is done elsewhere, and of course the scrollbar.

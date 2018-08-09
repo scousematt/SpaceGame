@@ -1,7 +1,7 @@
 import pygame
-import base_gui, buttons, fundamentals
+import base_gui, buttons, fundamentals, tree_view
 
-OBJECTS_WITH_TEXT_NOT_PANEL = (buttons.DefaultButton, base_gui.DropDown)
+OBJECTS_WITH_TEXT_NOT_PANEL = (buttons.DefaultButton, base_gui.DropDown, tree_view.TreeView)
 
 class DefaultLabel(base_gui.BaseGui):
 	def __init__(self, text, parent, x, y, justify='left', default_dict=base_gui.load_defaults(), fontsize=None,
@@ -52,7 +52,6 @@ class DefaultLabel(base_gui.BaseGui):
 				self.parent.parent.gui.font_dict[''.join([self.fontname, str(self.fontsize)])] = self.font
 
 			except:
-				print(f'font {self.fontname} fontsize {self.fontsize}')
 				self.error['font'] = True
 		if not self.is_error():
 			self.change_text(text)

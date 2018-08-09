@@ -61,6 +61,8 @@ class DefaultPanel(base_gui.BaseGui):
 			self.children.append(buttons.Button(self, x, y, some_func, text, self.default_dict))
 		elif kind == 'image':
 			self.children.append(buttons.ButtonImage(self, x, y, some_func, text, self.default_dict))
+		elif kind == 'toggle':
+			self.children.append(buttons.ButtonToggleImage(self, x, y, some_func, text, self.default_dict))
 		elif kind == 'ok':
 			self.children.append(buttons.ButtonOK(self, x, y, some_func, text, self.default_dict))
 		else:
@@ -70,7 +72,9 @@ class DefaultPanel(base_gui.BaseGui):
 	def create_button_ok(self, text, x, y):
 		self.children.append(buttons.ButtonOK(text, self, x, y, [], self.default_dict))
 
-
+	def create_treeview(self, name, x, y):
+		self.children.append(tree_view.TreeView(name, self, x, y, self.default_dict))
+		return self.children[-1]
 
 	def create_dropdown_title(self, text, x, y, num_entries_visible, entries_list, function, length):
 		# The dropdown list creates its own panel, but looks like a defaultLabel at present found in another panel
@@ -155,4 +159,4 @@ class PanelDropDownScroll(PanelScroll):
 # Imports
 
 from color_blocks import PanelColorBlock
-import labels, buttons
+import labels, buttons, tree_view
