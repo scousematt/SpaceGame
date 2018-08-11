@@ -46,4 +46,8 @@ dropdown_y_offset:30
 dropdown_label_left_margin:10
 dropdown_label_back_color:(200,200,200)
 dropdown_width:190
+#Treeview
+treeview_plus:plus.png
+treeview_minus:minus.png
+treeview_column_spacing:30
 #EOF

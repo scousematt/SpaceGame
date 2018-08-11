@@ -15,7 +15,7 @@ class Image(base_gui.BaseGui):
             return
 
         self.screen = screen
-        self.rect = rect
+        self.rect = pygame.Rect(rect.x, rect.y, rect.width, rect.height)
         #If the image is to be scaled
         if (rect.width, rect.height) != self.image.get_size():
             self.image = pygame.transform.scale(self.image, (self.rect.w, self.rect.h))

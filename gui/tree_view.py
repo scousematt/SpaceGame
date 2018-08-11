@@ -1,6 +1,6 @@
 import pygame
 import random
-import base_gui, labels
+import base_gui, labels, fundamentals
 
 
 class Node(base_gui.BaseGui):
@@ -26,30 +26,40 @@ class TreeView(base_gui.BaseGui):
         base_gui.BaseGui.__init__(self)
         self.parent = panel
         self.name = name
-        self.x = x
-        self.y = y
+        #  TODO make this consistant throughout every object.
+        self.x = x + self.parent.x
+        self.y = y + self.parent.y
         self.original_y = self.y
+        self.original_x = self.x
         self.default_dict = default_dict
         self.screen = self.parent.screen
+        self.node_components = []
+        #  Setup a rect to suit plus and minus images.
+        self.control_rect = pygame.Rect(self.x,
+                                        self.y,
+                                        self.default_dict['label_fontsize'],
+                                        self.default_dict['label_fontsize'])
+        #  This is a blank, the same size as the image.
+        self.no_control = self.default_dict['label_fontsize']
+        # Setup the first node, the treeview root.
         self.iids = ['000000']
         self.nodes = {'000000' : Node('000000', 'Root', 0, '000000', True)}
-        #self.root_node = self.add_node('000000', 0, '')
         self.root = self.nodes['000000'].iid
 
         # Temporary while testing the order
         self.packer = '  '
 
 
-    def add_node(self, dad, text, location='end', iid='', show_children=True):
+    def add_node(self, parent, text, location='end', iid='', show_children=True):
         if iid == '':
             iid = self.generate_iid()
 
-        node = Node(dad, text, self.nodes[dad].generation + 1, iid, show_children)
+        node = Node(parent, text, self.nodes[parent].generation + 1, iid, show_children)
         self.nodes[iid] = node
-        if location == 'end' or location > len(self.nodes[dad].children):
-            self.nodes[dad].children.append(node)
+        if location == 'end' or location > len(self.nodes[parent].children):
+            self.nodes[parent].children.append(node)
         else:
-            self.iid_dict[dad].children.insert_node(location)
+            self.iid_dict[parent].children.insert_node(location)
         self.parent.changed = True
 
         return iid
@@ -64,34 +74,44 @@ class TreeView(base_gui.BaseGui):
         self.iids.append(sample_iid)
         return sample_iid
 
-    def display_children(self, node_iid):
+    def recalculate_output(self, node_iid):
         node = self.nodes[node_iid]
-        print(f'{self.packer * (self.nodes[node.iid].generation) + node.text}')
-        x = self.x + 25 * self.nodes[node.iid].generation
-        text = node.text
-        print(node.children)
+        x = self.x + self.no_control + node.generation * self.default_dict['treeview_column_spacing']
+        #  We need a rect for the image.
+        self.control_rect.topleft = (x, self.y)
         if len(node.children) > 0 and node.show_children:
-            text = f'- {node.text}'
+            self.node_components.append(fundamentals.Image(self.default_dict['treeview_minus'],
+                                                           self.parent.screen,
+                                                           self.control_rect))
         elif len(node.children) > 0:
-            text = f'+ {node.text}'
-        else:
-            text = f'   {node.text}'
-        self.parent.children.append(labels.DefaultLabel(text, self.parent, x, self.y ))
-        self.y += 25
+            self.node_components.append(fundamentals.Image(self.default_dict['treeview_plus'],
+                                                           self.parent.screen,
+                                                           self.control_rect))
+        x += self.no_control
+        self.node_components.append(labels.DefaultLabel(node.text, self.parent, x - self.parent.x, self.y - self.parent.y))
+        #  Added the label, so now we can increment the y value
+        self.y += self.no_control
 
+
+        #  If there are no visible children then return to the next sibling of its generation
         if not node.show_children:
-            print('Not showing children')
             return
 
-
+        #  If we can see the children, iterate through them
         for child in node.children:
-            self.display_children(child.iid)
-            # Build up the self.panel.children
+            self.recalculate_output(child.iid)
 
 
     def display(self):
+        self.node_components = []
         self.y = self.original_y
-        self.display_children(self.root)
+        self.recalculate_output(self.root)
+        if self.is_error():
+            self.on_error()
+            return
+        for component in self.node_components:
+            component.display()
+
 
     def __str__(self):
         return f'Treeview name {self.name}'
