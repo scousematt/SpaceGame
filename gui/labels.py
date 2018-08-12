@@ -138,8 +138,9 @@ class DropDownTitleLabel(DefaultLabel):
 		self.children.append(DropDownColorBlock(self.parent,
 										   self.default_dict['dropdown_label_back_color'],
 									   self.background_rect))
-		self.image_rect = pygame.Rect(self.background_rect.right - 20, self.background_rect.top + 2, 20, 20)
-		self.children.append(fundamentals.Image('dropdown.png', self.parent.screen, self.image_rect))
+		#  The image corrects itself and so does the label, the x needs to be reduced by panel.x
+		self.image_rect = pygame.Rect(self.background_rect.right - 20 - self.parent.x, self.background_rect.top + 2, 20, 20)
+		self.children.append(fundamentals.Image('dropdown.png', self.parent, self.image_rect))
 		self.update()
 		print(self.children)
 

@@ -5,7 +5,7 @@ IMAGE_PATH = 'images/'
 
 
 class Image(base_gui.BaseGui):
-    def __init__(self, image, screen, rect):
+    def __init__(self, image, parent, rect):
         base_gui.BaseGui.__init__(self)
         self.image_name = image
         try:
@@ -14,8 +14,9 @@ class Image(base_gui.BaseGui):
             self.error['image_not_found'] = f'Image {image} not found in {IMAGE_PATH}'
             return
 
-        self.screen = screen
-        self.rect = pygame.Rect(rect.x, rect.y, rect.width, rect.height)
+        self.parent = parent
+        self.screen = self.parent.screen
+        self.rect = pygame.Rect(rect.x + self.parent.x, rect.y + self.parent.y, rect.width, rect.height)
         #If the image is to be scaled
         if (rect.width, rect.height) != self.image.get_size():
             self.image = pygame.transform.scale(self.image, (self.rect.w, self.rect.h))

@@ -1,6 +1,6 @@
 import pygame
 import random
-import base_gui, labels, fundamentals
+import base_gui, labels, fundamentals, buttons
 
 
 class Node(base_gui.BaseGui):
@@ -15,6 +15,17 @@ class Node(base_gui.BaseGui):
         self.iid = iid
         self.show_children = show_children
 
+    def toggle_show(self):
+        print(f'{self.text} toggle_show')
+        if self.show_children:
+            self.show_children = False
+        else:
+            self.show_children = True
+        #  Set the panel.changed status to changed to force a redisplay.
+        #print(f'node parent is {type(self.parent)}')
+        #print(f'node parent parent is {type(self.parent.parent)}')
+        #self.parent.parent.display()
+
     def display(self):
         pass
 
@@ -27,11 +38,14 @@ class TreeView(base_gui.BaseGui):
         self.parent = panel
         self.name = name
         #  TODO make this consistant throughout every object.
-        self.x = x + self.parent.x
-        self.y = y + self.parent.y
+        self.x = x
+        self.y = y
         self.original_y = self.y
         self.original_x = self.x
         self.default_dict = default_dict
+        self.default_dict['button_width'] = self.default_dict['label_fontsize'] - 2
+        self.default_dict['button_height'] = self.default_dict['label_fontsize'] - 2
+        self.default_dict['button_highlight_offset'] = 1
         self.screen = self.parent.screen
         self.node_components = []
         #  Setup a rect to suit plus and minus images.
@@ -41,14 +55,16 @@ class TreeView(base_gui.BaseGui):
                                         self.default_dict['label_fontsize'])
         #  This is a blank, the same size as the image.
         self.no_control = self.default_dict['label_fontsize']
-        # Setup the first node, the treeview root.
+        #  Setup the first node, the treeview root.
         self.iids = ['000000']
         self.nodes = {'000000' : Node('000000', 'Root', 0, '000000', True)}
         self.root = self.nodes['000000'].iid
 
-        # Temporary while testing the order
+        #  Temporary while testing the order
         self.packer = '  '
 
+        #  Set the panel to active so that it is examined in the gui loop
+        self.parent.active = True
 
     def add_node(self, parent, text, location='end', iid='', show_children=True):
         if iid == '':
@@ -79,16 +95,18 @@ class TreeView(base_gui.BaseGui):
         x = self.x + self.no_control + node.generation * self.default_dict['treeview_column_spacing']
         #  We need a rect for the image.
         self.control_rect.topleft = (x, self.y)
+        print(node.text)
         if len(node.children) > 0 and node.show_children:
-            self.node_components.append(fundamentals.Image(self.default_dict['treeview_minus'],
-                                                           self.parent.screen,
-                                                           self.control_rect))
+            #     def __init__(self, panel, x, y, function_list, image, default_dict=base_gui.load_defaults()):
+            self.node_components.append(buttons.ButtonImage(self.parent, x, self.y,[node.toggle_show],
+                                                            self.default_dict['treeview_minus'],
+                                                            default_dict=self.default_dict))
         elif len(node.children) > 0:
-            self.node_components.append(fundamentals.Image(self.default_dict['treeview_plus'],
-                                                           self.parent.screen,
-                                                           self.control_rect))
+            self.node_components.append(buttons.ButtonImage(self.parent, x, self.y,[node.toggle_show],
+                                                            self.default_dict['treeview_plus'],
+                                                            default_dict=self.default_dict))
         x += self.no_control
-        self.node_components.append(labels.DefaultLabel(node.text, self.parent, x - self.parent.x, self.y - self.parent.y))
+        self.node_components.append(labels.DefaultLabel(node.text, self.parent, x + self.default_dict['treeview_packer'], self.y))
         #  Added the label, so now we can increment the y value
         self.y += self.no_control
 

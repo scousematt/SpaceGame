@@ -3,12 +3,17 @@ import base_gui, color_blocks, labels, fundamentals
 
 
 class DefaultButton(base_gui.BaseGui):
-    def __init__(self, panel, x, y, function_list, default_dict=base_gui.load_defaults()):
+    def __init__(self, panel, x, y, function_list, default_dict):
+        #
+        #  When writing documentation, note that the function list is a list of names, if the () is
+        #  included, the function will execute.
+        #
         base_gui.BaseGui.__init__(self)
         self.parent = panel
         self.x = x + panel.x
         self.y = y + panel.y
         self.children = []
+
         self.default_dict = default_dict
 
 
@@ -97,15 +102,27 @@ class ButtonOK(DefaultButton):
 
 class ButtonImage(DefaultButton):
     def __init__(self, panel, x, y, function_list, image, default_dict=base_gui.load_defaults()):
-        DefaultButton.__init__(self, panel, x, y, function_list)
+        DefaultButton.__init__(self, panel, x, y, function_list, default_dict)
         # TODO All images are assumed to be square
-        # Centers the image in the button
+
+        #  If the image is in a button, the button already corrects for the panel x, y. The correction in
+        #  image is therefore redundant.
+
+        self.x -= panel.x
+        self.y -= panel.y
+
+
+        #  Center the image in the button.
         x_ = self.x + 0.5 * (self.default_dict['button_width'] - self.default_dict['button_height'])
-        #This rect is for the image size not mouse click detection
+
+
+        #  This rect is for the image size not mouse click detection.
         self.image_rect = pygame.Rect(x_, self.y, self.default_dict['button_height'], self.default_dict['button_height'])
         # Resize image to fit in button
         self.image = image
+
         self.setup()
+        print(f'Button rect {self.rect}, image rect {self.children[-1].rect}')
 
     def get_image_index(self):
         idx = [i for i, val in enumerate(self.children) if type(val) == fundamentals.Image]
@@ -113,19 +130,18 @@ class ButtonImage(DefaultButton):
         return idx[0]
 
     def setup(self):
-        self.children.append(fundamentals.Image(self.image, self.parent.screen, self.image_rect))
+        self.children.append(fundamentals.Image(self.image, self.parent, self.image_rect))
 
 class ButtonToggleImage(ButtonImage):
     def __init__(self, panel, x, y, function_list, image, default_dict=base_gui.load_defaults()):
         ButtonImage.__init__(self, panel, x, y, function_list, image)
-
         #self.update()
 
     def setup(self):
         self.cur_image = 0
         self.images = []
         for image in self.image:
-            self.images.append(fundamentals.Image(image, self.parent.screen, self.image_rect))
+            self.images.append(fundamentals.Image(image, self.parent, self.image_rect))
         self.children.append(self.images[0])
 
     def display(self):

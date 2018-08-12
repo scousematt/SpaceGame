@@ -50,4 +50,5 @@ dropdown_width:190
 treeview_plus:plus.png
 treeview_minus:minus.png
 treeview_column_spacing:30
+treeview_packer:5
 #EOF

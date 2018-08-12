@@ -7,6 +7,8 @@ They will be overwritten if a different look, color etc is required.
 import pygame
 
 
+
+
 def return_correct_type(var_in):
 	try:
 		if int(var_in):
@@ -260,8 +262,10 @@ class Scrollbar(BaseGui):
 # Do imports here
 
 
-import panels, labels, color_blocks, buttons
+import panels, labels, color_blocks, buttons, tree_view, event_loop
 
+
+BUTTONS = (buttons.DefaultButton, buttons.Button, buttons.ButtonOK, buttons.ButtonImage)
 
 class GuiManager(BaseGui):
 
@@ -291,12 +295,6 @@ class GuiManager(BaseGui):
 						  default_dict=None, visible=True, active=True, scrollable=False)
 		self.panel_dict['Main Panel'].change_background_color( (122,0,0) )#self.default_dict['main_panel_background_color'])
 		self.panel_dict['Main Panel'].display()
-
-	# def show_panel(self, panel_name):
-	# 	# Think this is replaced by the panel_dict
-	# 	for panel in self.panels:
-	# 		if panel.name == panel_name:
-	# 			panel.visible = True
 
 	def hide_panel(self, panel_name):
 		panel = self.panel_dict[panel_name]
@@ -328,15 +326,14 @@ class GuiManager(BaseGui):
 					if not self.lmb_pressed:
 						#Button is not currently held down
 						if not self.dropdown_active:
-							if isinstance(element, (buttons.DefaultButton, buttons.ButtonOK))and element.rect.collidepoint(pos):
-								element.on_click()
+							#  Drop down active renders the rest of the UI invalid until an option from the dropdown is selected.
+							if isinstance(element, BUTTONS)and element.rect.collidepoint(pos):
+								event_loop.button_clicked(element)
+							elif isinstance(element, tree_view.TreeView):
+								event_loop.treeview_clicked(element, pos)
 							elif isinstance(element, color_blocks.DefaultColorBlock):
-								if element.drag_with_mouse and element.rect.collidepoint(pos):
-									self.lmb_pressed = True
-									self.mouse_x = pos[0]
-									self.mouse_y = pos[1]
-									self.element_moving = panel
-
+								#  Clicking a title bar to move a window.
+								event_loop.move_panel(element, panel, pos, self)
 							elif isinstance(element, DropDown) and element.children[0].background_rect.collidepoint(pos):
 								self.lmb_pressed = True
 								self.dropdown_active = element
@@ -350,6 +347,7 @@ class GuiManager(BaseGui):
 							self.element_moving = element
 
 						elif panel.name == 'Drop Down':
+							#  Clicking on an option from the drop down menu.
 							if isinstance(element, labels.DefaultLabel) and element.get_text_surface().rect.collidepoint(pos):
 								# get drop list and work update on the clicked element
 								self.lmb_pressed = True
@@ -361,7 +359,7 @@ class GuiManager(BaseGui):
 
 	def on_lmb_up(self, pos):
 		self.lmb_pressed = False
-		print(f'element moving {self.element_moving}')
+		print(f'element moving {self.element_moving} at {pos}')
 		if self.element_moving:
 			x_diff = pos[0] - self.mouse_x
 			y_diff = pos[1] - self.mouse_y
@@ -386,18 +384,6 @@ class GuiManager(BaseGui):
 		else:
 			panel.changed = True
 			panel.highlight = None
-
-
-	#
-	# def panels_inactivate(self):
-	# 	for panel in self.panels_on_screen:
-	# 		panel.active = False
-	#
-	# def panels_activate(self):
-	# 	for panel in self.panels_on_screen:
-	# 		if panel.visible:
-	# 			panel.active = True
-
 
 	def create_scroll_panel(self, name, x, y, width, height, full_list, num_visible, default_dict=None, visible=True, active=True, scrollable=False):
 		self.panel_dict[name] = (panels.PanelScroll(self, name, x, y, width, height, full_list, num_visible, visible=True, active=True))
@@ -455,7 +441,7 @@ class GuiManager(BaseGui):
 	def create_treeview(self, panel_name, name, x, y):
 		panel = self.panel_dict[panel_name]
 		if not self.is_error():
-			return panel.create_treeview(name, x, y)
+			return panel.create_treeview(panel, x, y)
 
 
 	def change_label_text(self, panel_name, label_name, text):
