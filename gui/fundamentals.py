@@ -60,6 +60,18 @@ class TextSurface(base_gui.BaseGui):
     def display(self):
         self.screen.blit(self.text_surface, self.rect)
 
+class OutputLine(base_gui.BaseGui):
+    def __init__(self):
+        base_gui.BaseGui.__init__(self)
+        self.children = []
+
+    def display(self):
+        if self.is_error():
+            self.on_error()
+            return
+
+        for child in self.children:
+            child.display()
 
 
 

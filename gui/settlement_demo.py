@@ -50,6 +50,15 @@ g1020 = t.add_node(g10, 'Bert')
 g1021 = t.add_node(g10, 'Bill')
 g2020 = t.add_node(g1020, 'Carl')
 g1201 = t.add_node(g12, 'Bessie')
+g1202 = t.add_node(g12, 'Bertha')
+g1203 = t.add_node(g12, 'Barbara')
+g1204 = t.add_node(g12, 'Brenda')
+g1205 = t.add_node(g12, 'Beth')
+g1206 = t.add_node(g12, 'Brook')
+g1207 = t.add_node(g12, 'Blanche')
+g1208 = t.add_node(g12, 'Briana')
+
+
 t.display()
 
 

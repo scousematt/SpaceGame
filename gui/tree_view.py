@@ -54,7 +54,7 @@ class TreeView(base_gui.BaseGui):
                                         self.default_dict['label_fontsize'],
                                         self.default_dict['label_fontsize'])
         #  This is a blank, the same size as the image.
-        self.no_control = self.default_dict['label_fontsize']
+        self.no_control_image = self.default_dict['label_fontsize']
         #  Setup the first node, the treeview root.
         self.iids = ['000000']
         self.nodes = {'000000' : Node('000000', 'Root', 0, '000000', True)}
@@ -92,7 +92,7 @@ class TreeView(base_gui.BaseGui):
 
     def recalculate_output(self, node_iid):
         node = self.nodes[node_iid]
-        x = self.x + self.no_control + node.generation * self.default_dict['treeview_column_spacing']
+        x = self.x + self.no_control_image + node.generation * self.default_dict['treeview_column_spacing']
         #  We need a rect for the image.
         self.control_rect.topleft = (x, self.y)
         print(node.text)
@@ -105,10 +105,10 @@ class TreeView(base_gui.BaseGui):
             self.node_components.append(buttons.ButtonImage(self.parent, x, self.y,[node.toggle_show],
                                                             self.default_dict['treeview_plus'],
                                                             default_dict=self.default_dict))
-        x += self.no_control
+        x += self.no_control_image
         self.node_components.append(labels.DefaultLabel(node.text, self.parent, x + self.default_dict['treeview_packer'], self.y))
         #  Added the label, so now we can increment the y value
-        self.y += self.no_control
+        self.y += self.no_control_image
 
 
         #  If there are no visible children then return to the next sibling of its generation
@@ -124,6 +124,11 @@ class TreeView(base_gui.BaseGui):
         self.node_components = []
         self.y = self.original_y
         self.recalculate_output(self.root)
+        data_height = self.y - self.original_y
+        if data_height > self.parent.height:
+            pass
+            #self.node_components.insert(0, base_gui.ScrollBar(self.parent.name, )
+            #self, panel, button_max_height, max_entries, visible_entries, default_dict = load_defaults()):
         if self.is_error():
             self.on_error()
             return

@@ -37,7 +37,6 @@ class DefaultPanel(base_gui.BaseGui):
 	def display(self):
 		if self.is_error():
 			self.on_error()
-			print('Are we in an error')
 			return
 
 		for child in self.children:
@@ -109,12 +108,13 @@ class PanelScroll(DefaultPanel):
 		self.scrollbar = None
 		self.scrollbar_changed = False
 
-	def create_scrollbar(self, max_height, max_entries, visible_entries, orientation='vertical'):
+	def create_scrollbar(self, lowest_thumb_y, max_entries, visible_entries, orientation='vertical'):
+		#  lowest_thumb_y is the lowest point the scrollbar thumb.y can be in the panel
 		if orientation == 'vertical':
 			# Change to a horizontal and vertical
 			# TODO Add max_v
-			print(max_height, self.height, self.height * (self.height / max_height))
-			self.scrollbar = (base_gui.Scrollbar(self, max_height, max_entries, visible_entries))
+			print(f'Creating scrollbar in panel {lowest_thumb_y}, {self.height}, {self.height * (self.height / lowest_thumb_y)}')
+			self.scrollbar = (scrollbars.Scrollbar(self, lowest_thumb_y, max_entries, visible_entries))
 			self.children.append(self.scrollbar)
 
 	def get_output_list(self):
@@ -159,4 +159,4 @@ class PanelDropDownScroll(PanelScroll):
 # Imports
 
 from color_blocks import PanelColorBlock
-import labels, buttons, tree_view
+import labels, buttons, tree_view, scrollbars

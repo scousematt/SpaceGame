@@ -174,9 +174,17 @@ class DropDown(BaseGui):
 
 		if not self.display_list_visible:
 			# First time the window opens
-			self.parent.gui.create_dropdown_scroll_panel(self.panel_name, self.x + self.parent.x - self.default_dict['dropdown_label_left_margin'],
-										y + self.parent.y, self.default_dict['dropdown_width'], self.height,
-										self.entries_list, self.num_visible_entries, self)
+			_x = self.x + self.parent.x - self.default_dict['dropdown_label_left_margin']
+			_y = y + self.parent.y
+			#  Go back to baseGui.create_dropdown_scroll_panel to create a new panel and populate it.
+			self.parent.gui.create_dropdown_scroll_panel(self.panel_name,
+														_x,
+														_y,
+														 self.default_dict['dropdown_width'],
+														 self.height,
+					    								 self.entries_list,
+														 self.num_visible_entries,
+														 self)
 			self.panel = self.parent.gui.panel_dict[self.panel_name]
 			self.parent.gui.create_scrollbar(self.panel_name, self.max_height, len(self.entries_list), self.num_visible_entries, 'vertical')
 			self.populate_list()
@@ -205,56 +213,7 @@ class DropDown(BaseGui):
 		self.parent.gui.panel_dict['Drop Down'].children = []
 
 
-class Scrollbar(BaseGui):
-	def __init__(self, panel, button_max_height, max_entries, visible_entries, default_dict=load_defaults()):
-		BaseGui.__init__(self)
-		self.panel = panel
-		self.button_height = (panel.height * (panel.height / button_max_height)) // 1
-		self.button_max_height = button_max_height
-		self.max_entries = max_entries
-		self.visible_entries = visible_entries
-		self.default_dict = default_dict
-		self.height = panel.height# - 2 * self.default_dict['scrollbar_top_margin']
-		self.width = self.default_dict['scrollbar_width']
-		self.x = self.panel.rect.right - self.width - self.default_dict['scrollbar_margin_right']
-		self.y = self.panel.rect.top #+ self.default_dict['scrollbar_top_margin']
-		self.rect = pygame.Rect(self.x, self.y, self.width, self.height)
-		self.button_rect = pygame.Rect(self.x, self.y, self.width, self.button_height)
-		self.line_width = self.default_dict['scrollbar_button_highlight_width']
-		self.list_element = 0 # from the list to be displayed in parent
 
-		self.children=[]
-
-		self.children.append(color_blocks.DefaultColorBlock(self.panel, self.default_dict['scrollbar_color'], self.rect))
-		self.children.append(color_blocks.ScrollbarColorBlock(self.panel,  self.default_dict['scrollbar_button_color'],
-													self.button_rect, self, drag_with_mouse=True))
-
-		#Created
-		self.panel.changed = True
-		self.panel.scrollbar = self
-
-	def display(self):
-		for child in self.children:
-			#print(child.rect)
-			child.display()
-
-	def get_element(self):
-		# This will return the index of the first line to be visible and doesnt work
-		traverse = self.height - self.button_height
-		step = (traverse / (self.max_entries - self.visible_entries)) // 1
-		cur_pos = self.children[1].rect.y - self.panel.rect.top
-		return int(cur_pos // step)
-
-	def update_pos(self, x, y):
-		self.children[1].rect.y += y
-		if self.children[1].rect.y < self.y:
-			self.children[1].rect.y = self.y
-		elif self.children[1].rect.y > self.y + self.height - self.button_height:
-			self.children[1].rect.y = self.y + self.height - self.button_height
-		self.panel.changed = True
-		self.panel.scrollbar_changed = True
-		self.panel.visible = True
-		self.list_element = self.get_element()
 
 
 ################################################################################
