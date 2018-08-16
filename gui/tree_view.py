@@ -14,9 +14,10 @@ class Node(base_gui.BaseGui):
         self.text = text
         self.iid = iid
         self.show_children = show_children
+        self.str = f'parent {self.parent} iid is {self.iid} show {self.show_children}'
+
 
     def toggle_show(self):
-        print(f'{self.text} toggle_show')
         if self.show_children:
             self.show_children = False
         else:
@@ -29,15 +30,13 @@ class Node(base_gui.BaseGui):
     def display(self):
         pass
 
-    def __str__(self):
-        return f'parent {self.parent} iid is {self.iid} show {self.show_children}'
 
 class TreeView(base_gui.BaseGui):
     def __init__(self, name, panel, x, y, default_dict):
         base_gui.BaseGui.__init__(self)
         self.parent = panel
         self.name = name
-        #  TODO make this consistant throughout every object.
+
         self.x = x
         self.y = y
         self.original_y = self.y
@@ -47,6 +46,9 @@ class TreeView(base_gui.BaseGui):
         self.default_dict['button_height'] = self.default_dict['label_fontsize'] - 2
         self.default_dict['button_highlight_offset'] = 1
         self.screen = self.parent.screen
+        #  Make a rect which will hold the outputted leaves
+        self.rect = None
+
         #  Setup a rect to suit plus and minus images.
         self.control_rect = pygame.Rect(self.x,
                                         self.y,
@@ -60,11 +62,13 @@ class TreeView(base_gui.BaseGui):
         self.root = self.nodes['000000'].iid
 
         #  Temporary while testing the order
-        self.packer = '  '
+
 
         #  Set the panel to active so that it is examined in the gui loop
         self.parent.active = True
         self.str = f'Treeview {self.name} in panel {self.parent.name}'
+        #  Run to set up the self.rect so that it is populated for self.parent.display().
+        self.recalculate_output(self.root)
 
     def add_node(self, parent, text, location='end', iid='', show_children=True):
         if iid == '':
@@ -95,7 +99,6 @@ class TreeView(base_gui.BaseGui):
         x = self.x + self.element_height + node.generation * self.default_dict['treeview_column_spacing']
         #  We need a rect for the image.
         self.control_rect.topleft = (x, self.y)
-        print(node.text)
         if len(node.children) > 0 and node.show_children:
             #     def __init__(self, panel, x, y, function_list, image, default_dict=base_gui.load_defaults()):
             self.children.append(buttons.ButtonImage(self.parent, x, self.y,[node.toggle_show],
@@ -107,8 +110,13 @@ class TreeView(base_gui.BaseGui):
                                                             default_dict=self.default_dict))
         x += self.element_height
         self.children.append(labels.DefaultLabel(node.text, self.parent, x + self.default_dict['treeview_packer'], self.y))
-        #  Added the label, so now we can increment the y value
+        #  Added the label increment the y position.
         self.y += self.element_height
+        if node_iid == self.root:
+            #  Initialise self.rect
+            self.rect = self.children[-1].rect
+        else:
+            self.rect = self.rect.union(self.children[-1].rect)
 
 
         #  If there are no visible children then return to the next sibling of its generation
@@ -120,22 +128,20 @@ class TreeView(base_gui.BaseGui):
             self.recalculate_output(child.iid)
 
 
-    def display(self):
+    def update(self):
         self.children = []
         self.y = self.original_y
         self.recalculate_output(self.root)
-        # Number visible lines = height of line + y margin
-        total_y = len(self.children) * self.element_height + self.original_y
-        if total_y > self.parent.height:
-            #  We are going to need a scrollbar.
-            self.scrollbar = scrollbars.Scrollbar()
-            # parent, lowest_thumb_y, total_number_entries, visible_entries, default_dict=base_gui.load_defaults()
-            self.parent.gui.children.append(scrollbars.Scrollbar())
-        data_height = self.y - self.original_y
-        if data_height > self.parent.height:
-            pass
-            #self.node_components.insert(0, base_gui.ScrollBar(self.parent.name, )
-            #self, panel, button_max_height, max_entries, visible_entries, default_dict = load_defaults()):
-        super().display()
+
+    def display(self):
+        display_rect = self.parent.display_rect
+        rect = self.parent.rect
+        offset = display_rect.y - rect.y
+        print(self.children)
+        for child in self.children:
+            if display_rect.contains(child.rect):
+                child.rect.top += offset
+                child.display()
+
 
 

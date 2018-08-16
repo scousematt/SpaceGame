@@ -10,7 +10,7 @@ class DefaultLabel(base_gui.BaseGui):
 		self.default_dict = default_dict
 		self.parent = parent
 		self.text = '' # We establish self.text in the method self.change_text(text)
-
+		self.rect = None
 
 		if isinstance(text, (int, float)):
 			# here we can test to see if we want colored numbers (red , green) or brackets around -ve
@@ -76,6 +76,11 @@ class DefaultLabel(base_gui.BaseGui):
 		elif len(child) == 1:
 			self.children.pop(child[0])
 		self.children.append(fundamentals.TextSurface(self.screen, self.text, self.font, self.text_color, self.coords, self.justify))
+		self.set_rect()
+
+	def set_rect(self):
+		#  From the last element, get the rect.
+		self.rect = self.children[-1].rect
 
 	def change_text(self, new_text):
 		if isinstance(new_text, (int, float)):
@@ -141,6 +146,11 @@ class DropDownTitleLabel(DefaultLabel):
 
 		self.update()
 
+	def set_rect(self):
+		#  There are more elements in the label so this method overwrites the DefaultLabel to union all the rects in self.children
+		self.rect = self.children[0].rect
+		for child in self.children:
+			self.rect = self.rect.union(child.rect)
 
 class DropDownListLabel(DefaultLabel):
 	def __init__(self, text, parent, x, y, justify='left', default_dict=base_gui.load_defaults(), fontsize=None,

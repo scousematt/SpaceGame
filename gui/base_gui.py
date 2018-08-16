@@ -66,6 +66,7 @@ class BaseGui():
 		self.children=[]
 		self.str = 'BaseObject'
 
+
 	def display(self):
 		if self.is_error():
 			self.on_error()
@@ -73,6 +74,9 @@ class BaseGui():
 
 		for child in self.children:
 			child.display()
+
+	def update(self):
+		pass
 
 	def is_error(self):
 		if len(self.error) > 0:
@@ -87,13 +91,13 @@ class BaseGui():
 			print(f'{value} : {self.error[value]}')
 			
 	def valid_color(self, color):
-		if type(color) == tuple and len(color) == 3:
+		if isinstance(color, tuple) and len(color) == 3:
 			for i in color:
 				if i < 0 or i > 255:
-					self.error['invalid_color'] = color
+					self.error['invalid_color'] = f'{color} out of bounds (0 - 255)'
 					return False
 			return True
-		self.error['invalid_color'] = color
+		self.error['invalid_color'] = f'{color} is not a tuple or has the wrong length'
 		return False
 
 	def __str__(self):
@@ -165,6 +169,7 @@ class DropDown(BaseGui):
 		self.y = y
 		self.entries_list = entries_list
 		self.num_visible_entries = num_visible_entries
+		#  This is the lowest value of y if every item in the list was displayed
 		self.max_height = len(entries_list) * self.default_dict['dropdown_line_height'] + 2 * self.default_dict['dropdown_line_header']
 		self.function = function
 		self.length = length
@@ -341,11 +346,9 @@ class GuiManager(BaseGui):
 
 	def on_lmb_up(self, pos):
 		self.lmb_pressed = False
-		print(f'element moving {self.element_moving} at {pos}')
 		if self.element_moving:
 			x_diff = pos[0] - self.mouse_x
 			y_diff = pos[1] - self.mouse_y
-			print('change of {}, {}'.format(x_diff, y_diff))
 			self.element_moving.update_pos(x_diff, y_diff)
 			self.element_moving = False
 
@@ -382,7 +385,8 @@ class GuiManager(BaseGui):
 		if name in self.panel_dict:
 			self.error['panel_name_exists'] = name
 			return
-		self.panel_dict[name] = panels.DefaultPanel(self, name, x, y, width, height, default_dict, visible, active)
+		#self.panel_dict[name] = panels.DefaultPanel(self, name, x, y, width, height, default_dict, visible, active)
+		self.panel_dict[name] = panels.PanelDynamicScrollbar(self, name, x, y, width, height, default_dict, visible, active)
 
 		self.panels.append(self.panel_dict[name])
 		if visible:

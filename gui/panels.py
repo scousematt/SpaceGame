@@ -21,10 +21,13 @@ class DefaultPanel(base_gui.BaseGui):
 
 		self.changed = False  # updated by self.children objects
 		self.children = []
-		print(self.name, self.x, self.y, self.width, self.height)
 		self.rect = pygame.Rect(self.x, self.y, self.width, self.height)
 		self.children.append(PanelColorBlock(self, self.background_color, self.rect))
+		self.children.append(BlockWithBorder(self, self.border_color, self.rect, self.default_dict['panel_border'] ))
 		self.named_children_dict = {}
+
+		self.str = f'{self.name} {type(self)} at {self.x}, {self.y}'
+
 
 	def update_pos(self, x, y):
 		self.rect = self.rect.move(x, y)
@@ -40,14 +43,13 @@ class DefaultPanel(base_gui.BaseGui):
 			return
 
 		for child in self.children:
-			print(child.rect.bottom)
 			child.display()
 
-		#  If border is made a fundamental object then it we don't need to override the display()
-		self.border = pygame.draw.rect(self.screen,
-									   self.border_color,
-									   self.rect,
-									   self.default_dict['panel_border'])
+		# #  If border is made a fundamental object then it we don't need to override the display()
+		# self.border = pygame.draw.rect(self.screen,
+		# 							   self.border_color,
+		# 							   self.rect,
+		# 							   self.default_dict['panel_border'])
 
 
 	def change_background_color(self, color):
@@ -94,10 +96,6 @@ class DefaultPanel(base_gui.BaseGui):
 		self.children.append(pygame.draw.rect(self.screen, color, rect))
 		self.changed = True
 
-	def __str__(self):
-		return ('Panel object at {}, {} with width {} and height {}'.format(self.x, self.y,
-																			self.width, self.height))
-
 
 class PanelScroll(DefaultPanel):
 	def __init__(self, gui, name, x, y, width, height, full_list, view_num, default_dict=base_gui.load_defaults(), visible=True,
@@ -116,7 +114,7 @@ class PanelScroll(DefaultPanel):
 		if orientation == 'vertical':
 			# Change to a horizontal and vertical
 			# TODO Add max_v
-			print(f'Creating scrollbar in panel {lowest_thumb_y}, {self.height}, {self.height * (self.height / lowest_thumb_y)}')
+			print(f'Creating scrollbar in panel {self.name}, panel height {self.height}, height of thumb {self.height * (self.height / lowest_thumb_y)}')
 			self.scrollbar = (scrollbars.Scrollbar(self, lowest_thumb_y, max_entries, visible_entries))
 			self.children.append(self.scrollbar)
 
@@ -149,41 +147,59 @@ class PanelDropDownScroll(PanelScroll):
 				self.named_children_dict[label_name] = self.children[-1]
 
 class PanelDynamicScrollbar(DefaultPanel):
-	def __str__(self, gui, name, x, y, width, height, default_dict=base_gui.load_defaults(), visible=True, active=True):
-		DefaultPanel.__init__(self, gui, name, x, y, width, height, default_dict=base_gui.load_defaults(), visible=True, active=True)
-		pass
+	def __init__(self, gui, name, x, y, width, height, default_dict=base_gui.load_defaults(), visible=True, active=True):
+		DefaultPanel.__init__(self, gui, name, x, y, width, height)
 		self.scrollbar = False
+		#  While self.rect is the panel dimension, self.total_rect will comprise of the total surfaces to be displayed
+		self.total_rect = None
+		#  Displayed rect is the show output from total_rect, initially set to the panel rect
+		self.display_rect = self.rect
+		self.str = f'DynamicScrollbar'
 
 	def check_for_scrollbar(self):
 		#  Need to compare check self.scrollbar.% movement then show
-		pass
+		if not self.display_rect.contains(self.total_rect):
+			#  The contents are larger than the panel.
+			print('Creating a scrollbar')
+			if not self.scrollbar:
+				print('We should see this when the scrollbar is created')
+				self.scrollbar = scrollbars.DefaultScrollbar(self)
+		else:
+			self.scrollbar = None
+			self.display_rect = self.rect
 
 	def union_all(self):
-		output = self.children[0]
+		self.total_rect = self.children[0].rect
 		for child in self.children:
 			try:
-				output = output.union(child.rect)
+				self.total_rect = self.total_rect.union(child.rect)
 			except AttributeError:
-				for kid in child.children:
-					try:
-						output = output.union(kid.rect)
-					except AttributeError:
-						self.error['child_child_rect'] = f'{child} has no rect, {child.kid} has no rect, panel.union_all()'
 				self.error['child_rect'] = f'{child} has no rect, panel.union_all()'
-		return output
+			except:
+				self.error['general'] = f'{self.name} fail in union_all()'
+
 
 	def display(self):
-		#  Need to check the to_display Rect against the panel.rect.  If the scrollbar is need it is created in this method
-		#  if one exists and is no longer required, delete it.
+		print(self.children)
+		for child in self.children:
+			child.update()
+		self.union_all()
 		self.check_for_scrollbar()
+
+
+
+		if self.is_error():
+			self.on_error()
+			return
+		print(f'Display {self.display_rect}')
+		for child in self.children:
+			child.display()
 		if self.scrollbar:
-			pass
-
-
+			self.scrollbar.display()
 
 ######################################
 #
 # Imports
 
-from color_blocks import PanelColorBlock
+from color_blocks import PanelColorBlock, BlockWithBorder
 import labels, buttons, tree_view, scrollbars

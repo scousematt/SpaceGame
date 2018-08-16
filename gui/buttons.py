@@ -32,7 +32,6 @@ class DefaultButton(base_gui.BaseGui):
         if self.function_list == []:
             self.function_list = [self.close_panel]
         self.function_index = 0
-        print(self.function_list)
         self.on_click_method = self.function_list[self.function_index]
 
         #  Return for __str__.
@@ -114,11 +113,9 @@ class ButtonImage(DefaultButton):
         self.image = image
 
         self.setup()
-        print(f'Button rect {self.rect}, image rect {self.children[-1].rect}')
 
     def get_image_index(self):
         idx = [i for i, val in enumerate(self.children) if type(val) == fundamentals.Image]
-        print(f'iundex is {idx}')
         return idx[0]
 
     def setup(self):
@@ -158,6 +155,5 @@ class ButtonToggleImage(ButtonImage):
             self.function_index = 0
 
         self.on_click_method = self.function_list[self.function_index]
-        print(f'The cur_image is now {self.cur_image}, image is {self.images[self.cur_image]}')
         self.display()
         return return_method

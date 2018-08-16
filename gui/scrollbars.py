@@ -1,6 +1,52 @@
 import pygame
 import base_gui, color_blocks
 
+
+class DefaultScrollbar(base_gui.BaseGui):
+	def  __init__(self, parent, default_dict=base_gui.load_defaults()):
+		base_gui.BaseGui.__init__(self)
+		self.parent = parent
+		self.thumb_height = (self.parent.height**2 / self.parent.total_rect.height) // 1   #  Lower integer.
+		self.default_dict = default_dict
+		self.x = self.parent.rect.right - self.default_dict['scrollbar_width'] - self.default_dict['scrollbar_margin_right']
+		self.y = self.parent.rect.top
+
+		self.rect = pygame.Rect(self.x, self.y, self.default_dict['scrollbar_width'], self.parent.height)
+		self.thumb_rect = pygame.Rect(self.x, self.y, self.default_dict['scrollbar_width'], self.thumb_height)
+		self.thumb_travel = self.rect.height - self.thumb_height
+
+		self.children.append(color_blocks.DefaultColorBlock(self.parent, self.default_dict['scrollbar_color'], self.rect))
+		self.children.append(color_blocks.ScrollbarColorBlock(self.parent, self.default_dict['scrollbar_button_color'],
+													self.thumb_rect, self, drag_with_mouse=True))
+
+		#  Reference from the colorblock, it is the amount the thumb -inflates to reveal shadow/highlight.
+		#  A scrollbar consists of 2 troughs and a thumb according to wikipedia.
+		#  If we want an image on the thumb we are going to have to make a fundamentals object.
+		self.thumb = self.children[-1]
+		self.str = f'Default scrollbar object from panel {self.parent.name}'
+
+	def update_pos(self, x, y):
+		self.amount_moved += (self.total_rect.height * y) / self.thumb_travel
+		self.thumb.rect.y += y
+		if self.thumb.rect.y < self.y:
+			self.thumb.rect.y = self.y
+		elif self.thumb.rect.y > self.y + self.height - self.thumb_height:
+			self.thumb.rect.y = self.y + self.height - self.thumb_height
+		self.parent.changed = True
+		self.parent.scrollbar_changed = True
+		self.parent.visible = True
+		#  Only changing for a vertical scrollbar
+		#self.parent.display_rect.top += y
+
+	def update(self):
+		self.parent.display_rect.top += self.amount_moved
+		self.thumb_height = (self.parent.height**2 / self.parent.total_rect.height) // 1   #  Lower integer.
+		self.children[1].rect.height = self.thumb_rect.height
+		self.children[1].rect.x += - 20
+		self.amount_moved = 0
+
+
+
 class Scrollbar(base_gui.BaseGui):
 	def __init__(self, parent, lowest_thumb_y, total_number_entries, visible_entries, default_dict=base_gui.load_defaults()):
 		base_gui.BaseGui.__init__(self)

@@ -1,7 +1,6 @@
 import base_gui, labels
 
 def button_clicked(element):
-    print(f'Button {element} is clicked')
     element.on_click()
 
 def treeview_clicked(element, pos):
