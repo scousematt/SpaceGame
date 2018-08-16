@@ -32,10 +32,11 @@ gui.create_label('Data','Name', 10,10)
 gui.create_label('Data',g.settlement_names[0], 300,10, label_name='name')
 gui.create_label('Data','Population', 10, 40)
 gui.create_label('Data',g.settlements[g.settlement_names[0]].pop_int, 300, 40, label_name='pop')
+#  panel created, initial text, x, y, number entries visible at once, entry list, function, length of text displayed.
 gui.create_dropdown_title('Toolbar', 'Select Planet', 200, 10, 3, g.settlement_names, g.display_settlement, length=20 )
 gui.create_dropdown_title('Toolbar', 'Time', 500, 10, 5, g.time_increments, g.set_time_increment)
 
-gui.create_panel('Tree', 200, 130, 600, 400)
+gui.create_panel('Tree', 200, 130, 400, 400)
 
 t = gui.create_treeview('Tree', 'Testing', 10, 10)
 print(f'Tree View Object {t}')

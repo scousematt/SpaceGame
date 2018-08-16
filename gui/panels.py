@@ -40,12 +40,15 @@ class DefaultPanel(base_gui.BaseGui):
 			return
 
 		for child in self.children:
+			print(child.rect.bottom)
 			child.display()
 
+		#  If border is made a fundamental object then it we don't need to override the display()
 		self.border = pygame.draw.rect(self.screen,
 									   self.border_color,
 									   self.rect,
 									   self.default_dict['panel_border'])
+
 
 	def change_background_color(self, color):
 		if self.valid_color(color):
@@ -126,22 +129,16 @@ class PanelDropDownScroll(PanelScroll):
 	def __init__(self, gui, name, x, y, width, height, full_list, view_num, dropdown, default_dict=base_gui.load_defaults(),
 				 visible=True, active=True):
 		PanelScroll.__init__(self, gui, name, x, y, width, height, full_list, view_num)
+		#  As the name implies, this is created and controlled by a drop down label from another panel.
 		self.dropdown = dropdown
 		self.active_label = None
 		self.highlight = None    # On mouseover
 		self.old_highlight = True
 
 	def display(self):
-		if self.is_error():
-			self.on_error()
-			return
 		self.dropdown.populate_list()
-		for child in self.children:
-			child.display()
-		self.border = pygame.draw.rect(self.screen,
-									   self.border_color,
-									   self.rect,
-									   self.default_dict['panel_border'])
+		super().display()
+
 
 	def create_label(self, text, x, y, justify='left', fontsize=None, label_name=False):
 		self.children.append(labels.DropDownListLabel(text, self, x, y, justify, self.default_dict, fontsize, label_name))
@@ -151,6 +148,36 @@ class PanelDropDownScroll(PanelScroll):
 			if label_name:
 				self.named_children_dict[label_name] = self.children[-1]
 
+class PanelDynamicScrollbar(DefaultPanel):
+	def __str__(self, gui, name, x, y, width, height, default_dict=base_gui.load_defaults(), visible=True, active=True):
+		DefaultPanel.__init__(self, gui, name, x, y, width, height, default_dict=base_gui.load_defaults(), visible=True, active=True)
+		pass
+		self.scrollbar = False
+
+	def check_for_scrollbar(self):
+		#  Need to compare check self.scrollbar.% movement then show
+		pass
+
+	def union_all(self):
+		output = self.children[0]
+		for child in self.children:
+			try:
+				output = output.union(child.rect)
+			except AttributeError:
+				for kid in child.children:
+					try:
+						output = output.union(kid.rect)
+					except AttributeError:
+						self.error['child_child_rect'] = f'{child} has no rect, {child.kid} has no rect, panel.union_all()'
+				self.error['child_rect'] = f'{child} has no rect, panel.union_all()'
+		return output
+
+	def display(self):
+		#  Need to check the to_display Rect against the panel.rect.  If the scrollbar is need it is created in this method
+		#  if one exists and is no longer required, delete it.
+		self.check_for_scrollbar()
+		if self.scrollbar:
+			pass
 
 
 

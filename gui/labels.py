@@ -11,20 +11,27 @@ class DefaultLabel(base_gui.BaseGui):
 		self.parent = parent
 		self.text = '' # We establish self.text in the method self.change_text(text)
 
+
 		if isinstance(text, (int, float)):
 			# here we can test to see if we want colored numbers (red , green) or brackets around -ve
 			text = f'{text}'
 
 		self.name = label_name
 
+		#  Set the label to screen coordinates.
 		self.x = x + self.parent.x
 		self.y = y + self.parent.y
 		self.default_dict = default_dict
-		self.justify = justify  # left or right, on centre y
+		self.justify = justify  #  Left, right, on centre y.
 
 		self.text_color = self.default_dict['label_color']
-		self.children = []
 		# Set the screen based on the parent type
+
+
+		#  Setup output for __str__.
+		self.str = f'{type(self)} {self.text} from Parent {self.parent}, Justify {self.justify}'
+
+		#  Move all of this somewhere else, it shouldn't be in the __init__, confusing.
 		if isinstance(self.parent, OBJECTS_WITH_TEXT_NOT_PANEL):
 			self.screen = self.parent.parent.screen
 		else:
@@ -114,16 +121,6 @@ class DefaultLabel(base_gui.BaseGui):
 		self.update()
 		self.parent.changed = True
 
-	def display(self):
-		if self.is_error():
-			self.on_error()
-			return
-		for child in self.children:
-			child.display()
-
-	def __str__(self):
-		return f'DefaultLabel {self.text} from Parent {self.parent}, Justify {self.justify}'
-
 
 class DropDownTitleLabel(DefaultLabel):
 	# This is the drop down title label
@@ -141,24 +138,9 @@ class DropDownTitleLabel(DefaultLabel):
 		#  The image corrects itself and so does the label, the x needs to be reduced by panel.x
 		self.image_rect = pygame.Rect(self.background_rect.right - 20 - self.parent.x, self.background_rect.top + 2, 20, 20)
 		self.children.append(fundamentals.Image('dropdown.png', self.parent, self.image_rect))
+
 		self.update()
-		print(self.children)
 
-	def display(self):
-		if self.is_error():
-			self.on_error()
-			return
-		for child in self.children:
-			child.display()
-		#self.parent.screen.blit(self.text_surface, self.rect)
-		#self.parent.screen.blit(self.image, (self.background_rect.right - 20, self.background_rect.top + 2))
-
-
-	def __str__(self):
-		if self.justify == 'right':
-			return f'DropDownTitleLabel {self.text} from Panel {self.parent.name} right justified x is rhs'
-		else:
-			return f'DropDownTitleLabel {self.text} from Panel {self.parent_name}'
 
 class DropDownListLabel(DefaultLabel):
 	def __init__(self, text, parent, x, y, justify='left', default_dict=base_gui.load_defaults(), fontsize=None,
@@ -182,11 +164,6 @@ class DropDownListLabel(DefaultLabel):
 		#self.parent.screen.blit(self.text_surface, self.rect)
 
 
-	def __str__(self):
-		if self.justify == 'right':
-			return ('DropDownListLabel "{}" from Panel "{}" right justified x is rhs'.format(self.text, self.parent.name))
-		else:
-			return ('DropDownListLabel "{}" from Panel "{}"'.format(self.text, self.parent.name))
 
 #######################
 #

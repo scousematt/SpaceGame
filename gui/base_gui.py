@@ -59,11 +59,21 @@ def format_text(text, line_length):
 	return(output)
 
 
-class BaseGui:
+class BaseGui():
 	def __init__(self):
 		self.error = {}
 		self.visible = False
-		
+		self.children=[]
+		self.str = 'BaseObject'
+
+	def display(self):
+		if self.is_error():
+			self.on_error()
+			return
+
+		for child in self.children:
+			child.display()
+
 	def is_error(self):
 		if len(self.error) > 0:
 			return True
@@ -85,6 +95,21 @@ class BaseGui:
 			return True
 		self.error['invalid_color'] = color
 		return False
+
+	def __str__(self):
+		return self.str
+
+class BaseVisibleObject():
+	def __init__(self):
+		self.x = 0
+		self.y = 0
+		self.children = []
+
+	def offset_xy(self, x, y):
+		self.x += x
+		self.y += y
+
+
 
 
 class MessageBox(BaseGui):
@@ -149,10 +174,12 @@ class DropDown(BaseGui):
 		self.justify = 'left'
 		self.default_dict = load_defaults()
 		self.fontsize = self.default_dict['label_fontsize']
-		self.children = []
+
 		self.children.append(labels.DropDownTitleLabel(self.name, self.parent, x, y, self.justify, default_dict=self.default_dict, fontsize=self.fontsize, label_name='drop_list'))
+		self.rect = self.children[-1].rect
 		self.height = self.default_dict['dropdown_line_height'] * self.num_visible_entries + self.default_dict['dropdown_line_header']
 		self.display_list_visible = False
+		self.str = f'Dropdown title label and image: {name}.'
 
 	def set_length_of_text(self, text_):
 		if self.length == 0:
@@ -161,11 +188,6 @@ class DropDown(BaseGui):
 			self.error['dropdown_title_text_length'] = f'Length is {len(self.length)} chars, text_ is {len(text_)}'
 		elif self.length >= len(text_):
 			self.text = f'{text_:{self.length}}'
-
-	def display(self):
-		# This should display only the label
-		for element in self.children:
-			element.display()
 
 	def display_list(self):
 		# self.parent.gui.dropdown_active = True # Lets the main event loop know it is looking at mouse over the panel
@@ -195,6 +217,7 @@ class DropDown(BaseGui):
 	def populate_list(self):
 		# Get rid of the labels in the panel and add the new ones
 		y = self.default_dict['dropdown_line_header']
+		#  Sloppy, what if I need to add more than the 2 color blocks.
 		self.panel.children = self.panel.children[:2]
 		for entry in self.panel.get_output_list():
 			# the label created is overwritten in a panel drop down list panel
@@ -221,7 +244,7 @@ class DropDown(BaseGui):
 # Do imports here
 
 
-import panels, labels, color_blocks, buttons, tree_view, event_loop
+import panels, labels, color_blocks, buttons, tree_view, event_loop, scrollbars
 
 
 BUTTONS = (buttons.DefaultButton, buttons.Button, buttons.ButtonOK, buttons.ButtonImage)
@@ -297,7 +320,7 @@ class GuiManager(BaseGui):
 								self.lmb_pressed = True
 								self.dropdown_active = element
 
-						elif isinstance(element, Scrollbar) and element.children[1].rect.collidepoint(pos):
+						elif isinstance(element, scrollbars.Scrollbar) and element.children[1].rect.collidepoint(pos):
 							self.lmb_pressed = True
 							# TODO change to vector2 to allow pos - mouse_clicked_pos
 							self.mouse_x = pos[0]
@@ -344,7 +367,8 @@ class GuiManager(BaseGui):
 			panel.changed = True
 			panel.highlight = None
 
-	def create_scroll_panel(self, name, x, y, width, height, full_list, num_visible, default_dict=None, visible=True, active=True, scrollable=False):
+	def create_scroll_panel(self, name, x, y, width, height, full_list,
+							num_visible, default_dict=None, visible=True, active=True, scrollable=False):
 		self.panel_dict[name] = (panels.PanelScroll(self, name, x, y, width, height, full_list, num_visible, visible=True, active=True))
 
 	def create_dropdown_scroll_panel(self, name, x, y, width, height, full_list, num_visible, dropdown, default_dict=None,

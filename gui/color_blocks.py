@@ -11,6 +11,7 @@ class DefaultColorBlock(base_gui.BaseGui):
 		self.panel = panel
 		self.color = color
 		self.rect = rect
+		self.str = f'{type(self)} with color {self.color}'
 
 	def display(self):
 		pygame.draw.rect(self.panel.screen,

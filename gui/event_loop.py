@@ -5,7 +5,7 @@ def button_clicked(element):
     element.on_click()
 
 def treeview_clicked(element, pos):
-    for child in element.node_components:
+    for child in element.children:
         if isinstance(child, base_gui.BUTTONS) and child.rect.collidepoint(pos):
             button_clicked(child)
             #  Now make the panel containing the treeview to changed.

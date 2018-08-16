@@ -35,12 +35,8 @@ class DefaultButton(base_gui.BaseGui):
         print(self.function_list)
         self.on_click_method = self.function_list[self.function_index]
 
-    def display(self):
-        if self.is_error():
-            self.on_error()
-            return ()
-        for child in self.children:
-            child.display()
+        #  Return for __str__.
+        self.str = f'Button {type(self)} in panel {self.parent.name}'
 
     def on_click(self):
         try:
@@ -52,10 +48,6 @@ class DefaultButton(base_gui.BaseGui):
             self.function_index = 0
         self.on_click_method = self.function_list[self.function_index]
         return return_method
-
-    def __str__(self):
-        return f'{type(self)} at {self.x}, {self.y}'
-
 
 
 class Button(DefaultButton):
@@ -149,12 +141,8 @@ class ButtonToggleImage(ButtonImage):
         del self.children[self.get_image_index()]
         # replace the image
         self.children.append(self.images[self.cur_image])
+        super().display()
 
-        if self.is_error():
-            self.on_error()
-            return ()
-        for child in self.children:
-            child.display()
 
     def on_click(self):
         try:
