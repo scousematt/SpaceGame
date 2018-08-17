@@ -137,7 +137,6 @@ class TreeView(base_gui.BaseGui):
         display_rect = self.parent.display_rect
         rect = self.parent.rect
         offset = display_rect.y - rect.y
-        print(self.children)
         for child in self.children:
             if display_rect.contains(child.rect):
                 child.rect.top += offset

@@ -160,15 +160,15 @@ class PanelDynamicScrollbar(DefaultPanel):
 		#  Need to compare check self.scrollbar.% movement then show
 		if not self.display_rect.contains(self.total_rect):
 			#  The contents are larger than the panel.
-			print('Creating a scrollbar')
 			if not self.scrollbar:
-				print('We should see this when the scrollbar is created')
 				self.scrollbar = scrollbars.DefaultScrollbar(self)
 		else:
 			self.scrollbar = None
 			self.display_rect = self.rect
 
 	def union_all(self):
+		#  After examining Rect.unionall c source, it does work with a list of rects. Is it worth making a list of rects then? List
+		#  comprehension.
 		self.total_rect = self.children[0].rect
 		for child in self.children:
 			try:
@@ -180,9 +180,9 @@ class PanelDynamicScrollbar(DefaultPanel):
 
 
 	def display(self):
-		print(self.children)
 		for child in self.children:
 			child.update()
+		#  Now that all the interior elements have been updated, recalculate the self.total_rect.
 		self.union_all()
 		self.check_for_scrollbar()
 
@@ -191,10 +191,10 @@ class PanelDynamicScrollbar(DefaultPanel):
 		if self.is_error():
 			self.on_error()
 			return
-		print(f'Display {self.display_rect}')
 		for child in self.children:
 			child.display()
 		if self.scrollbar:
+			self.scrollbar.update()
 			self.scrollbar.display()
 
 ######################################

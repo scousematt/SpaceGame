@@ -213,6 +213,7 @@ class DropDown(BaseGui):
 														 self.num_visible_entries,
 														 self)
 			self.panel = self.parent.gui.panel_dict[self.panel_name]
+			#  Do we need to call this through parent.gui.create_scrollbar, why not just self.children.append(DefaultScrollbar)
 			self.parent.gui.create_scrollbar(self.panel_name, self.max_height, len(self.entries_list), self.num_visible_entries, 'vertical')
 			self.populate_list()
 
@@ -249,7 +250,7 @@ class DropDown(BaseGui):
 # Do imports here
 
 
-import panels, labels, color_blocks, buttons, tree_view, event_loop, scrollbars
+import panels, labels, color_blocks, buttons, tree_view, event_loop_methods, scrollbars
 
 
 BUTTONS = (buttons.DefaultButton, buttons.Button, buttons.ButtonOK, buttons.ButtonImage)
@@ -315,17 +316,17 @@ class GuiManager(BaseGui):
 						if not self.dropdown_active:
 							#  Drop down active renders the rest of the UI invalid until an option from the dropdown is selected.
 							if isinstance(element, BUTTONS)and element.rect.collidepoint(pos):
-								event_loop.button_clicked(element)
+								event_loop_methods.button_clicked(element)
 							elif isinstance(element, tree_view.TreeView):
-								event_loop.treeview_clicked(element, pos)
+								event_loop_methods.treeview_clicked(element, pos)
 							elif isinstance(element, color_blocks.DefaultColorBlock):
 								#  Clicking a title bar to move a window.
-								event_loop.move_panel(element, panel, pos, self)
+								event_loop_methods.move_panel(element, panel, pos, self)
 							elif isinstance(element, DropDown) and element.children[0].background_rect.collidepoint(pos):
 								self.lmb_pressed = True
 								self.dropdown_active = element
 
-						elif isinstance(element, scrollbars.Scrollbar) and element.children[1].rect.collidepoint(pos):
+						elif isinstance(element, scrollbars.Scrollbar) and element.thumb.rect.collidepoint(pos):
 							self.lmb_pressed = True
 							# TODO change to vector2 to allow pos - mouse_clicked_pos
 							self.mouse_x = pos[0]
