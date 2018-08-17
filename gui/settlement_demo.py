@@ -1,5 +1,5 @@
 import pygame
-import base_gui
+import base_gui, event_loop_methods
 import game
 
 pygame.init()

@@ -20,3 +20,11 @@ def move_panel(element, panel, pos,  game):
         game.mouse_x = pos[0]
         game.mouse_y = pos[1]
         game.element_moving = panel
+
+def mouse_left_scrollbar(gui, element, pos):
+    gui.lmb_pressed = True
+    # TODO change to vector2 to allow pos - mouse_clicked_pos
+    gui.mouse_x = pos[0]
+    gui.mouse_y = pos[1]
+    # we want the scrollbar to update itself, not a scrollbar element
+    gui.element_moving = element
