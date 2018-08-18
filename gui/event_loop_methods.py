@@ -22,6 +22,7 @@ def move_panel(element, panel, pos,  game):
         game.element_moving = panel
 
 def mouse_left_scrollbar(gui, element, pos):
+    #  Mouse has left clicked on a scrollbars.Scrollbar
     gui.lmb_pressed = True
     # TODO change to vector2 to allow pos - mouse_clicked_pos
     gui.mouse_x = pos[0]

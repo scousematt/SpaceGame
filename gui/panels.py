@@ -153,18 +153,23 @@ class PanelDynamicScrollbar(DefaultPanel):
 		#  While self.rect is the panel dimension, self.total_rect will comprise of the total surfaces to be displayed
 		self.total_rect = None
 		#  Displayed rect is the show output from total_rect, initially set to the panel rect
-		self.display_rect = self.rect
+		self.display_rect = pygame.Rect(self.rect.x, self.rect.y, self.rect.w, self.rect.h) #  Making sure that the 2 rects are not same in memory.
 		self.str = f'DynamicScrollbar'
 
 	def check_for_scrollbar(self):
 		#  Need to compare check self.scrollbar.% movement then show
-		if not self.display_rect.contains(self.total_rect):
+		#if not self.display_rect.contains(self.total_rect):
+		if self.total_rect.height > self.display_rect.height:
 			#  The contents are larger than the panel.
 			if not self.scrollbar:
 				self.scrollbar = scrollbars.DefaultScrollbar(self)
+				self.children.append(self.scrollbar)
 		else:
+			if self.scrollbar:
+				self.children.remove(self.scrollbar)
 			self.scrollbar = None
-			self.display_rect = self.rect
+			self.display_rect.top = self.rect.top
+		#  If scrollbar exists then
 
 	def union_all(self):
 		#  After examining Rect.unionall c source, it does work with a list of rects. Is it worth making a list of rects then? List
@@ -193,9 +198,7 @@ class PanelDynamicScrollbar(DefaultPanel):
 			return
 		for child in self.children:
 			child.display()
-		if self.scrollbar:
-			self.scrollbar.update()
-			self.scrollbar.display()
+
 
 ######################################
 #

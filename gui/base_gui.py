@@ -211,41 +211,31 @@ class DropDown(BaseGui):
 				self.panel = self.parent.gui.panel_dict[self.panel_name]
 			except:
 				#  No panel with name 'drop down' exists.
-				self.parent.gui.create_dropdown_scroll_panel(self.panel_name,
-														_x,
-														_y,
-														 self.default_dict['dropdown_width'],
-														 self.height,
-					    								 self.entries_list,
-														 self.num_visible_entries,
-														 self)
-				#  Do we need to call this through parent.gui.create_scrollbar, why not just self.children.append(DefaultScrollbar)
-				self.parent.gui.create_scrollbar(self.panel_name, self.max_height, len(self.entries_list), self.num_visible_entries, 'vertical')
-				#  Populate the base panel.
-				self.panel = self.parent.gui.panel_dict[self.panel_name]
+				self.create_panel(_x, _y)
 				self.dropdown_panel_empty = self.panel.children
 			else:
 				if self.panel.children == []:  #  Used a dropdown and it has been set to [] after closing
-					self.parent.gui.create_dropdown_scroll_panel(self.panel_name,
-																 _x,
-																 _y,
-																 self.default_dict['dropdown_width'],
-																 self.height,
-																 self.entries_list,
-																 self.num_visible_entries,
-																 self)
-					#  Do we need to call this through parent.gui.create_scrollbar, why not just self.children.append(DefaultScrollbar)
-					self.parent.gui.create_scrollbar(self.panel_name, self.max_height, len(self.entries_list),
-													 self.num_visible_entries, 'vertical')
-					#  Populate the base panel.
-					self.panel = self.parent.gui.panel_dict[self.panel_name]
-					self.dropdown_panel_empty = self.panel.children
-
+					self.create_panel(_x, _y)
 				self.panel.children = self.dropdown_panel_empty
 			self.populate_list()
 
 		self.display_list_visible = True
 
+	def create_panel(self, _x, _y):
+		self.parent.gui.create_dropdown_scroll_panel(self.panel_name,
+													 _x,
+													 _y,
+													 self.default_dict['dropdown_width'],
+													 self.height,
+													 self.entries_list,
+													 self.num_visible_entries,
+													 self)
+		#  Do we need to call this through parent.gui.create_scrollbar, why not just self.children.append(DefaultScrollbar)
+		self.parent.gui.create_scrollbar(self.panel_name, self.max_height, len(self.entries_list),
+										 self.num_visible_entries, 'vertical')
+		#  Populate the base panel.
+		self.panel = self.parent.gui.panel_dict[self.panel_name]
+		self.dropdown_panel_empty = self.panel.children
 
 	def populate_list(self):
 		# Get rid of the labels in the panel and add the new ones
@@ -357,11 +347,10 @@ class GuiManager(BaseGui):
 							elif isinstance(element, DropDown) and element.children[0].background_rect.collidepoint(pos):
 								self.lmb_pressed = True
 								self.dropdown_active = element
-							# elif isinstance(element, scrollbars.DefaultScrollbar) and element.thumb.rect.collidepoint(pos):
-							# 	event_loop_methods.mouse_left_scrollbar(self, element, pos)
+							elif isinstance(element, scrollbars.DefaultScrollbar) and element.thumb.rect.collidepoint(pos):
+								event_loop_methods.mouse_left_scrollbar(self, element, pos)
 
 						elif isinstance(element, (scrollbars.Scrollbar)) and element.thumb.rect.collidepoint(pos):
-							print('click on drop down scrollbar')
 							event_loop_methods.mouse_left_scrollbar(self, element, pos)
 						elif panel.name == 'Drop Down':
 							#  Clicking on an option from the drop down menu.

@@ -121,6 +121,18 @@ class ButtonImage(DefaultButton):
     def setup(self):
         self.children.append(fundamentals.Image(self.image, self.parent, self.image_rect))
 
+    def set_children_rect_y(self):
+        for child in self.children:
+            if self.rect.y != child.rect.y:
+                child.rect.y =  self.rect.y
+
+    def display(self):
+        #  If the button moves, then move the image, maybe do in image.update() but the image is not a child of button but of panel?
+        if self.rect.y != self.children[self.get_image_index()].rect.y:
+            self.set_children_rect_y()
+            #self.children[self.get_image_index()].rect.y = self.rect.y
+        super().display()
+
 class ButtonToggleImage(ButtonImage):
     def __init__(self, panel, x, y, function_list, image, default_dict=base_gui.load_defaults()):
         ButtonImage.__init__(self, panel, x, y, function_list, image)
@@ -138,6 +150,7 @@ class ButtonToggleImage(ButtonImage):
         del self.children[self.get_image_index()]
         # replace the image
         self.children.append(self.images[self.cur_image])
+
         super().display()
 
 
