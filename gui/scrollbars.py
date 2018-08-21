@@ -31,15 +31,16 @@ class DefaultScrollbar(base_gui.BaseGui):
 		self.thumb.rect.y += y
 		if self.thumb.rect.y < self.y:
 			self.thumb.rect.y = self.y
-			self.parent.display_rect.y = self.parent.rect.y
+			#  set_display_rect(y=False, bottom=False, top=False). y and bottom are fixed, top is incremented.
+			self.parent.set_display_rect(y=self.parent.rect.y)
 		elif self.thumb.rect.y > self.y + self.rect.height - self.thumb.rect.height:
 			self.thumb.rect.y = self.y + self.rect.height - self.thumb.rect.height
-			self.parent.display_rect.bottom = self.parent.total_rect.bottom
+			self.parent.set_display_rect(bottom=self.parent.total_rect.bottom)
 		else:
 			#  Move the display_rect by the same % as y compared to thumb travel
 			_ratio_thumb = (y / (self.rect.height - self.thumb.rect.height))
 			_total_moveable = self.parent.total_rect.height - self.parent.rect.height
-			self.parent.display_rect.y += _ratio_thumb * _total_moveable
+			self.parent.set_display_rect(top=_ratio_thumb * _total_moveable)
 		self.parent.changed = True
 		self.parent.scrollbar_changed = True
 		self.parent.visible = True
@@ -48,7 +49,11 @@ class DefaultScrollbar(base_gui.BaseGui):
 
 	def update(self):
 		#  Check to see if the contents of the panel require the thumb to change size.
-		self.thumb.rect.height = (self.parent.height**2 / self.parent.total_rect.height) // 1
+		_height = (self.parent.height**2 / self.parent.total_rect.height) // 1
+		if self.thumb.rect.height != _height:
+			self.thumb.rect.height = _height
+			self.update_pos(0,0)
+			self.display()
 
 	# def display(self):
 	# 	# for child in self.children:

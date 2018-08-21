@@ -332,7 +332,8 @@ class GuiManager(BaseGui):
 		dropdown_text = None
 		for panel_name, panel in self.panel_dict.items():
 			if panel.active and panel.rect.collidepoint(pos):
-				for element in panel.children:
+				_static_and_children = panel.children + panel.static_children
+				for element in _static_and_children:
 					if not self.lmb_pressed:
 						#Button is not currently held down
 						if not self.dropdown_active:

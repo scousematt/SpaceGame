@@ -21,9 +21,13 @@ class DefaultPanel(base_gui.BaseGui):
 
 		self.changed = False  # updated by self.children objects
 		self.children = []
+		#  Elements of the object that will be displayed no matter the internal movement of the children. This is where images for corners
+		#  and title bars, [x], etc would be.
+		self.static_children = []
 		self.rect = pygame.Rect(self.x, self.y, self.width, self.height)
-		self.children.append(PanelColorBlock(self, self.background_color, self.rect))
-		self.children.append(BlockWithBorder(self, self.border_color, self.rect, self.default_dict['panel_border'] ))
+		self.static_children.append(PanelColorBlock(self, self.background_color, self.rect))
+		self.static_children.append(BlockWithBorder(self, self.border_color, self.rect, self.default_dict['panel_border'] ))
+		#  What is this used for?
 		self.named_children_dict = {}
 
 		self.str = f'{self.name} {type(self)} at {self.x}, {self.y}'
@@ -42,6 +46,8 @@ class DefaultPanel(base_gui.BaseGui):
 			self.on_error()
 			return
 
+		for static in self.static_children:
+			static.display()
 		for child in self.children:
 			child.display()
 
@@ -57,8 +63,13 @@ class DefaultPanel(base_gui.BaseGui):
 			# self.background is a DefaultColorBlock object
 
 			self.background_color = color
-			self.children[0].color = self.background_color
-			self.changed = True
+			for static in self.static_children:
+				if isinstance(static, PanelColorBlock):
+					static.color = self.background_color
+					self.changed = True
+					return
+
+			self.error['no_panel_block'] = f'Change background in panel {self.name} cannot find PanelColorBlock'
 
 	def create_button(self, x, y, some_func, text, kind):
 		if kind == 'text':
@@ -154,6 +165,7 @@ class PanelDynamicScrollbar(DefaultPanel):
 		self.total_rect = None
 		#  Displayed rect is the show output from total_rect, initially set to the panel rect
 		self.display_rect = pygame.Rect(self.rect.x, self.rect.y, self.rect.w, self.rect.h) #  Making sure that the 2 rects are not same in memory.
+		self.old_display_rect_y = self.display_rect.y
 		self.str = f'DynamicScrollbar'
 
 	def check_for_scrollbar(self):
@@ -163,18 +175,35 @@ class PanelDynamicScrollbar(DefaultPanel):
 			#  The contents are larger than the panel.
 			if not self.scrollbar:
 				self.scrollbar = scrollbars.DefaultScrollbar(self)
-				self.children.append(self.scrollbar)
+				#  The scrollbar will be present in the same place no matter the content, so add to static_children.
+				#  if added to static children, it will not be examined in the gui loop.
+				self.static_children.append(self.scrollbar)
+			self.scrollbar.update()
 		else:
 			if self.scrollbar:
-				self.children.remove(self.scrollbar)
+				self.static_children.remove(self.scrollbar)
 			self.scrollbar = None
 			self.display_rect.top = self.rect.top
 		#  If scrollbar exists then
 
+	def set_display_rect(self, y=False, bottom=False, top=False):
+		#  What if more than one is true?
+		self.old_display_rect_y = self.display_rect.y
+		if y:
+			self.display_rect.y = y
+		elif bottom:
+			self.display_rect.bottom = bottom
+		else:
+			self.display_rect.top += top
+
+
 	def union_all(self):
 		#  After examining Rect.unionall c source, it does work with a list of rects. Is it worth making a list of rects then? List
 		#  comprehension.
-		self.total_rect = self.children[0].rect
+		if len(self.children) == 0:
+			self.total_rect = self.rect
+			return
+		self.total_rect = self.rect
 		for child in self.children:
 			try:
 				self.total_rect = self.total_rect.union(child.rect)
@@ -185,7 +214,12 @@ class PanelDynamicScrollbar(DefaultPanel):
 
 
 	def display(self):
+		y_change = self.display_rect.y - self.old_display_rect_y
+		print(y_change)
 		for child in self.children:
+			if y_change != 0:
+				print(f'rect {self.rect.y} display {self.display_rect.y} old {self.old_display_rect_y}')
+				child.rect.y -= y_change
 			child.update()
 		#  Now that all the interior elements have been updated, recalculate the self.total_rect.
 		self.union_all()
@@ -196,8 +230,11 @@ class PanelDynamicScrollbar(DefaultPanel):
 		if self.is_error():
 			self.on_error()
 			return
+		for static in self.static_children:
+			static.display()
 		for child in self.children:
-			child.display()
+			if child.rect.y > self.rect.y: # and child.rect.bottom < self.rect.bottom:
+				child.display()
 
 
 ######################################

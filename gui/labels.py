@@ -69,7 +69,7 @@ class DefaultLabel(base_gui.BaseGui):
 		# TODO Combine all the surface rects here to allow for other fonts and sizes?
 		return self.children[list_text_surface_indexes[0]]
 
-	def update(self):
+	def update_text_surface(self):
 		child = [i for i, val in enumerate(self.children) if type(val) == fundamentals.TextSurface]
 		if len(child) > 1:
 			self.error['label_multiple_texts'] = f'Label {self.text} has multiple TextSurface objects'
@@ -77,6 +77,10 @@ class DefaultLabel(base_gui.BaseGui):
 			self.children.pop(child[0])
 		self.children.append(fundamentals.TextSurface(self.screen, self.text, self.font, self.text_color, self.coords, self.justify))
 		self.set_rect()
+
+	def update(self):
+		for child in self.children:
+			child.rect.y = self.rect.y
 
 	def set_rect(self):
 		#  From the last element, get the rect.
@@ -98,11 +102,6 @@ class DefaultLabel(base_gui.BaseGui):
 
 		self.text = new_text
 
-		# self.text_surface = self.font.render(self.text,
-		# 									 True,
-		# 									 self.text_color)
-		# self.rect = self.text_surface.get_rect()
-
 		if self.justify == 'left':
 			self.coords = (self.x, self.y)
 		elif self.justify == 'right':
@@ -110,15 +109,10 @@ class DefaultLabel(base_gui.BaseGui):
 		else:
 			print(f'Justify :{self.justify} from labels.DefaultLabel.change_text()')
 			self.coords = self.parent.rect.center
-		# Check to see if label is within panel
-		# if not self.parent.rect.contains(self.rect):
-		# 	if self.parent.rect.left > self.rect.left or self.parent.rect.right > self.rect.right:
-		# 		self.error['out_of_panel_horizontal'] = self
-		# 	elif self.parent.rect.top > self.rect.top or self.parent.rect.bottom > self.rect.bottom:
-		# 		self.error['out_of_panel_vertical'] = self
+
 		self.parent.changed = True
 		# Update the TextSurface
-		self.update()
+		self.update_text_surface()
 
 	def change_color(self, color):
 		# TODO Determine if the new color is valid or not and prepare an error
@@ -144,7 +138,7 @@ class DropDownTitleLabel(DefaultLabel):
 		self.image_rect = pygame.Rect(self.background_rect.right - 20 - self.parent.x, self.background_rect.top + 2, 20, 20)
 		self.children.append(fundamentals.Image('dropdown.png', self.parent, self.image_rect))
 
-		self.update()
+		self.update_text_surface()
 
 	def set_rect(self):
 		#  There are more elements in the label so this method overwrites the DefaultLabel to union all the rects in self.children
