@@ -12,9 +12,9 @@ class DefaultButton(base_gui.BaseGui):
         self.parent = panel
         self.x = x + self.parent.x
         self.y = y + self.parent.y
-        self.children = []
 
         self.default_dict = default_dict
+        #  Populate the button sizes from the default_dict.
         self.setup_sizes()
 
         self.rect = pygame.Rect(self.x, self.y, self.button_width, self.button_height)
@@ -59,6 +59,7 @@ class DefaultButton(base_gui.BaseGui):
 
     def display(self):
         for child in self.children:
+            #  If scrolled out of panel, don't show it.
             if child.rect.y > self.parent.y:
                 child.display()
 
@@ -127,9 +128,9 @@ class ButtonImage(DefaultButton):
                 child.rect.y =  self.rect.y
 
     def display(self):
-        #  If the button moves, then move the image, maybe do in image.update() but the image is not a child of button but of panel?
+        #  The image is relative to the button, not the panel, so adjust here.
         if self.rect.y != self.children[self.get_image_index()].rect.y:
-            self.set_children_rect_y()
+            self.children[self.get_image_index()].rect.y = self.rect.y
             #self.children[self.get_image_index()].rect.y = self.rect.y
         super().display()
 
@@ -146,7 +147,6 @@ class ButtonTreeviewImage(ButtonImage):
 class ButtonToggleImage(ButtonImage):
     def __init__(self, panel, x, y, function_list, image, default_dict=base_gui.load_defaults()):
         ButtonImage.__init__(self, panel, x, y, function_list, image)
-        #self.update()
 
     def setup(self):
         self.cur_image = 0

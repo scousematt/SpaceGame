@@ -127,7 +127,7 @@ class DefaultLabel(base_gui.BaseGui):
 	def change_color(self, color):
 		# TODO Determine if the new color is valid or not and prepare an error
 		self.text_color = color
-		self.update()
+		self.update_text_surface()
 		self.parent.changed = True
 
 class ButtonLabel(DefaultLabel):

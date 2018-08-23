@@ -39,6 +39,7 @@ gui.create_dropdown_title('Toolbar', 'Time', 500, 10, 5, g.time_increments, g.se
 gui.create_panel('Tree', 200, 130, 400, 250)
 gui.create_label('Tree', 'Treeview example', 10, 10)
 gui.create_button('Tree', 10, 50, [g.update], 'Test')
+gui.create_button('Tree', 200, 10, [g.update], ['plus.png', 'minus.png'], kind='toggle')
 t = gui.create_treeview('Tree', 'Testing', 10, 90)
 
 

@@ -248,6 +248,9 @@ class DropDown(BaseGui):
 			self.parent.gui.create_label(self.panel_name, entry, self.default_dict['dropdown_label_left_margin'], y)
 			y += self.default_dict['dropdown_line_height']
 
+	# def update(self, y_change):
+	# 	for child in self.children:
+	# 		child.rect.y += y_change
 
 	def on_click(self, name):
 		# When an element from the drop down list is clicked
