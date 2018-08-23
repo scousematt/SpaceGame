@@ -42,9 +42,9 @@ class TreeView(base_gui.BaseGui):
         self.original_y = self.y
         self.original_x = self.x
         self.default_dict = default_dict
-        self.default_dict['button_width'] = self.default_dict['label_fontsize'] - 2
-        self.default_dict['button_height'] = self.default_dict['label_fontsize'] - 2
-        self.default_dict['button_highlight_offset'] = 1
+        # self.default_dict['button_width'] = self.default_dict['label_fontsize'] - 2
+        # self.default_dict['button_height'] = self.default_dict['label_fontsize'] - 2
+        # self.default_dict['button_highlight_offset'] = 1
         self.screen = self.parent.screen
         #  Make a rect which will hold the outputted leaves
         self.rect = None
@@ -67,6 +67,8 @@ class TreeView(base_gui.BaseGui):
         #  Set the panel to active so that it is examined in the gui loop
         self.parent.active = True
         self.str = f'Treeview {self.name} in panel {self.parent.name}'
+        #  Cumulative changes to the y as scrollbar is manipulated
+        self.total_offset = 0
         #  Run to set up the self.rect so that it is populated for self.parent.display().
         self.recalculate_output(self.root)
 
@@ -101,11 +103,11 @@ class TreeView(base_gui.BaseGui):
         self.control_rect.topleft = (x, self.y)
         if len(node.children) > 0 and node.show_children:
             #     def __init__(self, panel, x, y, function_list, image, default_dict=base_gui.load_defaults()):
-            self.children.append(buttons.ButtonImage(self.parent, x, self.y,[node.toggle_show],
+            self.children.append(buttons.ButtonTreeviewImage(self.parent, x, self.y,[node.toggle_show],
                                                             self.default_dict['treeview_minus'],
                                                             default_dict=self.default_dict))
         elif len(node.children) > 0:
-            self.children.append(buttons.ButtonImage(self.parent, x, self.y,[node.toggle_show],
+            self.children.append(buttons.ButtonTreeviewImage(self.parent, x, self.y,[node.toggle_show],
                                                             self.default_dict['treeview_plus'],
                                                             default_dict=self.default_dict))
         x += self.element_height
@@ -128,10 +130,14 @@ class TreeView(base_gui.BaseGui):
             self.recalculate_output(child.iid)
 
 
-    def update(self):
+    def update(self, y_change):
         self.children = []
+        # self.original_y += y_change
         self.y = self.original_y
         self.recalculate_output(self.root)
+        print(f'treeview height {self.rect.height}')
+        self.total_offset += y_change
+        self.rect.y += self.total_offset
 
     def display(self):
         display_rect = self.parent.display_rect

@@ -1,7 +1,7 @@
 import pygame
 import base_gui, buttons, fundamentals, tree_view
 
-OBJECTS_WITH_TEXT_NOT_PANEL = (buttons.DefaultButton, base_gui.DropDown, tree_view.TreeView)
+OBJECTS_WITH_TEXT_NOT_PANEL = (buttons.DefaultButton, buttons.Button, base_gui.DropDown, tree_view.TreeView)
 
 class DefaultLabel(base_gui.BaseGui):
 	def __init__(self, text, parent, x, y, justify='left', default_dict=base_gui.load_defaults(), fontsize=None,
@@ -78,9 +78,15 @@ class DefaultLabel(base_gui.BaseGui):
 		self.children.append(fundamentals.TextSurface(self.screen, self.text, self.font, self.text_color, self.coords, self.justify))
 		self.set_rect()
 
-	def update(self):
+	def update(self, y_change):
+		#  The panel upon scrollbar movement will change the self.rect.y
 		for child in self.children:
-			child.rect.y = self.rect.y
+			child.rect.y += y_change
+
+	def display(self):
+		for child in self.children:
+			if child.rect.y > self.parent.y:
+				child.display()
 
 	def set_rect(self):
 		#  From the last element, get the rect.
@@ -101,24 +107,55 @@ class DefaultLabel(base_gui.BaseGui):
 			return
 
 		self.text = new_text
+		#  Position self.coords to suit the justification before the text_surface is created
+		self.justify_text()
 
+		self.parent.changed = True
+		#  Update the TextSurface. Most pointless comment in the world.
+		self.update_text_surface()
+
+	def justify_text(self):
 		if self.justify == 'left':
 			self.coords = (self.x, self.y)
 		elif self.justify == 'right':
-			self.coords = self.x, self.y
+			self.coords = (self.x, self.y)
 		else:
 			print(f'Justify :{self.justify} from labels.DefaultLabel.change_text()')
 			self.coords = self.parent.rect.center
 
-		self.parent.changed = True
-		# Update the TextSurface
-		self.update_text_surface()
 
 	def change_color(self, color):
 		# TODO Determine if the new color is valid or not and prepare an error
 		self.text_color = color
 		self.update()
 		self.parent.changed = True
+
+class ButtonLabel(DefaultLabel):
+	def __init__(self, text, parent, x, y, justify, default_dict, fontsize=None,
+				 label_name=None):
+		self.button = parent
+		DefaultLabel.__init__(self, text, parent, x, y, justify, default_dict, fontsize=None,
+				 label_name=None)
+		'''Same as the DefaultLabel except the self.parent.y does not refer to its parent (a button) but the panel in which the button
+		resides.'''
+		self.parent = self.parent.parent
+		#self.rect = self.parent.rect
+		self.rect = self.button.rect
+
+
+		print(self.button, self.parent, 'erm')
+
+	def justify_text(self):
+		if self.justify == 'left':
+			self.coords = (self.x, self.y)
+		elif self.justify == 'right':
+			self.coords = (self.x, self.y)
+		else:
+			print(f'Justify :{self.justify} "{self.text}" from ButtonLabel')
+			print(self.button)
+			print(self.button.rect.center)
+			self.coords = self.button.rect.center
+			print(self.coords)
 
 
 class DropDownTitleLabel(DefaultLabel):

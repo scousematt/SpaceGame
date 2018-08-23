@@ -10,18 +10,18 @@ class DefaultButton(base_gui.BaseGui):
         #
         base_gui.BaseGui.__init__(self)
         self.parent = panel
-        self.x = x + panel.x
-        self.y = y + panel.y
+        self.x = x + self.parent.x
+        self.y = y + self.parent.y
         self.children = []
 
         self.default_dict = default_dict
+        self.setup_sizes()
 
-
-        self.rect = pygame.Rect(self.x, self.y, self.default_dict['button_width'], self.default_dict['button_height'])
+        self.rect = pygame.Rect(self.x, self.y, self.button_width, self.button_height)
         self.children.append(color_blocks.Triangles2ColorBlock(self.parent,
                                                               self.default_dict['button_highlight_color'],
-                                                              self.rect.inflate(self.default_dict['button_highlight_offset'] * 2,
-                                                                                self.default_dict['button_highlight_offset'] * 2),
+                                                              self.rect.inflate(self.button_highlight_offset * 2,
+                                                                                self.button_highlight_offset * 2),
                                                               self.default_dict['button_shadow_color']))
         self.children.append(color_blocks.DefaultColorBlock(self.parent,
                                                            self.default_dict['button_color'],
@@ -37,6 +37,11 @@ class DefaultButton(base_gui.BaseGui):
         #  Return for __str__.
         self.str = f'Button {type(self)} in panel {self.parent.name}'
 
+    def setup_sizes(self):
+        self.button_width = self.default_dict['button_width']
+        self.button_height = self.default_dict['button_height']
+        self.button_highlight_offset = self.default_dict['button_highlight_offset']
+
     def on_click(self):
         try:
             return_method =  self.on_click_method(self)
@@ -48,6 +53,14 @@ class DefaultButton(base_gui.BaseGui):
         self.on_click_method = self.function_list[self.function_index]
         return return_method
 
+    def update(self, y_change):
+        for child in self.children:
+            child.update(y_change)
+
+    def display(self):
+        for child in self.children:
+            if child.rect.y > self.parent.y:
+                child.display()
 
 class Button(DefaultButton):
     def __init__(self, panel, x, y, function_list, text, default_dict=base_gui.load_defaults()):
@@ -60,17 +73,9 @@ class Button(DefaultButton):
         button_dict = {'label_color': (200,200,200), #self.default_dict['button_text_color'],
                        'label_font': self.default_dict['button_font'],
                        'label_fontsize': self.default_dict['button_fontsize']}
-        self.children.append(labels.DefaultLabel(self.text, self, self.rect.x, self.rect.y,
+        self.children.append(labels.ButtonLabel(self.text, self, self.rect.x, self.rect.y,
                                                  justify='center', default_dict=button_dict))
 
-
-
-
-
-    # def update(self):
-    #     self.text_rect.center = ((self.rect.x + self.rect.width // 2, self.rect.y + self.rect.height // 2))
-    #     self.create_highlight_coords()
-    #     self.shadow_rect = self.rect.inflate(self.offset * 2, self.offset * 2)
 
 
 
@@ -96,23 +101,18 @@ class ButtonImage(DefaultButton):
         DefaultButton.__init__(self, panel, x, y, function_list, default_dict)
         # TODO All images are assumed to be square
 
-        #  If the image is in a button, the button already corrects for the panel x, y. The correction in
-        #  image is therefore redundant.
-
-        self.x -= panel.x
-        self.y -= panel.y
-
-
         #  Center the image in the button.
-        x_ = self.x + 0.5 * (self.default_dict['button_width'] - self.default_dict['button_height'])
+        x_ = self.x + 0.5 * (self.button_width - self.button_height)
 
 
         #  This rect is for the image size not mouse click detection.
-        self.image_rect = pygame.Rect(x_, self.y, self.default_dict['button_height'], self.default_dict['button_height'])
+        self.image_rect = pygame.Rect(x_ - self.parent.x, self.y - self.parent.x, self.button_height, self.button_height)
         # Resize image to fit in button
         self.image = image
 
         self.setup()
+
+
 
     def get_image_index(self):
         idx = [i for i, val in enumerate(self.children) if type(val) == fundamentals.Image]
@@ -132,6 +132,16 @@ class ButtonImage(DefaultButton):
             self.set_children_rect_y()
             #self.children[self.get_image_index()].rect.y = self.rect.y
         super().display()
+
+class ButtonTreeviewImage(ButtonImage):
+    def __init__(self, panel, x, y, function_list, image, default_dict=base_gui.load_defaults()):
+        ButtonImage.__init__(self, panel, x, y, function_list, image)
+
+    def setup_sizes(self):
+        self.button_width = self.default_dict['treeview_image_width']
+        self.button_height = self.default_dict['treeview_image_width']
+        self.button_highlight_offset = self.default_dict['treeview_highlight_offset']
+
 
 class ButtonToggleImage(ButtonImage):
     def __init__(self, panel, x, y, function_list, image, default_dict=base_gui.load_defaults()):

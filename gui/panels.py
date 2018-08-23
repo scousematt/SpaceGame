@@ -161,17 +161,20 @@ class PanelDynamicScrollbar(DefaultPanel):
 	def __init__(self, gui, name, x, y, width, height, default_dict=base_gui.load_defaults(), visible=True, active=True):
 		DefaultPanel.__init__(self, gui, name, x, y, width, height)
 		self.scrollbar = False
-		#  While self.rect is the panel dimension, self.total_rect will comprise of the total surfaces to be displayed
-		self.total_rect = None
+		#  While self.rect is the panel dimension, need a value for the overall height of the contents regardless of what is displayed.
+		self.total_y = self.rect.height
 		#  Displayed rect is the show output from total_rect, initially set to the panel rect
 		self.display_rect = pygame.Rect(self.rect.x, self.rect.y, self.rect.w, self.rect.h) #  Making sure that the 2 rects are not same in memory.
 		self.old_display_rect_y = self.display_rect.y
+		self.change_y = 0
+		self.total_change_y = 0
+		self.lowest_y = 0
 		self.str = f'DynamicScrollbar'
 
 	def check_for_scrollbar(self):
 		#  Need to compare check self.scrollbar.% movement then show
 		#if not self.display_rect.contains(self.total_rect):
-		if self.total_rect.height > self.display_rect.height:
+		if self.total_y > self.display_rect.height:
 			#  The contents are larger than the panel.
 			if not self.scrollbar:
 				self.scrollbar = scrollbars.DefaultScrollbar(self)
@@ -187,7 +190,7 @@ class PanelDynamicScrollbar(DefaultPanel):
 		#  If scrollbar exists then
 
 	def set_display_rect(self, y=False, bottom=False, top=False):
-		#  What if more than one is true?
+		#  What if more than one is true? Altering display_rect elsewhere could make maintainence difficult.
 		self.old_display_rect_y = self.display_rect.y
 		if y:
 			self.display_rect.y = y
@@ -195,34 +198,28 @@ class PanelDynamicScrollbar(DefaultPanel):
 			self.display_rect.bottom = bottom
 		else:
 			self.display_rect.top += top
-
-
-	def union_all(self):
-		#  After examining Rect.unionall c source, it does work with a list of rects. Is it worth making a list of rects then? List
-		#  comprehension.
-		if len(self.children) == 0:
-			self.total_rect = self.rect
-			return
-		self.total_rect = self.rect
-		for child in self.children:
-			try:
-				self.total_rect = self.total_rect.union(child.rect)
-			except AttributeError:
-				self.error['child_rect'] = f'{child} has no rect, panel.union_all()'
-			except:
-				self.error['general'] = f'{self.name} fail in union_all()'
-
+		self.change_y = self.old_display_rect_y - self.display_rect.y
 
 	def display(self):
-		y_change = self.display_rect.y - self.old_display_rect_y
-		print(y_change)
+		y_change = self.old_display_rect_y - self.display_rect.y
+		self.total_change_y += y_change
+		_lowest = 10000
+		_total_y_list = []
+		_min_y = 100000
+		_max_y = 0
 		for child in self.children:
-			if y_change != 0:
-				print(f'rect {self.rect.y} display {self.display_rect.y} old {self.old_display_rect_y}')
-				child.rect.y -= y_change
-			child.update()
+			child.update(y_change)
+			_min_y = min(_min_y, child.rect.y)
+			_max_y = max(_max_y, child.rect.bottom)
+			if child.y - self.rect.y < _lowest:
+				#  Find the closest child to the top of the frame
+				_lowest = child.y - self.rect.y
 		#  Now that all the interior elements have been updated, recalculate the self.total_rect.
-		self.union_all()
+		if len(self.children)> 0:
+			#  TODO is display being run without the children created?
+			self.total_y = abs(_max_y) - abs(_min_y) + _lowest
+
+		print(self.total_y)
 		self.check_for_scrollbar()
 
 
@@ -233,8 +230,7 @@ class PanelDynamicScrollbar(DefaultPanel):
 		for static in self.static_children:
 			static.display()
 		for child in self.children:
-			if child.rect.y > self.rect.y: # and child.rect.bottom < self.rect.bottom:
-				child.display()
+			child.display()
 
 
 ######################################

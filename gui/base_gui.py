@@ -75,7 +75,7 @@ class BaseGui():
 		for child in self.children:
 			child.display()
 
-	def update(self):
+	def update(self, y_change):
 		pass
 
 	def is_error(self):

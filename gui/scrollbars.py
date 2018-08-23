@@ -6,7 +6,7 @@ class DefaultScrollbar(base_gui.BaseGui):
 	def  __init__(self, parent, default_dict=base_gui.load_defaults()):
 		base_gui.BaseGui.__init__(self)
 		self.parent = parent
-		thumb_height = (self.parent.height**2 / self.parent.total_rect.height) // 1   #  Lower integer.
+		thumb_height = (self.parent.rect.height**2 / self.parent.total_y) // 1   #  Lower integer.
 		self.default_dict = default_dict
 		self.x = self.parent.rect.right - self.default_dict['scrollbar_width'] - self.default_dict['scrollbar_margin_right']
 		self.y = self.parent.rect.top
@@ -32,14 +32,14 @@ class DefaultScrollbar(base_gui.BaseGui):
 		if self.thumb.rect.y < self.y:
 			self.thumb.rect.y = self.y
 			#  set_display_rect(y=False, bottom=False, top=False). y and bottom are fixed, top is incremented.
-			self.parent.set_display_rect(y=self.parent.rect.y)
+			self.parent.set_display_rect(y=self.parent.y)
 		elif self.thumb.rect.y > self.y + self.rect.height - self.thumb.rect.height:
-			self.thumb.rect.y = self.y + self.rect.height - self.thumb.rect.height
-			self.parent.set_display_rect(bottom=self.parent.total_rect.bottom)
+			self.thumb.rect.bottom = self.parent.rect.bottom #y + self.rect.height - self.thumb.rect.height
+			self.parent.set_display_rect(bottom=self.parent.total_y + self.parent.rect.y + self.default_dict['panel_packer'])
 		else:
 			#  Move the display_rect by the same % as y compared to thumb travel
 			_ratio_thumb = (y / (self.rect.height - self.thumb.rect.height))
-			_total_moveable = self.parent.total_rect.height - self.parent.rect.height
+			_total_moveable = self.parent.total_y - self.parent.rect.height
 			self.parent.set_display_rect(top=_ratio_thumb * _total_moveable)
 		self.parent.changed = True
 		self.parent.scrollbar_changed = True
@@ -47,9 +47,10 @@ class DefaultScrollbar(base_gui.BaseGui):
 		#  Only changing for a vertical scrollbar
 		#self.parent.display_rect.top += y
 
-	def update(self):
+	def update(self, y_change=0):
 		#  Check to see if the contents of the panel require the thumb to change size.
-		_height = (self.parent.height**2 / self.parent.total_rect.height) // 1
+		# TODO we are running self.parent.unionall every display, need to check if scrollbar area has changed - add flag from treeview.
+		_height = (self.parent.height**2 / self.parent.total_y) // 1
 		if self.thumb.rect.height != _height:
 			self.thumb.rect.height = _height
 			self.update_pos(0,0)

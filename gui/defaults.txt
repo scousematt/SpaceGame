@@ -30,6 +30,7 @@ msg_background_color:(210,200,200)
 panel_background_color:(220,240,240)
 panel_border_color:(90,25,25)
 panel_border:4
+panel_packer:-10
 #Scrollbar
 scrollbar_top_margin:10
 scrollbar_width:16
@@ -51,4 +52,7 @@ treeview_plus:plus.png
 treeview_minus:minus.png
 treeview_column_spacing:30
 treeview_packer:5
+treeview_image_width:16
+treeview_image_height:16
+treeview_highlight_offset:1
 #EOF
