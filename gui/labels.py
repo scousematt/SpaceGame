@@ -120,7 +120,6 @@ class DefaultLabel(base_gui.BaseGui):
 		elif self.justify == 'right':
 			self.coords = (self.x, self.y)
 		elif self.justify == 'centerx':
-			print(f'Justify :{self.justify} from labels.DefaultLabel.change_text() y is {self.y}')
 			self.coords = (self.parent.rect.centerx, self.y)
 		else:
 			self.coords = self.parent.rect.center
@@ -145,7 +144,6 @@ class ButtonLabel(DefaultLabel):
 		self.rect = self.button.rect
 
 
-		print(self.button, self.parent, 'erm')
 
 	def justify_text(self):
 		if self.justify == 'left':
@@ -153,11 +151,9 @@ class ButtonLabel(DefaultLabel):
 		elif self.justify == 'right':
 			self.coords = (self.x, self.y)
 		else:
-			print(f'Justify :{self.justify} "{self.text}" from ButtonLabel')
-			print(self.button)
-			print(self.button.rect.center)
+
 			self.coords = self.button.rect.center
-			print(self.coords)
+
 
 
 class DropDownTitleLabel(DefaultLabel):

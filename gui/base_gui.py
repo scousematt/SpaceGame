@@ -75,8 +75,9 @@ class BaseGui():
 		for child in self.children:
 			child.display()
 
-	def update(self, y_change):
+	def update(self, y=0):
 		pass
+
 
 	def is_error(self):
 		if len(self.error) > 0:
@@ -288,8 +289,8 @@ class GuiManager(BaseGui):
 
 
 		self.panels = []
-		self.dialogs = []
-		self.dislog_dict = {}
+		self.number_dialogs = 0
+		self.dialog_dict = {}
 		self.font_dict = {}
 		self.panels_on_screen = []
 		self.panel_dict = {}
@@ -314,14 +315,10 @@ class GuiManager(BaseGui):
 		panel = self.panel_dict[panel_name]
 		panel.visible = False
 		panel.active = False
-		redraw_screen = False
-		if panel.visible == True:
-			panel.changed = True
 		for p in self.panels:
-			# When removing a panel, check to make sure panels below are re displayed
+			#  When removing a panel, check to make sure panels below are redisplayed.
 			if p.visible:
-				if p.rect.colliderect(panel.rect):
-					p.changed = True
+				p.changed = True
 		self.display()
 
 	def display(self):
@@ -346,7 +343,8 @@ class GuiManager(BaseGui):
 								event_loop_methods.button_clicked(element)
 							elif isinstance(element, tree_view.TreeView):
 								event_loop_methods.treeview_clicked(element, pos)
-							elif isinstance(element, color_blocks.DefaultColorBlock):
+							elif isinstance(element, color_blocks.PanelColorBlock) and element.drag_with_mouse and element.rect.collidepoint(pos):
+								print(f'panel {panel.name} element {element} dwm {element.drag_with_mouse}')
 								#  Clicking a title bar to move a window.
 								event_loop_methods.move_panel(element, panel, pos, self)
 							elif isinstance(element, DropDown) and element.children[0].background_rect.collidepoint(pos):
@@ -374,7 +372,9 @@ class GuiManager(BaseGui):
 			x_diff = pos[0] - self.mouse_x
 			y_diff = pos[1] - self.mouse_y
 			self.element_moving.update_pos(x_diff, y_diff)
+			self.element_moving.changed = True
 			self.element_moving = False
+
 
 	def on_mousemove_dropdown(self, pos):
 		# Run from main pygame loop
@@ -422,10 +422,6 @@ class GuiManager(BaseGui):
 		panel = self.panel_dict[panel_name]
 		if self.is_error() == False:
 			panel.create_button(x, y, functions, text, kind)
-
-	def create_button_ok(self, panel, x, y):
-		if self.is_error() == False:
-			panel.create_button_ok('OK', x, y)
 
 	def create_scrollbar(self, panel_name, max_height, num_entries, visible_entries, orientation='vertical'):
 		if not orientation in ['vertical', 'horizontal']:
@@ -486,6 +482,6 @@ class GuiManager(BaseGui):
 		print(name)
 		self.panels.append(self.panel_dict[name])
 		_buttonx = self.default_dict['dialog_width'] / 2 - self.default_dict['button_width'] / 2
-		self.create_button(name, _buttonx, self.panel_dict[name].end_of_text_y, [], 'OK')
+		self.panel_dict[name].create_button_ok(_buttonx, self.panel_dict[name].end_of_text_y)
 		if visible:
 			self.panels_on_screen.append(self.panel_dict[name])

@@ -36,29 +36,27 @@ class DefaultPanel(base_gui.BaseGui):
 
 
 	def update_pos(self, x, y):
+		self.changed = True
 		self.rect = self.rect.move(x, y)
 		self.gui.screen.fill((0, 0, 0))
-		for c in self.children:
-			c.rect = c.rect.move(x, y)
-			if type(c) == base_gui.ButtonOK:
-				c.update()
+		for child in (self.static_children + self.children):
+			#child.rect = child.rect.move(x, y)
+			child.update(y)
+		for panel in self.gui.panels:
+			if panel.visible:
+				panel.changed = True
+			panel.update(0)
+		self.gui.display()
+
+
 
 	def display(self):
 		if self.is_error():
 			self.on_error()
 			return
-		print('We are in defaultpanel display')
 
-		for static in self.static_children:
-			static.display()
-		for child in self.children:
+		for child in (self.static_children + self.children):
 			child.display()
-
-		# #  If border is made a fundamental object then it we don't need to override the display()
-		# self.border = pygame.draw.rect(self.screen,
-		# 							   self.border_color,
-		# 							   self.rect,
-		# 							   self.default_dict['panel_border'])
 
 
 	def change_background_color(self, color):
@@ -87,8 +85,8 @@ class DefaultPanel(base_gui.BaseGui):
 			self.error['create_invalid_button'] = f'Creating invalid button type {kind} in panel {self.name}'
 
 
-	def create_button_ok(self, text, x, y):
-		self.children.append(buttons.ButtonOK(text, self, x, y, [], self.default_dict))
+	def create_button_ok(self, x, y):
+		self.children.append(buttons.ButtonOK(self, x, y, self.default_dict))
 
 	def create_treeview(self, name, x, y):
 		self.children.append(tree_view.TreeView(name, self, x, y, self.default_dict))
@@ -127,8 +125,6 @@ class PanelScroll(DefaultPanel):
 		#  lowest_thumb_y is the lowest point the scrollbar thumb.y can be in the panel
 		if orientation == 'vertical':
 			# Change to a horizontal and vertical
-			# TODO Add max_v
-			print(f'Creating scrollbar in panel {self.name}, panel height {self.height}, height of thumb {self.height * (self.height / lowest_thumb_y)}')
 			self.scrollbar = (scrollbars.Scrollbar(self, lowest_thumb_y, max_entries, visible_entries))
 			self.children.append(self.scrollbar)
 
@@ -222,7 +218,6 @@ class PanelDynamicScrollbar(DefaultPanel):
 			#  TODO is display being run without the children created?
 			self.total_y = abs(_max_y) - abs(_min_y) + _lowest
 
-		print(self.total_y)
 		self.check_for_scrollbar()
 
 
@@ -230,10 +225,8 @@ class PanelDynamicScrollbar(DefaultPanel):
 		if self.is_error():
 			self.on_error()
 			return
-		for static in self.static_children:
+		for static in (self.static_children + self.children):
 			static.display()
-		for child in self.children:
-			child.display()
 
 
 class PanelDialog(DefaultPanel, dialogs.DefaultDialog):
@@ -241,7 +234,9 @@ class PanelDialog(DefaultPanel, dialogs.DefaultDialog):
 		dialogs.DefaultDialog.__init__(self, gui, title, text, default_dict=base_gui.load_defaults())
 		DefaultPanel.__init__(self, gui, name, self.x, self.y, self.width, self.height, default_dict=base_gui.load_defaults(), visible=True, active=True)
 
-		self.static_children.append(PanelColorBlock(self, self.default_dict['msg_title_background_color'], self.title_rect))
+		self.static_children.append(PanelColorBlock(self, self.default_dict['msg_title_background_color'], self.title_rect, drag_with_mouse=True))
+		#  Use the title bar to detect mouse drag and drop
+		# self.title_bar = self.static_children[-1]
 		self.static_children.append(labels.DefaultLabel(self.title, self,
 														self.default_dict['msg_title_x'],
 														self.default_dict['msg_title_y'], justify='centerx'))
@@ -252,3 +247,7 @@ class PanelDialog(DefaultPanel, dialogs.DefaultDialog):
 								self.default_dict['msg_text_x'],
 								self.default_dict['msg_text_y'] + i * (self.default_dict['msg_label_fontsize'] + 5),
 								fontsize=self.default_dict['msg_label_fontsize'])
+
+		#  Add to gui dialogs.
+		self.gui.dialog_dict[self.name] = self
+

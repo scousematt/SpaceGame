@@ -3,7 +3,6 @@ import base_gui
 
 
 class DefaultColorBlock(base_gui.BaseGui):
-
 	def __init__(self, panel, color, rect, default_dict=base_gui.load_defaults()):
 		# This is for things internal to panels where a block of color is needed, things like message box title background
 		# it is essentially a colored pygame.rect
@@ -21,7 +20,7 @@ class DefaultColorBlock(base_gui.BaseGui):
 
 	def update(self, y_change):
 		self.rect.y += y_change
-		print('We are updating a color block')
+
 
 class Triangles2ColorBlock(DefaultColorBlock):
 	def __init__(self, panel, color, rect, color2):
@@ -88,4 +87,3 @@ class DropDownColorBlock(DefaultColorBlock):
 	def __init__(self, panel, color, rect):
 		DefaultColorBlock.__init__(self, panel, color, rect )
 
-		pass

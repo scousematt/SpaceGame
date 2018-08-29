@@ -56,7 +56,7 @@ treeview_image_width:16
 treeview_image_height:16
 treeview_highlight_offset:1
 #Dialog
-dialog_x:300
+dialog_x:200
 dialog_y:100
 dialog_width:500
 dialog_height:300

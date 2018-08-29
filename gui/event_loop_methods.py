@@ -14,12 +14,15 @@ def treeview_clicked(element, pos):
             print(child.text)
 
 
-def move_panel(element, panel, pos,  game):
+def move_panel(element, panel, pos,  gui):
+    print(f'Event loop move panel clicked')
+    element.color = (180,160, 180)
+    panel.changed = True
     if element.drag_with_mouse and element.rect.collidepoint(pos):
-        game.lmb_pressed = True
-        game.mouse_x = pos[0]
-        game.mouse_y = pos[1]
-        game.element_moving = panel
+        gui.lmb_pressed = True
+        gui.mouse_x = pos[0]
+        gui.mouse_y = pos[1]
+        gui.element_moving = panel
 
 def mouse_left_scrollbar(gui, element, pos):
     #  Mouse has left clicked on a scrollbars.Scrollbar

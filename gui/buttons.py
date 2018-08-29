@@ -60,6 +60,7 @@ class DefaultButton(base_gui.BaseGui):
         for child in self.children:
             child.update(y_change)
 
+
     def display(self):
         for child in self.children:
             #  If scrolled out of panel, don't show it.
@@ -84,19 +85,23 @@ class Button(DefaultButton):
 
 
 class ButtonOK(Button):
+    '''
+    Only to be used in dialogs. Not in standard panels.
+    '''
+    def __init__(self, panel, x, y, default_dict=base_gui.load_defaults()):
+        Button.__init__(self, panel, x, y, [], 'OK', default_dict)
+        # self.width = panel.width - (2 * self.default_dict['msg_text_x'])
+        # self.rect = pygame.Rect(self.x, self.y, self.button_width, self.button_height)
+        #
+        # self.offset = default_dict['button_highlight_offset']
+        #
+        # # This is the rect that contains the whole button
+        # self.shadow_rect = self.rect.inflate(self.offset * 2, self.offset * 2)
 
-    def __init__(self, text, panel, x, y, function_list=[], default_dict=base_gui.load_defaults()):
-        DefaultButton.__init__(self, panel, x, y, [], default_dict)
-        self.width = panel.width - (2 * self.default_dict['msg_text_x'])
-        self.text = 'OK'
-        self.rect = pygame.Rect(self.x, self.y, self.button_width, self.button_height)
 
-        self.offset = default_dict['button_highlight_offset']
+        self.function_list = [self.parent.close_dialog]
+        self.on_click_method = self.function_list[0]
 
-        # This is the rect that contains the whole button
-        self.shadow_rect = self.rect.inflate(self.offset * 2, self.offset * 2)
-
-        self.change_text(text)
 
 
 class ButtonImage(DefaultButton):

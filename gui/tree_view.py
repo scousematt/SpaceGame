@@ -22,10 +22,7 @@ class Node(base_gui.BaseGui):
             self.show_children = False
         else:
             self.show_children = True
-        #  Set the panel.changed status to changed to force a redisplay.
-        #print(f'node parent is {type(self.parent)}')
-        #print(f'node parent parent is {type(self.parent.parent)}')
-        #self.parent.parent.display()
+
 
     def display(self):
         pass
@@ -135,7 +132,6 @@ class TreeView(base_gui.BaseGui):
         # self.original_y += y_change
         self.y = self.original_y
         self.recalculate_output(self.root)
-        print(f'treeview height {self.rect.height}')
         self.total_offset += y_change
         self.rect.y += self.total_offset
 
@@ -144,7 +140,7 @@ class TreeView(base_gui.BaseGui):
         offset = display_rect.y - self.parent.rect.y
         for child in self.children:
             if display_rect.contains(child.rect):
-                child.rect.top -= offset
+                child.update(-offset)
                 child.display()
 
 

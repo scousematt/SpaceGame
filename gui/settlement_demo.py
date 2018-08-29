@@ -44,6 +44,7 @@ gui.create_dropdown_title('Toolbar', 'Time', 500, 10, 5, g.time_increments, g.se
 # t = gui.create_treeview('Tree', 'Testing', 10, 90)
 
 gui.create_message_box('title_name', 'Title Test', 'Testing the text is here and we will check to see if it forms a paragraph.')
+gui.create_message_box('title_name1', 'Second Test', 'The quick brown fox jumped over the lazy dog.')
 
 ########
 # testing
@@ -62,15 +63,10 @@ gui.create_message_box('title_name', 'Title Test', 'Testing the text is here and
 # g1206 = t.add_node(g12, 'Brook')
 # g1207 = t.add_node(g12, 'Blanche')
 # g1208 = t.add_node(g12, 'Briana')
-
-
+#
+#
 # t.display()
 
-
-
-
-# TODO We have a drop box that we can click on, now it needs to refresh the information in 'Data' and redraw it. Also make the
-# drop list panel the only active panel, which will disappear when clicking is done elsewhere, and of course the scrollbar.
 
 
 done = False
