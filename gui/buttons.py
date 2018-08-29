@@ -37,6 +37,9 @@ class DefaultButton(base_gui.BaseGui):
         #  Return for __str__.
         self.str = f'Button {type(self)} in panel {self.parent.name}'
 
+    def close_panel(self):
+        self.parent.gui.hide_panel(self.parent.name)
+
     def setup_sizes(self):
         self.button_width = self.default_dict['button_width']
         self.button_height = self.default_dict['button_height']
@@ -80,20 +83,19 @@ class Button(DefaultButton):
 
 
 
-class ButtonOK(DefaultButton):
+class ButtonOK(Button):
 
     def __init__(self, text, panel, x, y, function_list=[], default_dict=base_gui.load_defaults()):
-        DefaultButton.__init__(self, text, panel, x, y, function_list=[])
+        DefaultButton.__init__(self, panel, x, y, [], default_dict)
         self.width = panel.width - (2 * self.default_dict['msg_text_x'])
         self.text = 'OK'
-        self.rect = pygame.Rect(self.x, self.y, self.width, self.height)
+        self.rect = pygame.Rect(self.x, self.y, self.button_width, self.button_height)
 
         self.offset = default_dict['button_highlight_offset']
 
         # This is the rect that contains the whole button
         self.shadow_rect = self.rect.inflate(self.offset * 2, self.offset * 2)
 
-        self.create_highlight_coords()
         self.change_text(text)
 
 

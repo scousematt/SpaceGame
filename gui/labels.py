@@ -119,8 +119,10 @@ class DefaultLabel(base_gui.BaseGui):
 			self.coords = (self.x, self.y)
 		elif self.justify == 'right':
 			self.coords = (self.x, self.y)
+		elif self.justify == 'centerx':
+			print(f'Justify :{self.justify} from labels.DefaultLabel.change_text() y is {self.y}')
+			self.coords = (self.parent.rect.centerx, self.y)
 		else:
-			print(f'Justify :{self.justify} from labels.DefaultLabel.change_text()')
 			self.coords = self.parent.rect.center
 
 

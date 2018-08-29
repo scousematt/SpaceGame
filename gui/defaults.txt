@@ -21,7 +21,7 @@ msg_chars_on_line:57
 msg_width:500
 msg_title_background_color:(200,180,180)
 msg_title_x:10
-msg_title_y:9
+msg_title_y:18
 msg_title_height:28
 msg_text_x:25
 msg_text_y:43
@@ -55,4 +55,10 @@ treeview_packer:5
 treeview_image_width:16
 treeview_image_height:16
 treeview_highlight_offset:1
+#Dialog
+dialog_x:300
+dialog_y:100
+dialog_width:500
+dialog_height:300
+dialog_multiple_offset:25
 #EOF

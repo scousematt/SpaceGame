@@ -36,33 +36,35 @@ gui.create_label('Data',g.settlements[g.settlement_names[0]].pop_int, 300, 40, l
 gui.create_dropdown_title('Toolbar', 'Select Planet', 200, 10, 3, g.settlement_names, g.display_settlement, length=20 )
 gui.create_dropdown_title('Toolbar', 'Time', 500, 10, 5, g.time_increments, g.set_time_increment)
 
-gui.create_panel('Tree', 200, 130, 400, 250)
-gui.create_label('Tree', 'Treeview example', 10, 10)
-gui.create_button('Tree', 10, 50, [g.update], 'Test')
-gui.create_button('Tree', 200, 10, [g.update], ['plus.png', 'minus.png'], kind='toggle')
-t = gui.create_treeview('Tree', 'Testing', 10, 90)
+#  Treeview
+# gui.create_panel('Tree', 200, 130, 400, 250)
+# gui.create_label('Tree', 'Treeview example', 10, 10)
+# gui.create_button('Tree', 10, 50, [g.update], 'Test')
+# gui.create_button('Tree', 200, 10, [g.update], ['plus.png', 'minus.png'], kind='toggle')
+# t = gui.create_treeview('Tree', 'Testing', 10, 90)
 
+gui.create_message_box('title_name', 'Title Test', 'Testing the text is here and we will check to see if it forms a paragraph.')
 
 ########
 # testing
 
-g10 = t.add_node(t.root, 'Alan')
-g11 = t.add_node(t.root, 'Andy')
-g12 = t.add_node(t.root, 'Arnold', show_children=False)
-g1020 = t.add_node(g10, 'Bert')
-g1021 = t.add_node(g10, 'Bill')
-g2020 = t.add_node(g1020, 'Carl')
-g1201 = t.add_node(g12, 'Bessie')
-g1202 = t.add_node(g12, 'Bertha')
-g1203 = t.add_node(g12, 'Barbara')
-g1204 = t.add_node(g12, 'Brenda')
-g1205 = t.add_node(g12, 'Beth')
-g1206 = t.add_node(g12, 'Brook')
-g1207 = t.add_node(g12, 'Blanche')
-g1208 = t.add_node(g12, 'Briana')
+# g10 = t.add_node(t.root, 'Alan')
+# g11 = t.add_node(t.root, 'Andy')
+# g12 = t.add_node(t.root, 'Arnold', show_children=False)
+# g1020 = t.add_node(g10, 'Bert')
+# g1021 = t.add_node(g10, 'Bill')
+# g2020 = t.add_node(g1020, 'Carl')
+# g1201 = t.add_node(g12, 'Bessie')
+# g1202 = t.add_node(g12, 'Bertha')
+# g1203 = t.add_node(g12, 'Barbara')
+# g1204 = t.add_node(g12, 'Brenda')
+# g1205 = t.add_node(g12, 'Beth')
+# g1206 = t.add_node(g12, 'Brook')
+# g1207 = t.add_node(g12, 'Blanche')
+# g1208 = t.add_node(g12, 'Briana')
 
 
-t.display()
+# t.display()
 
 
 

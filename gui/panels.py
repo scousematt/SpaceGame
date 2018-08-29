@@ -1,5 +1,7 @@
 import pygame
 import base_gui
+from color_blocks import PanelColorBlock, BlockWithBorder
+import labels, buttons, tree_view, scrollbars, dialogs
 
 class DefaultPanel(base_gui.BaseGui):
 	def __init__(self, gui, name, x, y, width, height, default_dict=base_gui.load_defaults(), visible=True, active=True):
@@ -45,6 +47,7 @@ class DefaultPanel(base_gui.BaseGui):
 		if self.is_error():
 			self.on_error()
 			return
+		print('We are in defaultpanel display')
 
 		for static in self.static_children:
 			static.display()
@@ -233,9 +236,19 @@ class PanelDynamicScrollbar(DefaultPanel):
 			child.display()
 
 
-######################################
-#
-# Imports
+class PanelDialog(DefaultPanel, dialogs.DefaultDialog):
+	def __init__(self, gui, name, title, text, default_dict=base_gui.load_defaults(), visible=True, active=True):
+		dialogs.DefaultDialog.__init__(self, gui, title, text, default_dict=base_gui.load_defaults())
+		DefaultPanel.__init__(self, gui, name, self.x, self.y, self.width, self.height, default_dict=base_gui.load_defaults(), visible=True, active=True)
 
-from color_blocks import PanelColorBlock, BlockWithBorder
-import labels, buttons, tree_view, scrollbars
+		self.static_children.append(PanelColorBlock(self, self.default_dict['msg_title_background_color'], self.title_rect))
+		self.static_children.append(labels.DefaultLabel(self.title, self,
+														self.default_dict['msg_title_x'],
+														self.default_dict['msg_title_y'], justify='centerx'))
+
+		#  Add the main text
+		for i, line in enumerate(self.formatted_text):
+			self.create_label(line,
+								self.default_dict['msg_text_x'],
+								self.default_dict['msg_text_y'] + i * (self.default_dict['msg_label_fontsize'] + 5),
+								fontsize=self.default_dict['msg_label_fontsize'])

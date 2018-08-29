@@ -124,8 +124,7 @@ class MessageBox(BaseGui):
 		self.text = text
 		self.gui = gui
 		self.screen = self.gui.screen
-		# Make existing panels on the screen inactive to the input
-		self.gui.panels_inactivate()
+
 		formatted_text = format_text(self.text, self.default_dict['msg_chars_on_line'] )
 		end_of_text_y = (2 * self.default_dict['msg_text_y']) + (self.default_dict['msg_label_fontsize'] + 5) * len(
 																										formatted_text)
@@ -155,8 +154,7 @@ class MessageBox(BaseGui):
 							   self.default_dict['msg_text_x'],
 							   self.default_dict['msg_text_y'] + i * (self.default_dict['msg_label_fontsize'] + 5),
 							   fontsize=self.default_dict['msg_label_fontsize'])
-		self.gui.create_button_ok(self.panel, self.default_dict['msg_text_x'], end_of_text_y)
-
+		self.gui.create_button(self.panel, self.default_dict['msg_text_x'], end_of_text_y,[], 'OK')
 
 
 class DropDown(BaseGui):
@@ -290,9 +288,12 @@ class GuiManager(BaseGui):
 
 
 		self.panels = []
+		self.dialogs = []
+		self.dislog_dict = {}
 		self.font_dict = {}
 		self.panels_on_screen = []
 		self.panel_dict = {}
+
 		self.lmb_pressed = False
 		self.mouse_x = 0
 		self.mouse_y = 0
@@ -461,13 +462,30 @@ class GuiManager(BaseGui):
 		label = panel.named_children_dict[label_name]
 		label.change_text(text)
 
-	def get_panel_by_name(self, name):
-		for panel in self.panels:
-			if name == panel.name:
-				return(panel)
+	# def get_panel_by_name(self, name):
+	# 	'''
+	# 	Surely this is replaced with a call to self.panels_dict[name]
+	# 	:param name:
+	# 	:return:
+	# 	'''
+	# 	for panel in self.panels:
+	# 		if name == panel.name:
+	# 			return(panel)
+	#
+	# 	self.error['unknown_panel_name'] = '{} not found in GuiManger.panels'.format(name)
+	# 	print(self.error)
 
-		self.error['unknown_panel_name'] = '{} not found in GuiManger.panels'.format(name)
-		print(self.error)
+	def create_message_box(self, name, title, text, default_dict=None, visible=True, active=True):
+		if default_dict == None:
+			default_dict = self.default_dict
+		if name in self.panel_dict:
+			self.error['panel_name_exists'] = name
+			return
 
-	def create_message_box(self, name, title, text, gui_defaults):
-		MessageBox(name, title, text, self)
+		self.panel_dict[name] = panels.PanelDialog(self, name, title, text, default_dict, visible, active)
+		print(name)
+		self.panels.append(self.panel_dict[name])
+		_buttonx = self.default_dict['dialog_width'] / 2 - self.default_dict['button_width'] / 2
+		self.create_button(name, _buttonx, self.panel_dict[name].end_of_text_y, [], 'OK')
+		if visible:
+			self.panels_on_screen.append(self.panel_dict[name])
