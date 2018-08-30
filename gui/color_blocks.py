@@ -21,6 +21,9 @@ class DefaultColorBlock(base_gui.BaseGui):
 	def update(self, y_change):
 		self.rect.y += y_change
 
+	def update_xy(self, x, y):
+		self.rect = self.rect.move(x,y)
+
 
 class Triangles2ColorBlock(DefaultColorBlock):
 	def __init__(self, panel, color, rect, color2):

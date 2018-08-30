@@ -135,6 +135,9 @@ class TreeView(base_gui.BaseGui):
         self.total_offset += y_change
         self.rect.y += self.total_offset
 
+    def update_xy(self, x, y):
+        self.rect = self.rect.move(x,y)
+
     def display(self):
         display_rect = self.parent.display_rect
         offset = display_rect.y - self.parent.rect.y

@@ -30,6 +30,10 @@ class DefaultDialog():
         if len(self.gui.dialog_dict) > 0:
             _key = list(self.gui.dialog_dict)[-1]
             self.gui.dialog_dict[_key].active = True
+        else:
+            for panel in self.gui.panels:
+                if panel.visible:
+                    panel.active = True
 
     def set_panel_sizes(self):
         #  A seperate method so that class children can calculate differently - images etc.

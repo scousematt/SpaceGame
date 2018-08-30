@@ -37,15 +37,20 @@ class DefaultPanel(base_gui.BaseGui):
 
 	def update_pos(self, x, y):
 		self.changed = True
-		self.rect = self.rect.move(x, y)
+		print(x,y)
+
 		self.gui.screen.fill((0, 0, 0))
+		if self.rect.y + y < 0:
+			y = 0 - self.rect.y
+		self.rect = self.rect.move(x, y)
 		for child in (self.static_children + self.children):
-			#child.rect = child.rect.move(x, y)
-			child.update(y)
+			child.update_xy(x, y)
 		for panel in self.gui.panels:
 			if panel.visible:
 				panel.changed = True
-			panel.update(0)
+			#panel.update(0)
+
+
 		self.gui.display()
 
 
@@ -236,7 +241,7 @@ class PanelDialog(DefaultPanel, dialogs.DefaultDialog):
 
 		self.static_children.append(PanelColorBlock(self, self.default_dict['msg_title_background_color'], self.title_rect, drag_with_mouse=True))
 		#  Use the title bar to detect mouse drag and drop
-		# self.title_bar = self.static_children[-1]
+		self.title_bar = self.static_children[-1]
 		self.static_children.append(labels.DefaultLabel(self.title, self,
 														self.default_dict['msg_title_x'],
 														self.default_dict['msg_title_y'], justify='centerx'))

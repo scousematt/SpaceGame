@@ -10,8 +10,8 @@ class DefaultButton(base_gui.BaseGui):
         #
         base_gui.BaseGui.__init__(self)
         self.parent = panel
-        self.x = x + self.parent.x
-        self.y = y + self.parent.y
+        self.x = x + self.parent.rect.x
+        self.y = y + self.parent.rect.y
 
         self.default_dict = default_dict
         #  Populate the button sizes from the default_dict.
@@ -60,12 +60,21 @@ class DefaultButton(base_gui.BaseGui):
         for child in self.children:
             child.update(y_change)
 
+    def update_xy(self, x, y):
+        self.rect = self.rect.move(x,y)
+        for child in self.children:
+            child.update_xy(x,y)
+
+
 
     def display(self):
         for child in self.children:
             #  If scrolled out of panel, don't show it.
-            if child.rect.y > self.parent.y:
+            #print(f'button child.rect.y {child.rect.y} parent.rect.y {self.parent.rect.y}')
+            if child.rect.y > self.parent.rect.y:
                 child.display()
+            else:
+                print(f'from else button child.rect.y {child.rect} parent.rect.y {self.parent.rect}')
 
 class Button(DefaultButton):
     def __init__(self, panel, x, y, function_list, text, default_dict=base_gui.load_defaults()):
@@ -90,19 +99,20 @@ class ButtonOK(Button):
     '''
     def __init__(self, panel, x, y, default_dict=base_gui.load_defaults()):
         Button.__init__(self, panel, x, y, [], 'OK', default_dict)
-        # self.width = panel.width - (2 * self.default_dict['msg_text_x'])
-        # self.rect = pygame.Rect(self.x, self.y, self.button_width, self.button_height)
-        #
-        # self.offset = default_dict['button_highlight_offset']
-        #
-        # # This is the rect that contains the whole button
-        # self.shadow_rect = self.rect.inflate(self.offset * 2, self.offset * 2)
-
-
+        for child in self.children:
+            print(child.rect, type(child))
         self.function_list = [self.parent.close_dialog]
         self.on_click_method = self.function_list[0]
 
-
+    def display(self):
+        for child in self.children:
+            #  If scrolled out of panel, don't show it.
+            #print(f'button child.rect.y {child.rect.y} parent.rect.y {self.parent.rect.y}')
+            if child.rect.y > self.parent.rect.y:
+                child.display()
+            else:
+                #  We have asked child.update_xy to run, so lets check out ubttons.ButtonLabel
+                print(f'{type(child)} from else button child.rect.y {child.rect} parent.rect.y {self.parent.rect}')
 
 class ButtonImage(DefaultButton):
     def __init__(self, panel, x, y, function_list, image, default_dict=base_gui.load_defaults()):

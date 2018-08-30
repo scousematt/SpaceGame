@@ -43,10 +43,10 @@ class TextSurface(base_gui.BaseGui):
         self.justify = justify
         self.text_surface = None
         self.rect = None
-        self.update()
+        self.update_text()
 
 
-    def update(self):
+    def update_text(self):
         self.text_surface = self.font.render(self.text, True, self.color)
         self.rect = self.text_surface.get_rect()
         if self.justify == 'left':

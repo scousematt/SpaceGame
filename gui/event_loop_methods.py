@@ -16,7 +16,6 @@ def treeview_clicked(element, pos):
 
 def move_panel(element, panel, pos,  gui):
     print(f'Event loop move panel clicked')
-    element.color = (180,160, 180)
     panel.changed = True
     if element.drag_with_mouse and element.rect.collidepoint(pos):
         gui.lmb_pressed = True

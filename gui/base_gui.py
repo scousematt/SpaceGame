@@ -78,6 +78,9 @@ class BaseGui():
 	def update(self, y=0):
 		pass
 
+	def update_xy(self, x=0, y=0):
+		pass
+
 
 	def is_error(self):
 		if len(self.error) > 0:
@@ -346,6 +349,7 @@ class GuiManager(BaseGui):
 							elif isinstance(element, color_blocks.PanelColorBlock) and element.drag_with_mouse and element.rect.collidepoint(pos):
 								print(f'panel {panel.name} element {element} dwm {element.drag_with_mouse}')
 								#  Clicking a title bar to move a window.
+								element.color = self.default_dict['msg_title_background_hl_color']
 								event_loop_methods.move_panel(element, panel, pos, self)
 							elif isinstance(element, DropDown) and element.children[0].background_rect.collidepoint(pos):
 								self.lmb_pressed = True
@@ -369,6 +373,10 @@ class GuiManager(BaseGui):
 	def on_lmb_up(self, pos):
 		self.lmb_pressed = False
 		if self.element_moving:
+			try:
+				self.element_moving.title_bar.color = self.default_dict['msg_title_background_color']
+			except:
+				pass
 			x_diff = pos[0] - self.mouse_x
 			y_diff = pos[1] - self.mouse_y
 			self.element_moving.update_pos(x_diff, y_diff)

@@ -11,6 +11,8 @@ class DefaultLabel(base_gui.BaseGui):
 		self.parent = parent
 		self.text = '' # We establish self.text in the method self.change_text(text)
 		self.rect = None
+		self.x = x
+		self.y = y
 
 		if isinstance(text, (int, float)):
 			# here we can test to see if we want colored numbers (red , green) or brackets around -ve
@@ -19,8 +21,8 @@ class DefaultLabel(base_gui.BaseGui):
 		self.name = label_name
 
 		#  Set the label to screen coordinates.
-		self.x = x + self.parent.x
-		self.y = y + self.parent.y
+		self.set_screen_coords()
+
 		self.default_dict = default_dict
 		self.justify = justify  #  Left, right, on centre y.
 
@@ -62,6 +64,11 @@ class DefaultLabel(base_gui.BaseGui):
 				self.error['font'] = True
 		if not self.is_error():
 			self.change_text(text)
+		print(self.children)
+
+	def set_screen_coords(self):
+		self.x = self.x + self.parent.x
+		self.y = self.y + self.parent.y
 
 	def get_text_surface(self):
 		# The update will check that there is only one text surface
@@ -82,11 +89,18 @@ class DefaultLabel(base_gui.BaseGui):
 		#  The panel upon scrollbar movement will change the self.rect.y
 		for child in self.children:
 			child.rect.y += y_change
+			child.update_text()
+
+	def update_xy(self, x, y):
+		for child in self.children:
+			child.rect = child.rect.move(x,y)
+		self.rect = self.rect.move(x,y)
 
 	def display(self):
 		for child in self.children:
-			if child.rect.y > self.parent.y:
+			if child.rect.y > self.parent.rect.y:
 				child.display()
+
 
 	def set_rect(self):
 		#  From the last element, get the rect.
@@ -135,14 +149,20 @@ class ButtonLabel(DefaultLabel):
 	def __init__(self, text, parent, x, y, justify, default_dict, fontsize=None,
 				 label_name=None):
 		self.button = parent
+
 		DefaultLabel.__init__(self, text, parent, x, y, justify, default_dict, fontsize=None,
 				 label_name=None)
 		'''Same as the DefaultLabel except the self.parent.y does not refer to its parent (a button) but the panel in which the button
 		resides.'''
 		self.parent = self.parent.parent
-		#self.rect = self.parent.rect
 		self.rect = self.button.rect
+		print(f'The label has {len(self.children)} children')
+		#self.rect = self.parent.rect
 
+	def set_screen_coords(self):
+		#  Button is the child of a panel, we need panel sizes.
+		self.x = self.x + self.parent.parent.x
+		self.y = self.y + self.parent.parent.y
 
 
 	def justify_text(self):
@@ -152,7 +172,7 @@ class ButtonLabel(DefaultLabel):
 			self.coords = (self.x, self.y)
 		else:
 
-			self.coords = self.button.rect.center
+			self.coords = self.parent.rect.center
 
 
 

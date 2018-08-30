@@ -20,6 +20,7 @@ msg_label_fontsize:18
 msg_chars_on_line:57
 msg_width:500
 msg_title_background_color:(200,180,180)
+msg_title_background_hl_color:(180, 160, 180)
 msg_title_x:10
 msg_title_y:18
 msg_title_height:28
