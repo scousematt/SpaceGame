@@ -64,7 +64,7 @@ class DefaultLabel(base_gui.BaseGui):
 				self.error['font'] = True
 		if not self.is_error():
 			self.change_text(text)
-		print(self.children)
+
 
 	def set_screen_coords(self):
 		self.x = self.x + self.parent.x
@@ -90,6 +90,7 @@ class DefaultLabel(base_gui.BaseGui):
 		for child in self.children:
 			child.rect.y += y_change
 			child.update_text()
+		self.rect = self.rect.move(0,y_change)
 
 	def update_xy(self, x, y):
 		for child in self.children:

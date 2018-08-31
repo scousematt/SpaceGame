@@ -55,8 +55,6 @@ class TextSurface(base_gui.BaseGui):
             #  Note, needs the supplied x to be the right hand side.
             self.rect.topright = self.coords
         else:
-            print(f'Justify :{self.justify} text is {self.text}')
-
             self.rect.center = self.coords
 
     def display(self):

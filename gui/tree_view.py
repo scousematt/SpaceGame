@@ -128,6 +128,7 @@ class TreeView(base_gui.BaseGui):
 
 
     def update(self, y_change):
+        #  Trying to obsolete this function.
         self.children = []
         # self.original_y += y_change
         self.y = self.original_y
@@ -136,6 +137,11 @@ class TreeView(base_gui.BaseGui):
         self.rect.y += self.total_offset
 
     def update_xy(self, x, y):
+        self.children = []
+        # self.original_y += y_change
+        self.y = self.original_y
+        self.recalculate_output(self.root)
+        self.total_offset += y
         self.rect = self.rect.move(x,y)
 
     def display(self):
@@ -143,7 +149,7 @@ class TreeView(base_gui.BaseGui):
         offset = display_rect.y - self.parent.rect.y
         for child in self.children:
             if display_rect.contains(child.rect):
-                child.update(-offset)
+                child.update_xy(0, -offset)
                 child.display()
 
 

@@ -273,7 +273,7 @@ class DropDown(BaseGui):
 # Do imports here
 
 
-import panels, labels, color_blocks, buttons, tree_view, event_loop_methods, scrollbars
+import panels, labels, color_blocks, buttons, tree_view, event_loop_methods, scrollbars, dialogs
 
 
 BUTTONS = (buttons.DefaultButton, buttons.Button, buttons.ButtonOK, buttons.ButtonImage)

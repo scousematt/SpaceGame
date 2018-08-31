@@ -211,8 +211,10 @@ class PanelDynamicScrollbar(DefaultPanel):
 		_total_y_list = []
 		_min_y = 100000
 		_max_y = 0
+
 		for child in self.children:
-			child.update(y_change)
+			child.update_xy(0, y_change)
+			#  Finding the extents of the actual rect compared to the display, allows for initial element offset to be accounted.
 			_min_y = min(_min_y, child.rect.y)
 			_max_y = max(_max_y, child.rect.bottom)
 			if child.y - self.rect.y < _lowest:
@@ -220,12 +222,9 @@ class PanelDynamicScrollbar(DefaultPanel):
 				_lowest = child.y - self.rect.y
 		#  Now that all the interior elements have been updated, recalculate the self.total_rect.
 		if len(self.children)> 0:
-			#  TODO is display being run without the children created?
 			self.total_y = abs(_max_y) - abs(_min_y) + _lowest
 
 		self.check_for_scrollbar()
-
-
 
 		if self.is_error():
 			self.on_error()

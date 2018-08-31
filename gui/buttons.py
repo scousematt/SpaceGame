@@ -73,8 +73,7 @@ class DefaultButton(base_gui.BaseGui):
             #print(f'button child.rect.y {child.rect.y} parent.rect.y {self.parent.rect.y}')
             if child.rect.y > self.parent.rect.y:
                 child.display()
-            else:
-                print(f'from else button child.rect.y {child.rect} parent.rect.y {self.parent.rect}')
+
 
 class Button(DefaultButton):
     def __init__(self, panel, x, y, function_list, text, default_dict=base_gui.load_defaults()):
@@ -110,9 +109,7 @@ class ButtonOK(Button):
             #print(f'button child.rect.y {child.rect.y} parent.rect.y {self.parent.rect.y}')
             if child.rect.y > self.parent.rect.y:
                 child.display()
-            else:
-                #  We have asked child.update_xy to run, so lets check out ubttons.ButtonLabel
-                print(f'{type(child)} from else button child.rect.y {child.rect} parent.rect.y {self.parent.rect}')
+
 
 class ButtonImage(DefaultButton):
     def __init__(self, panel, x, y, function_list, image, default_dict=base_gui.load_defaults()):
