@@ -10,18 +10,17 @@ class DialogManager():
     def __init__(self, gui):
         self.gui = gui
 
-def make_standard(self, name, title, text, image, default_dict, visible, active):
-        self.gui.panel_dict[name] = panels.PanelDialog(self, name, title, text, default_dict, visible, active)
+def make_standard(gui, name, title, text, default_dict, visible, active):
+        gui.panel_dict[name] = panels.PanelDialog(gui, name, title, text, default_dict, visible, active)
         print(name)
-        self.gui.panels.append(self.gui.panel_dict[name])
+        gui.panels.append(gui.panel_dict[name])
         _buttonx = default_dict['dialog_width'] / 2 - default_dict['button_width'] / 2
-        self.gui.panel_dict[name].create_button_ok(_buttonx, self.gui.panel_dict[name].end_of_text_y)
+        gui.panel_dict[name].create_button_ok(_buttonx, gui.panel_dict[name].end_of_text_y)
 
 dialog_type_dict = {'standard': make_standard}
 
-def make_dialog(gui, name, title, text, image, default_dict, visible, active, dialog_type='standard'):
-    #  key is the dialog type and the value is the name of a function. Call it with dialog_type_dict['standard']() .
-    dialog_type_dict[dialog_type](name, title, text, image, default_dict, visible, active)
+def make_dialog(dialog_type, gui, name, title, text, default_dict, visible, active, **kwargs):
+    dialog_type_dict[dialog_type](gui, name, title, text, default_dict, visible, active, **kwargs)
 
 
 class DefaultDialog():

@@ -485,11 +485,5 @@ class GuiManager(BaseGui):
 		if name in self.panel_dict:
 			self.error['panel_name_exists'] = name
 			return
+		dialogs.make_dialog('standard', self, name, title, text, default_dict, visible, active)
 
-		self.panel_dict[name] = panels.PanelDialog(self, name, title, text, default_dict, visible, active)
-		print(name)
-		self.panels.append(self.panel_dict[name])
-		_buttonx = self.default_dict['dialog_width'] / 2 - self.default_dict['button_width'] / 2
-		self.panel_dict[name].create_button_ok(_buttonx, self.panel_dict[name].end_of_text_y)
-		if visible:
-			self.panels_on_screen.append(self.panel_dict[name])
