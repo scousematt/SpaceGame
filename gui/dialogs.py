@@ -1,14 +1,6 @@
 import pygame
 import base_gui, panels
 
-class DialogManager():
-    '''
-    A dialog panel requires external calls to add buttons, images, etc. Rather than add these to the BaseGui class, those actions will
-    be performed here.
-    '''
-
-    def __init__(self, gui):
-        self.gui = gui
 
 def make_standard(gui, name, title, text, default_dict, visible, active):
         gui.panel_dict[name] = panels.PanelDialog(gui, name, title, text, default_dict, visible, active)
