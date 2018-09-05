@@ -1,7 +1,7 @@
 import pygame
 import base_gui
 from color_blocks import PanelColorBlock, BlockWithBorder
-import labels, buttons, tree_view, scrollbars, dialogs
+import labels, buttons, tree_view, scrollbars, dialogs, fundamentals
 
 class DefaultPanel(base_gui.BaseGui):
 	def __init__(self, gui, name, x, y, width, height, default_dict=base_gui.load_defaults(), visible=True, active=True):
@@ -234,7 +234,7 @@ class PanelDynamicScrollbar(DefaultPanel):
 
 
 class PanelDialog(DefaultPanel, dialogs.DefaultDialog):
-	def __init__(self, gui, name, title, text, default_dict=base_gui.load_defaults(), visible=True, active=True):
+	def __init__(self, gui, name, title, text, default_dict=base_gui.load_defaults(), visible=True, active=True, image=None):
 		dialogs.DefaultDialog.__init__(self, gui, title, text, default_dict=base_gui.load_defaults())
 		DefaultPanel.__init__(self, gui, name, self.x, self.y, self.width, self.height, default_dict=base_gui.load_defaults(), visible=True, active=True)
 
@@ -245,11 +245,23 @@ class PanelDialog(DefaultPanel, dialogs.DefaultDialog):
 														self.default_dict['msg_title_x'],
 														self.default_dict['msg_title_y'], justify='centerx'))
 
+		#  If there is an image, add the image. Need a rect for the image, so lets make one here.
+		image_packer = 0
+		if image:
+			image_rect = pygame.Rect(self.default_dict['dialog_image_border'],
+									 self.default_dict['dialog_image_border']+ self.default_dict['msg_text_y'],
+									 self.width - 2 * default_dict['dialog_image_border'],
+									 default_dict['dialog_image_height'])
+			self.children.append(fundamentals.Image(image, self, image_rect))
+			image_packer = image_rect.bottom + self.default_dict['msg_text_y']
+			self.end_of_text_y += image_packer
+			self.rect.height += image_packer
+
 		#  Add the main text
 		for i, line in enumerate(self.formatted_text):
 			self.create_label(line,
 								self.default_dict['msg_text_x'],
-								self.default_dict['msg_text_y'] + i * (self.default_dict['msg_label_fontsize'] + 5),
+								self.default_dict['msg_text_y'] + i * (self.default_dict['msg_label_fontsize'] + 5) + image_packer,
 								fontsize=self.default_dict['msg_label_fontsize'])
 
 		#  Add to gui dialogs.

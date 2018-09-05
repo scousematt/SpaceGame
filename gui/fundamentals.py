@@ -21,6 +21,8 @@ class Image(base_gui.BaseGui):
         if (rect.width, rect.height) != self.image.get_size():
             self.image = pygame.transform.scale(self.image, (self.rect.w, self.rect.h))
 
+    def update_xy(self, x, y):
+        self.rect = self.rect.move(x, y)
 
     def display(self):
         if self.is_error():

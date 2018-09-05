@@ -59,7 +59,9 @@ treeview_highlight_offset:1
 #Dialog
 dialog_x:200
 dialog_y:100
+dialog_image_border:4
+dialog_image_height:120
 dialog_width:500
-dialog_height:300
+dialog_height:420
 dialog_multiple_offset:25
 #EOF

@@ -75,8 +75,8 @@ class BaseGui():
 		for child in self.children:
 			child.display()
 
-	def update(self, y=0):
-		pass
+	# def update(self, y=0):
+	# 	pass
 
 	def update_xy(self, x=0, y=0):
 		pass
@@ -479,11 +479,11 @@ class GuiManager(BaseGui):
 	# 	self.error['unknown_panel_name'] = '{} not found in GuiManger.panels'.format(name)
 	# 	print(self.error)
 
-	def create_message_box(self, name, title, text, default_dict=None, visible=True, active=True):
+	def create_message_box(self, name, title, text, default_dict=None, visible=True, active=True, image=None):
 		if default_dict == None:
 			default_dict = self.default_dict
 		if name in self.panel_dict:
 			self.error['panel_name_exists'] = name
 			return
-		dialogs.make_dialog('standard', self, name, title, text, default_dict, visible, active)
+		dialogs.make_dialog('standard', self, name, title, text, default_dict, visible, active, image)
 

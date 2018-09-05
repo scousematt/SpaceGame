@@ -44,7 +44,7 @@ gui.create_button('Tree', 200, 10, [g.update], ['plus.png', 'minus.png'], kind='
 t = gui.create_treeview('Tree', 'Testing', 10, 90)
 
 gui.create_message_box('title_name', 'Title Test', 'Testing the text is here and we will check to see if it forms a paragraph.')
-gui.create_message_box('title_name1', 'Second Test', 'The quick brown fox jumped over the lazy dog.')
+gui.create_message_box('title_name1', 'Second Test', 'The quick brown fox jumped over the lazy dog.', image='001.png')
 
 ########
 # testing

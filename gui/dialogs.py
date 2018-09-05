@@ -2,17 +2,20 @@ import pygame
 import base_gui, panels
 
 
-def make_standard(gui, name, title, text, default_dict, visible, active):
-        gui.panel_dict[name] = panels.PanelDialog(gui, name, title, text, default_dict, visible, active)
-        print(name)
-        gui.panels.append(gui.panel_dict[name])
+def make_standard(gui, name, default_dict):
+        #  Just adding a single ok button
         _buttonx = default_dict['dialog_width'] / 2 - default_dict['button_width'] / 2
         gui.panel_dict[name].create_button_ok(_buttonx, gui.panel_dict[name].end_of_text_y)
 
+def make_standard_image(gui, name, title, text, default_dict, visible, active, image):
+    pass
+
 dialog_type_dict = {'standard': make_standard}
 
-def make_dialog(dialog_type, gui, name, title, text, default_dict, visible, active, **kwargs):
-    dialog_type_dict[dialog_type](gui, name, title, text, default_dict, visible, active, **kwargs)
+def make_dialog(dialog_type, gui, name, title, text, default_dict, visible, active, image):
+    gui.panel_dict[name] = panels.PanelDialog(gui, name, title, text, default_dict, visible, active, image)
+    gui.panels.append(gui.panel_dict[name])
+    dialog_type_dict[dialog_type](gui, name, default_dict)
 
 
 class DefaultDialog():
@@ -55,6 +58,7 @@ class DefaultDialog():
         self.formatted_text = base_gui.format_text(self.text, self.default_dict['msg_chars_on_line'])
         self.end_of_text_y = (2 * self.default_dict['msg_text_y']) + \
                              (self.default_dict['msg_label_fontsize'] + 5) * len(self.formatted_text)
+
 
         #  Panel sizes.
         self.gui.number_dialogs += 1
